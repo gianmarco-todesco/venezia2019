@@ -6,7 +6,7 @@ class GlViewer {
         this.canvas = document.getElementById('viewer');
         const gl = this.gl = this.canvas.getContext("webgl");
         const m4 = twgl.m4;
-        this.distance = 10.0;
+        this.distance = 1.0;
         this.camera = m4.identity();
         this.view = m4.identity();
         this.viewProjection = m4.identity();
@@ -72,9 +72,7 @@ class GlViewer {
         m4.rotateZ(world, this.phi, world);
         this.world = world;
     
-        //m4.transpose(
-        //   m4.inverse(world, this.worldInverseTranspose), uni.u_worldInverseTranspose);
-
+        m4.transpose(m4.inverse(world), this.worldInverseTranspose);
         m4.multiply(this.viewProjection, this.world, this.worldViewProjection);    
     }
 
@@ -290,7 +288,7 @@ class MouseHandler {
         canvas.addEventListener('mousewheel', function(e) {
             e.stopPropagation();
             e.preventDefault();
-            me.viewer.distance = Math.max(2, me.viewer.distance - e.wheelDelta *0.005);
+            me.viewer.distance = Math.max(0.1, me.viewer.distance - e.wheelDelta *0.001);
         }, false);
 
     }
