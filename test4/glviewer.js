@@ -5,6 +5,7 @@ class GlViewer {
     constructor(canvasId) {
         this.canvas = document.getElementById('viewer');
         const gl = this.gl = this.canvas.getContext("webgl");
+        twgl.addExtensionsToContext(gl);
         const m4 = twgl.m4;
         this.distance = 10.0;
         this.camera = m4.identity();
@@ -13,7 +14,7 @@ class GlViewer {
         this.worldViewProjection = m4.identity();
         this.world = m4.identity();
         this.worldInverseTranspose = m4.identity();
-        this.theta = 0.7;
+        this.theta = 0.0;
         this.phi = 0.0;
 
         this.mouseHandler = new MouseHandler(this);
@@ -72,8 +73,7 @@ class GlViewer {
         m4.rotateZ(world, this.phi, world);
         this.world = world;
     
-        //m4.transpose(
-        //   m4.inverse(world, this.worldInverseTranspose), uni.u_worldInverseTranspose);
+        this.worldInverseTranspose = m4.transpose(m4.inverse(world));
 
         m4.multiply(this.viewProjection, this.world, this.worldViewProjection);    
     }
@@ -224,12 +224,15 @@ Shapes.createGrid = function(v) {
     addLine(0,0,-r, 0,0,r, 0,0,1);
 
     var d = 0.1;
+    // x
     addLine(r,0,0, r-d, d,0, 1,0,0);
     addLine(r,0,0, r-d,-d,0, 1,0,0);
 
+    // y
     addLine(0,r,0,  d,r-d,0, 0,1,0);
     addLine(0,r,0, -d,r-d,0, 0,1,0);
 
+    // z
     addLine(0,0,r, 0, d,r-d, 0,0,1);
     addLine(0,0,r, 0,-d,r-d, 0,0,1);
 
@@ -290,7 +293,7 @@ class MouseHandler {
         canvas.addEventListener('mousewheel', function(e) {
             e.stopPropagation();
             e.preventDefault();
-            me.viewer.distance = Math.max(2, me.viewer.distance - e.wheelDelta *0.005);
+            me.viewer.distance = Math.max(0.1, me.viewer.distance - e.wheelDelta *0.005);
         }, false);
 
     }
