@@ -1,49 +1,6 @@
-"use strict";
 
 
-
-class ShaderProgram {
-
-    constructor(gl, vSrc, fSrc) { 
-        this.gl = gl;
-        this.vSrc = vSrc;
-        this.fSrc = fSrc;
-        this.pInfo = this._createProgramInfoFromSources(vSrc, fSrc);        
-    }
-
-    _createShaderFromSource(type, src) {
-        const gl = this.gl;
-        const shader = gl.createShader(type);
-        gl.shaderSource(shader, src);
-        gl.compileShader(shader);
-        const compiled = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-        if (!compiled) {
-            // Something went wrong during compilation; get the error
-            var lastError = gl.getShaderInfoLog(shader);
-            gl.deleteShader(shader);
-            throw lastError;
-        }
-        return shader;
-    }    
-
-    _createProgramInfoFromSources = function (vSrc, fSrc) {
-        const gl = this.gl;
-        const vShader = this._createShaderFromSource(gl.VERTEX_SHADER, vSrc);        
-        const fShader = this._createShaderFromSource(gl.FRAGMENT_SHADER, fSrc);
-        const program = gl.createProgram();
-        gl.attachShader(program, vShader);
-        gl.attachShader(program, fShader);
-        gl.linkProgram(program);
-        if ( !gl.getProgramParameter( program, gl.LINK_STATUS) ) {
-            var info = gl.getProgramInfoLog(program);
-            throw 'Could not compile WebGL program. \n\n' + info;
-        }
-        const programInfo = twgl.createProgramInfoFromProgram(gl, program);
-        return programInfo;    
-    }
-}    
-
-
+/*
 class MaterialStore {
     constructor(gl) {
         this.gl = gl;
@@ -67,68 +24,7 @@ class MaterialStore {
 
 MaterialStore.progSources = {};
 MaterialStore.progSources.standard = { 
-    vs : `
-    uniform mat4 u_worldViewProjection;
-    uniform vec3 u_lightWorldPos;
-    uniform mat4 u_world;
-    uniform mat4 u_viewInverse;
-    uniform mat4 u_worldInverseTranspose;
-    attribute vec4 instancePos;
-
-
-    attribute vec4 position;
-    attribute vec3 normal;
-
-    varying vec4 v_position;
-    varying vec3 v_normal;
-    varying vec3 v_surfaceToLight;
-    varying vec3 v_surfaceToView;
-
-    void main() {
-        vec4 pposition = position + instancePos;
-        v_position = u_worldViewProjection * pposition;
-        v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
-        v_surfaceToLight = u_lightWorldPos - (u_world * pposition).xyz;
-        v_surfaceToView = (u_viewInverse[3] - (u_world * pposition)).xyz;
-        gl_Position = v_position;
-    }`, 
-    fs : `
-    precision mediump float;
-
-    varying vec4 v_position;
-    varying vec3 v_normal;
-    varying vec3 v_surfaceToLight;
-    varying vec3 v_surfaceToView;
-    
-    uniform vec4 u_lightColor;
-    uniform vec4 u_diffuseColor;
-    uniform vec4 u_ambient;
-    uniform vec4 u_specular;
-    uniform float u_shininess;
-    uniform float u_specularFactor;
-    
-    vec4 lit(float l ,float h, float m) {
-    return vec4(1.0,
-                max(l, 0.0),
-                (l > 0.0) ? pow(max(0.0, h), m) : 0.0,
-                1.0);
-    }
-    
-    void main() {
-        vec4 diffuseColor = u_diffuseColor;
-        vec3 a_normal = normalize(v_normal);
-        vec3 surfaceToLight = normalize(v_surfaceToLight);
-        vec3 surfaceToView = normalize(v_surfaceToView);
-        vec3 halfVector = normalize(surfaceToLight + surfaceToView);
-        vec4 litR = lit(dot(a_normal, surfaceToLight),
-                            dot(a_normal, halfVector), u_shininess);
-        vec4 outColor = vec4((
-        u_lightColor * (diffuseColor * litR.y + diffuseColor * u_ambient +
-                        u_specular * litR.z * u_specularFactor)).rgb,
-            diffuseColor.a);
-        gl_FragColor = outColor;
-    }       
-    `};
+    };
 
 MaterialStore.progSources.standardWithTexture = { 
     vs : `
@@ -194,6 +90,7 @@ MaterialStore.progSources.standardWithTexture = {
         gl_FragColor = outColor;
     }       
     `};
+*/
 
 class Camera {
     constructor(canvas) {
@@ -237,21 +134,7 @@ class Camera {
     */
 }
 
-class Material {
-    constructor(program) {
-        this.program = program;
-        this.uniforms = {};
-    }
 
-}
-
-
-
-
-
-class Mesh {
-
-}
 
 
 class Engine {
@@ -266,7 +149,9 @@ class Engine {
         }
         this.camera = new Camera(this.canvas);
         this.world = twgl.m4.identity();
-        this.materialStore = new MaterialStore(gl);
+
+        this.resourceManager = new ResourceManager(gl);
+
         this.uniforms = {
             u_lightWorldPos: [1, 8, -10],
             u_lightColor: [1, 0.8, 0.8, 1],
@@ -313,16 +198,93 @@ class Engine {
         gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
   
     }
-
-
 }
+
+
+
+class Scene {
+    constructor(options) {
+        Object.assign(this, options);
+        const name = options.name;
+        if(!name) throw "Bad scene name";
+        if(Scene.scenes[name]) throw "Duplicated scene name";
+        Scene.scenes[name] = this;
+    }
+}
+Scene.scenes = {};
+
+
+class SceneManager {
+    constructor(options) {
+        Object.assign(this, options);
+        const sceneNames = options.scenes;
+        if(!sceneNames || !Array.isArray(sceneNames) || sceneNames.length<1) throw "Bad scenes";
+        const scenes = this.scenes = sceneNames.map(name => {
+            var scene = Scene.scenes[name];
+            if(!scene) throw `Scene ${name} not found`;
+            return scene;
+        });
+        if(scenes.length==0) throw "No scenes";
+        this.currentScene = scenes[0];
+    }
+
+    initialize(engine) {
+        this.scenes.forEach(scene => {
+            if(scene.initialize) scene.initialize(engine);
+        });
+    }
+
+    draw(engine) {
+        if(this.currentScene) this.currentScene.draw(engine);
+    }
+    
+}
+
+
+const scene1 = new Scene({
+    name:"scene1",
+    initialize : function(engine) {
+        
+
+    },
+    draw : function(engine) {
+
+        const m4 = twgl.m4;
+
+        let world = m4.multiply(m4.translation([-1,0,0]), m4.rotationY(performance.now()*0.001));
+
+        engine.setMaterial(this.material1);
+        engine.setWorldMatrix(world);    
+    
+        /*
+        engine.setBuffers(this.vertexArrayInfo);
+        twgl.drawBufferInfo(engine.gl, this.vertexArrayInfo, engine.gl.TRIANGLES, 
+            this.vertexArrayInfo.numelements, 0, 3);
+            */
+
+
+        const bufferInfo2 = engine.resourceManager.getGeometry("pentagon");
+        engine.setBuffers(bufferInfo2);
+        // twgl.drawBufferInfo(engine.gl, bufferInfo2, engine.gl.TRIANGLES);
+        engine.gl.drawElements(engine.gl.TRIANGLES, bufferInfo2.numElements, engine.gl.UNSIGNED_SHORT, 0);
+    },
+});
+
+const sceneMngr = new SceneManager({
+    scenes:[
+        "scene1"
+    ]
+});
+
 
 
 function initialize() {
     const engine = new Engine("viewer");
 
     const gl = engine.gl;
+    sceneMngr.initialize(gl);
 
+    /*
     const arrays = {
         position: [1, 1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1, -1, 1, -1, 1, 1, 1, 1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1, 1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1],
         normal:   [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1],
@@ -340,8 +302,10 @@ function initialize() {
 
 
     const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
-   
+   */
 
+    const bufferInfo = engine.resourceManager.getGeometry("three-cubes");
+    
     
     const tex = twgl.createTexture(gl, {
         min: gl.NEAREST,
@@ -365,8 +329,8 @@ function initialize() {
 
     const camera = engine.camera;
 
-    const material1 = engine.materialStore.createStandardMaterial(1,0.5,0.2);
-    const material2 = engine.materialStore.createStandardMaterial(0,0.6,0.8);
+    const material1 = engine.resourceManager.createStandardMaterial(1,0.5,0.2);
+    const material2 = engine.resourceManager.createStandardMaterial(0,0.6,0.8);
 
 
     
@@ -374,6 +338,10 @@ function initialize() {
         gl, 
         material1.program.pInfo, 
         bufferInfo);
+
+    scene1.vertexArrayInfo = vertexArrayInfo;
+    scene1.material1 = material1;
+
     
 
     function render(time) {
@@ -389,110 +357,115 @@ function initialize() {
   
         camera.update();
 
-        const m4 = twgl.m4;
-        /*
-        const projection = camera.projection;
-        
-        const eye = [1, 4, -10];
-        const target = [0, 0, 0];
-        const up = [0, 1, 0];
-        
-
-        const cameraMatrix = m4.lookAt(eye, target, up);
-        const view = m4.inverse(cameraMatrix);
-        const viewProjection = m4.multiply(projection, view);
-
-        //--------------
-        const uniforms = engine.uniforms;
-
-        uniforms.u_viewInverse = cameraMatrix;
-        */
-
-
-        let world = m4.multiply(m4.translation([-1,0,0]), m4.rotationY(time));
-  
-        engine.setMaterial(material1);
-
-        engine.setWorldMatrix(world);
-
-        /*
-        uniforms.u_world = world;
-        uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
-        uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
-        //--------------
- 
-        */
-
-        // prog.enable(bufferInfo, uniforms);
-        engine.setMaterial(material1);
-
-        // engine.setBuffers(bufferInfo);
-        twgl.setBuffersAndAttributes(engine.gl, engine.currentProgram.pInfo, vertexArrayInfo);
-
-
-        twgl.drawBufferInfo(engine.gl, vertexArrayInfo, gl.TRIANGLES, 
-            vertexArrayInfo.numelements, 0, 3);
-
-        // gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
-/* 
-        const uniforms2 = {};
-        uniforms2.u_world = world;
-        uniforms2.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
-        uniforms2.u_worldViewProjection = m4.multiply(viewProjection, world);
-        */
-
-        
-        engine.setMaterial(material2);
-        world = m4.multiply(m4.translation([1,0.3,0]), m4.rotationY(time)); 
-        engine.setWorldMatrix(world);
-        engine.setBuffers(bufferInfo);
-        // twgl.setUniforms(engine.currentProgram.pInfo, uniforms2);
-        gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
-
-
-        /*
-        let pInfo = material1.prog.pInfo;
-        gl.useProgram(pInfo.program);
-
-        twgl.setBuffersAndAttributes(gl, pInfo, bufferInfo);
-
-        Object.assign(uniforms, material.uniforms);
-        twgl.setUniforms(pInfo, uniforms);
-
-        
-        */
-
-
-  
-
-        /*
-        world = m4.multiply(m4.translation([ 1,0,0]), m4.rotationY(time));
-  
-        uniforms.u_world = world;
-        uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
-        uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
-  
-        // prog.enable(bufferInfo, uniforms);
-        pInfo = material.prog.pInfo;
-        gl.useProgram(pInfo.program);
-
-        twgl.setBuffersAndAttributes(gl, pInfo, bufferInfo);
-
-        Object.assign(uniforms, material.uniforms);
-        twgl.setUniforms(pInfo, uniforms);
-
-        gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
-        */
-
-
-
-
+        sceneMngr.draw(engine);
 
 
         requestAnimationFrame(render);
       }
-      requestAnimationFrame(render);
-  
-    
+      requestAnimationFrame(render);    
 }
 
+
+
+
+function dopo() {
+
+
+    const m4 = twgl.m4;
+    /*
+    const projection = camera.projection;
+    
+    const eye = [1, 4, -10];
+    const target = [0, 0, 0];
+    const up = [0, 1, 0];
+    
+
+    const cameraMatrix = m4.lookAt(eye, target, up);
+    const view = m4.inverse(cameraMatrix);
+    const viewProjection = m4.multiply(projection, view);
+
+    //--------------
+    const uniforms = engine.uniforms;
+
+    uniforms.u_viewInverse = cameraMatrix;
+    */
+
+
+    let world = m4.multiply(m4.translation([-1,0,0]), m4.rotationY(time));
+
+    engine.setMaterial(material1);
+
+    engine.setWorldMatrix(world);
+
+    /*
+    uniforms.u_world = world;
+    uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
+    uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
+    //--------------
+
+    */
+
+    // prog.enable(bufferInfo, uniforms);
+    engine.setMaterial(material1);
+
+    // engine.setBuffers(bufferInfo);
+    twgl.setBuffersAndAttributes(engine.gl, engine.currentProgram.pInfo, vertexArrayInfo);
+
+
+    twgl.drawBufferInfo(engine.gl, vertexArrayInfo, gl.TRIANGLES, 
+        vertexArrayInfo.numelements, 0, 3);
+
+    // gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
+/* 
+    const uniforms2 = {};
+    uniforms2.u_world = world;
+    uniforms2.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
+    uniforms2.u_worldViewProjection = m4.multiply(viewProjection, world);
+    */
+
+    
+    engine.setMaterial(material2);
+    world = m4.multiply(m4.translation([1,0.3,0]), m4.rotationY(time)); 
+    engine.setWorldMatrix(world);
+    engine.setBuffers(bufferInfo);
+    // twgl.setUniforms(engine.currentProgram.pInfo, uniforms2);
+    gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
+
+
+    /*
+    let pInfo = material1.prog.pInfo;
+    gl.useProgram(pInfo.program);
+
+    twgl.setBuffersAndAttributes(gl, pInfo, bufferInfo);
+
+    Object.assign(uniforms, material.uniforms);
+    twgl.setUniforms(pInfo, uniforms);
+
+    
+    */
+
+
+
+
+    /*
+    world = m4.multiply(m4.translation([ 1,0,0]), m4.rotationY(time));
+
+    uniforms.u_world = world;
+    uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
+    uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
+
+    // prog.enable(bufferInfo, uniforms);
+    pInfo = material.prog.pInfo;
+    gl.useProgram(pInfo.program);
+
+    twgl.setBuffersAndAttributes(gl, pInfo, bufferInfo);
+
+    Object.assign(uniforms, material.uniforms);
+    twgl.setUniforms(pInfo, uniforms);
+
+    gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
+    */
+
+
+
+}
