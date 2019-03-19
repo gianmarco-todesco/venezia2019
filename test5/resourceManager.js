@@ -113,7 +113,7 @@ ResourceStore.shaderPrograms["standard"] = {
     varying vec3 v_surfaceToView;
 
     void main() {
-        vec4 pposition = position + instancePos;
+        vec4 pposition = position ;
         v_position = u_worldViewProjection * pposition;
         v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
         v_surfaceToLight = u_lightWorldPos - (u_world * pposition).xyz;
@@ -171,9 +171,31 @@ ResourceStore.geometries["three-cubes"] = function(gl) {
     return twgl.createBufferInfoFromArrays(gl, arrays);
 };
 
+const PolygonHeight = 0.01;
+const PolygonEdge = 1;
 
-ResourceStore.geometries["pentagon"] = function(gl) {
-    const arrays = GeometryBuilder.createThickFaceArray(gl, 5, 1.0, 0.1);
+ResourceStore.geometries["sphere"] = function(gl) {
+    return twgl.primitives.createSphereBufferInfo(gl, 1, 20, 20);
+}
+
+
+ResourceStore.geometries["triangle"] = function(gl) {
+    const r = PolygonEdge*0.5/Math.sin(Math.PI/3);
+    const arrays = GeometryBuilder.createThickFaceArray(gl, 3, r, PolygonHeight);
     return twgl.createBufferInfoFromArrays(gl, arrays);
 };
+
+ResourceStore.geometries["square"] = function(gl) {
+    const r = PolygonEdge/Math.sqrt(2);
+    const arrays = GeometryBuilder.createThickFaceArray(gl, 4, r, PolygonHeight);
+    return twgl.createBufferInfoFromArrays(gl, arrays);
+};
+
+
+ResourceStore.geometries["pentagon"] = function(gl) {
+    const r = PolygonEdge*0.5/Math.sin(Math.PI/5);
+    const arrays = GeometryBuilder.createThickFaceArray(gl, 5, r, PolygonHeight);
+    return twgl.createBufferInfoFromArrays(gl, arrays);
+};
+
 

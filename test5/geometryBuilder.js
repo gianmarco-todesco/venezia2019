@@ -106,6 +106,7 @@ GeometryBuilder.createThickFaceArray = function(gl, n, r, h) {
         pts.push(r*cs, r*sn);
     }
 
+    
 
     gb.setNormal(0,0,1);
     gb.addVertex(0,0,h,0.5,0.5);

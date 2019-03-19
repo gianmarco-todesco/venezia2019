@@ -1,96 +1,5 @@
 
 
-/*
-class MaterialStore {
-    constructor(gl) {
-        this.gl = gl;
-        this.programs = {};
-    }
-
-    _touchProgram(name, src) {
-        if(this.programs[name]) return this.programs[name];    
-        const prog = this.programs[name] = new ShaderProgram(this.gl, src.vs, src.fs);
-        return prog;
-    }
-    standardProgram() { return this._touchProgram("standard",  MaterialStore.progSources.standard); }
-
-    createStandardMaterial(r,g,b) {
-        const material = new Material(this.standardProgram());
-        material.uniforms.u_diffuseColor = [r,g,b,1.0];
-        return material;
-    }
-
-}
-
-MaterialStore.progSources = {};
-MaterialStore.progSources.standard = { 
-    };
-
-MaterialStore.progSources.standardWithTexture = { 
-    vs : `
-    uniform mat4 u_worldViewProjection;
-    uniform vec3 u_lightWorldPos;
-    uniform mat4 u_world;
-    uniform mat4 u_viewInverse;
-    uniform mat4 u_worldInverseTranspose;
-
-    attribute vec4 position;
-    attribute vec3 normal;
-    attribute vec2 texcoord;
-
-    varying vec4 v_position;
-    varying vec2 v_texCoord;
-    varying vec3 v_normal;
-    varying vec3 v_surfaceToLight;
-    varying vec3 v_surfaceToView;
-
-    void main() {
-        v_texCoord = texcoord;
-        v_position = u_worldViewProjection * position;
-        v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
-        v_surfaceToLight = u_lightWorldPos - (u_world * position).xyz;
-        v_surfaceToView = (u_viewInverse[3] - (u_world * position)).xyz;
-        gl_Position = v_position;
-    }`, 
-    fs : `
-    precision mediump float;
-
-    varying vec4 v_position;
-    varying vec2 v_texCoord;
-    varying vec3 v_normal;
-    varying vec3 v_surfaceToLight;
-    varying vec3 v_surfaceToView;
-    
-    uniform vec4 u_lightColor;
-    uniform vec4 u_ambient;
-    uniform sampler2D u_diffuse;
-    uniform vec4 u_specular;
-    uniform float u_shininess;
-    uniform float u_specularFactor;
-    
-    vec4 lit(float l ,float h, float m) {
-    return vec4(1.0,
-                max(l, 0.0),
-                (l > 0.0) ? pow(max(0.0, h), m) : 0.0,
-                1.0);
-    }
-    
-    void main() {
-        vec4 diffuseColor = texture2D(u_diffuse, v_texCoord);
-        vec3 a_normal = normalize(v_normal);
-        vec3 surfaceToLight = normalize(v_surfaceToLight);
-        vec3 surfaceToView = normalize(v_surfaceToView);
-        vec3 halfVector = normalize(surfaceToLight + surfaceToView);
-        vec4 litR = lit(dot(a_normal, surfaceToLight),
-                            dot(a_normal, halfVector), u_shininess);
-        vec4 outColor = vec4((
-        u_lightColor * (diffuseColor * litR.y + diffuseColor * u_ambient +
-                        u_specular * litR.z * u_specularFactor)).rgb,
-            diffuseColor.a);
-        gl_FragColor = outColor;
-    }       
-    `};
-*/
 
 class Camera {
     constructor(canvas) {
@@ -112,29 +21,31 @@ class Camera {
         const up = [0, 1, 0];
         this.cameraMatrix = twgl.m4.lookAt(eye, target, up);
         
+    }
 
-    }
-/*        uniforms.u_viewInverse = camera;
-      uniforms.u_world = world;
-      uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
-      uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
-
-        const eye = [1, 4, -6];
-        const target = [0, 0, 0];
-        const up = [0, 1, 0];
-  
-        const camera = m4.lookAt(eye, target, up);
-        const view = m4.inverse(camera);
-        const viewProjection = m4.multiply(projection, view);
-        const world = m4.rotationY(time);
-  
-    }
-    
-    }
-    */
 }
 
-
+function createFpsMeter() {
+    var meter = new FPSMeter(null, {
+        interval:100,
+        smoothing:10,
+        show: 'fps',
+        decimals: 1,
+        maxFps: 60,
+        threshold: 100,
+        
+        position: 'absolute',
+        zIndex: 10,
+        left: '20px',
+        top: '20px',
+        theme: 'dark',
+        heat: 1,
+        graph: 1,
+        history: 20
+    });
+    // this.meter = meter;
+    return meter;    
+}
 
 
 class Engine {
@@ -201,87 +112,173 @@ class Engine {
 }
 
 
-
-class Scene {
-    constructor(options) {
-        Object.assign(this, options);
-        const name = options.name;
-        if(!name) throw "Bad scene name";
-        if(Scene.scenes[name]) throw "Duplicated scene name";
-        Scene.scenes[name] = this;
-    }
-}
-Scene.scenes = {};
-
-
-class SceneManager {
-    constructor(options) {
-        Object.assign(this, options);
-        const sceneNames = options.scenes;
-        if(!sceneNames || !Array.isArray(sceneNames) || sceneNames.length<1) throw "Bad scenes";
-        const scenes = this.scenes = sceneNames.map(name => {
-            var scene = Scene.scenes[name];
-            if(!scene) throw `Scene ${name} not found`;
-            return scene;
-        });
-        if(scenes.length==0) throw "No scenes";
-        this.currentScene = scenes[0];
-    }
-
-    initialize(engine) {
-        this.scenes.forEach(scene => {
-            if(scene.initialize) scene.initialize(engine);
-        });
-    }
-
-    draw(engine) {
-        if(this.currentScene) this.currentScene.draw(engine);
-    }
-    
-}
-
-
-const scene1 = new Scene({
-    name:"scene1",
+SlideManager.slides["slide1"] = {
     initialize : function(engine) {
-        
+        this.material = engine.resourceManager.createStandardMaterial(0.8,0.2,0.1);
+    },
+    draw : function(engine) {
+        const m4 = twgl.m4;
+        engine.setMaterial(this.material);
+        const ph = regularPolyhedra.tetrahedron;
+        const r = PolygonEdge * ph.inRadius / ph.edgeLength;
 
+        /*
+        engine.setWorldMatrix(m4.identity()); 
+        const sphereBufferInfo = engine.resourceManager.getGeometry("sphere");
+        engine.setBuffers(sphereBufferInfo);
+        
+        twgl.drawBufferInfo(
+            engine.gl, 
+            sphereBufferInfo, 
+            engine.gl.TRIANGLES, 
+            sphereBufferInfo.numElements);
+
+        engine.setWorldMatrix(m4.translation([0,2,0])); 
+        
+        twgl.drawBufferInfo(
+            engine.gl, 
+            sphereBufferInfo, 
+            engine.gl.TRIANGLES, 
+            sphereBufferInfo.numElements);
+        */
+
+        const bufferInfo = engine.resourceManager.getGeometry("triangle");
+        engine.setBuffers(bufferInfo);        
+        
+        ph.rotations.forEach(rot => {
+            let world = m4.translation([0,0,r]);
+            world = m4.multiply(rot, world);
+            world = m4.multiply(m4.rotationY(performance.now()*0.001), world);
+            engine.setWorldMatrix(world);    
+            engine.gl.drawElements(
+                engine.gl.TRIANGLES, 
+                bufferInfo.numElements, 
+                engine.gl.UNSIGNED_SHORT, 
+                0);
+            /*
+                engine.setBuffers(this.vertexArrayInfo);
+                twgl.drawBufferInfo(engine.gl, this.vertexArrayInfo, engine.gl.TRIANGLES, 
+                this.vertexArrayInfo.numelements, 0, 3);
+                // twgl.drawBufferInfo(engine.gl, bufferInfo2, engine.gl.TRIANGLES);
+            */
+        });
+    },
+};
+
+SlideManager.slides["slide2"] = {
+    initialize : function(engine) {
+        this.material = engine.resourceManager.createStandardMaterial(0.2,0.8,0.6);
+    },
+    draw : function(engine) {
+        const m4 = twgl.m4;
+        engine.setMaterial(this.material);
+        const bufferInfo = engine.resourceManager.getGeometry("square");
+        engine.setBuffers(bufferInfo);        
+        const ph = regularPolyhedra.cube;
+        const r = PolygonEdge * ph.inRadius  / ph.edgeLength;
+        ph.rotations.forEach(rot => {
+            let world = m4.translation([0,0,r]);
+            world = m4.multiply(rot, world);
+            world = m4.multiply(m4.rotationY(performance.now()*0.001), world);
+            engine.setWorldMatrix(world);    
+            engine.gl.drawElements(
+                engine.gl.TRIANGLES, 
+                bufferInfo.numElements, 
+                engine.gl.UNSIGNED_SHORT, 
+                0);
+        });
+    },
+};
+
+SlideManager.slides["slide3"] = {
+    initialize : function(engine) {
+        this.material = engine.resourceManager.createStandardMaterial(0.2,0.6,0.8);
+    },
+    draw : function(engine) {
+        const m4 = twgl.m4;
+        engine.setMaterial(this.material);
+        const bufferInfo = engine.resourceManager.getGeometry("triangle");
+        engine.setBuffers(bufferInfo);        
+        const ph = regularPolyhedra.octahedron;
+        const r = PolygonEdge * ph.inRadius / ph.edgeLength;
+        ph.rotations.forEach(rot => {
+            let world = m4.translation([0,0,r]);
+            world = m4.multiply(rot, world);
+            world = m4.multiply(m4.rotationY(performance.now()*0.001), world);
+            engine.setWorldMatrix(world);    
+            engine.gl.drawElements(
+                engine.gl.TRIANGLES, 
+                bufferInfo.numElements, 
+                engine.gl.UNSIGNED_SHORT, 
+                0);
+        });
+    },
+};
+
+SlideManager.slides["slide4"] = {
+    initialize : function(engine) {
+        this.material = engine.resourceManager.createStandardMaterial(0.8,0.2,0.9);
     },
     draw : function(engine) {
 
         const m4 = twgl.m4;
 
-
-        engine.setMaterial(this.material1);
-        const bufferInfo2 = engine.resourceManager.getGeometry("pentagon");
-        engine.setBuffers(bufferInfo2);
+        engine.setMaterial(this.material);
+        const bufferInfo = engine.resourceManager.getGeometry("pentagon");
+        engine.setBuffers(bufferInfo);
         
-        const dod = regularPolyhedra.dodecahedron;
-        for(var i=0;i<12;i++) {
-
-            let world = m4.translation([0,0,0.7]);
-            world = m4.multiply(dod.rotations[i], world);
+        const ph = regularPolyhedra.dodecahedron;
+        const r = PolygonEdge * ph.inRadius / ph.edgeLength;
+        ph.rotations.forEach(rot => {
+            let world = m4.translation([0,0,r]);
+            world = m4.multiply(rot, world);
             world = m4.multiply(m4.rotationY(performance.now()*0.001), world);
-    
             engine.setWorldMatrix(world);    
-            engine.gl.drawElements(engine.gl.TRIANGLES, bufferInfo2.numElements, engine.gl.UNSIGNED_SHORT, 0);
-        }
-
-
-    
-        /*
-        engine.setBuffers(this.vertexArrayInfo);
-        twgl.drawBufferInfo(engine.gl, this.vertexArrayInfo, engine.gl.TRIANGLES, 
-            this.vertexArrayInfo.numelements, 0, 3);
-            */
-        // twgl.drawBufferInfo(engine.gl, bufferInfo2, engine.gl.TRIANGLES);
-
+            engine.gl.drawElements(
+                engine.gl.TRIANGLES, 
+                bufferInfo.numElements, 
+                engine.gl.UNSIGNED_SHORT, 
+                0);
+        });
     },
-});
+};
 
-const sceneMngr = new SceneManager({
-    scenes:[
-        "scene1"
+SlideManager.slides["slide5"] = {
+    initialize : function(engine) {
+        this.material = engine.resourceManager.createStandardMaterial(0.1,0.8,0.9);
+    },
+    draw : function(engine) {
+
+        const m4 = twgl.m4;
+
+        engine.setMaterial(this.material);
+        const bufferInfo = engine.resourceManager.getGeometry("triangle");
+        engine.setBuffers(bufferInfo);
+        
+        const ph = regularPolyhedra.icosahedron;
+        const r = PolygonEdge * ph.inRadius / ph.edgeLength;
+        ph.rotations.forEach(rot => {
+            let world = m4.translation([0,0,r]);
+            world = m4.multiply(rot, world);
+            world = m4.multiply(m4.rotationY(performance.now()*0.001), world);
+            engine.setWorldMatrix(world);    
+            engine.gl.drawElements(
+                engine.gl.TRIANGLES, 
+                bufferInfo.numElements, 
+                engine.gl.UNSIGNED_SHORT, 
+                0);
+        });
+    },
+};
+
+
+const slideMngr = new SlideManager({
+    slides:[
+        "slide1",
+        "slide2",
+        "slide3",
+        "slide4",
+        "slide5",
     ]
 });
 
@@ -289,9 +286,10 @@ const sceneMngr = new SceneManager({
 
 function initialize() {
     const engine = new Engine("viewer");
+    const meter = createFpsMeter();
 
     const gl = engine.gl;
-    sceneMngr.initialize(gl);
+    slideMngr.initialize(engine);
 
     /*
     const arrays = {
@@ -313,7 +311,7 @@ function initialize() {
     const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
    */
 
-    const bufferInfo = engine.resourceManager.getGeometry("three-cubes");
+    // const bufferInfo = engine.resourceManager.getGeometry("three-cubes");
     
     
     const tex = twgl.createTexture(gl, {
@@ -338,11 +336,8 @@ function initialize() {
 
     const camera = engine.camera;
 
-    const material1 = engine.resourceManager.createStandardMaterial(1,0.5,0.2);
-    const material2 = engine.resourceManager.createStandardMaterial(0,0.6,0.8);
 
-
-    
+    /*
     const vertexArrayInfo = twgl.createVertexArrayInfo(
         gl, 
         material1.program.pInfo, 
@@ -351,11 +346,18 @@ function initialize() {
     scene1.vertexArrayInfo = vertexArrayInfo;
     scene1.material1 = material1;
 
-    
+    */
+
+    document.addEventListener("keydown", e=>{
+        if(e.code == "ArrowDown") slideMngr.nextSlide();
+        else if(e.code == "ArrowUp") slideMngr.prevSlide();
+        console.log(e);
+    });
+
 
     function render(time) {
+        meter.tickStart();
         time *= 0.001;
-
 
         twgl.resizeCanvasToDisplaySize(gl.canvas);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -366,9 +368,9 @@ function initialize() {
   
         camera.update();
 
-        sceneMngr.draw(engine);
+        slideMngr.draw(engine);
 
-
+        meter.tick();
         requestAnimationFrame(render);
       }
       requestAnimationFrame(render);    
