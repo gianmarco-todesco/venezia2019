@@ -73,6 +73,8 @@ MaterialStore.progSources.standard = {
     uniform mat4 u_world;
     uniform mat4 u_viewInverse;
     uniform mat4 u_worldInverseTranspose;
+    attribute vec4 instancePos;
+
 
     attribute vec4 position;
     attribute vec3 normal;
@@ -83,10 +85,11 @@ MaterialStore.progSources.standard = {
     varying vec3 v_surfaceToView;
 
     void main() {
-        v_position = u_worldViewProjection * position;
+        vec4 pposition = position + instancePos;
+        v_position = u_worldViewProjection * pposition;
         v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
-        v_surfaceToLight = u_lightWorldPos - (u_world * position).xyz;
-        v_surfaceToView = (u_viewInverse[3] - (u_world * position)).xyz;
+        v_surfaceToLight = u_lightWorldPos - (u_world * pposition).xyz;
+        v_surfaceToView = (u_viewInverse[3] - (u_world * pposition)).xyz;
         gl_Position = v_position;
     }`, 
     fs : `
@@ -256,6 +259,11 @@ class Engine {
     constructor(canvasId) {
         const canvas = this.canvas = document.getElementById(canvasId);
         const gl = this.gl = canvas.getContext("webgl");
+        twgl.addExtensionsToContext(gl);
+        if (!gl.drawArraysInstanced || !gl.createVertexArray) {
+            alert("need drawArraysInstanced and createVertexArray"); // eslint-disable-line
+            return;
+        }
         this.camera = new Camera(this.canvas);
         this.world = twgl.m4.identity();
         this.materialStore = new MaterialStore(gl);
@@ -282,12 +290,16 @@ class Engine {
     }
 
     setWorldMatrix(world) {
-        const uniforms = this.uniforms;
-        uniforms.u_viewInverse = this.camera.cameraMatrix;
-        uniforms.u_world = world;
-        uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
-        uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
-        twgl.setUniforms(this.currentProgram.pInfo, this.uniforms);
+        const m4 = twgl.m4;
+        const view = m4.inverse(this.camera.cameraMatrix);
+        const viewProjection = m4.multiply(this.camera.projection, view);
+        const uniforms = {
+            u_viewInverse : this.camera.cameraMatrix,
+            u_world : world,
+            u_worldInverseTranspose : m4.transpose(m4.inverse(world)),
+            u_worldViewProjection : m4.multiply(viewProjection, world)
+        };
+        twgl.setUniforms(this.currentProgram.pInfo, uniforms);
     }
 
 
@@ -316,9 +328,21 @@ function initialize() {
         normal:   [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1],
         texcoord: [1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1],
         indices:  [0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23],
+
+        instancePos: {
+            numComponents: 4,
+            data: [0,0,0,1, 1,1,1,1, 2,2,2,1],
+            divisor: 1
+        }
       };
+
+
+
+
     const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
-  
+   
+
+    
     const tex = twgl.createTexture(gl, {
         min: gl.NEAREST,
         mag: gl.NEAREST,
@@ -344,6 +368,14 @@ function initialize() {
     const material1 = engine.materialStore.createStandardMaterial(1,0.5,0.2);
     const material2 = engine.materialStore.createStandardMaterial(0,0.6,0.8);
 
+
+    
+    const vertexArrayInfo = twgl.createVertexArrayInfo(
+        gl, 
+        material1.program.pInfo, 
+        bufferInfo);
+    
+
     function render(time) {
         time *= 0.001;
 
@@ -357,12 +389,14 @@ function initialize() {
   
         camera.update();
 
+        const m4 = twgl.m4;
+        /*
         const projection = camera.projection;
         
         const eye = [1, 4, -10];
         const target = [0, 0, 0];
         const up = [0, 1, 0];
-        const m4 = twgl.m4;
+        
 
         const cameraMatrix = m4.lookAt(eye, target, up);
         const view = m4.inverse(cameraMatrix);
@@ -372,18 +406,47 @@ function initialize() {
         const uniforms = engine.uniforms;
 
         uniforms.u_viewInverse = cameraMatrix;
+        */
+
 
         let world = m4.multiply(m4.translation([-1,0,0]), m4.rotationY(time));
   
+        engine.setMaterial(material1);
+
+        engine.setWorldMatrix(world);
+
+        /*
         uniforms.u_world = world;
         uniforms.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
         uniforms.u_worldViewProjection = m4.multiply(viewProjection, world);
         //--------------
-  
+ 
+        */
+
         // prog.enable(bufferInfo, uniforms);
         engine.setMaterial(material1);
 
+        // engine.setBuffers(bufferInfo);
+        twgl.setBuffersAndAttributes(engine.gl, engine.currentProgram.pInfo, vertexArrayInfo);
+
+
+        twgl.drawBufferInfo(engine.gl, vertexArrayInfo, gl.TRIANGLES, 
+            vertexArrayInfo.numelements, 0, 3);
+
+        // gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
+/* 
+        const uniforms2 = {};
+        uniforms2.u_world = world;
+        uniforms2.u_worldInverseTranspose = m4.transpose(m4.inverse(world));
+        uniforms2.u_worldViewProjection = m4.multiply(viewProjection, world);
+        */
+
+        
+        engine.setMaterial(material2);
+        world = m4.multiply(m4.translation([1,0.3,0]), m4.rotationY(time)); 
+        engine.setWorldMatrix(world);
         engine.setBuffers(bufferInfo);
+        // twgl.setUniforms(engine.currentProgram.pInfo, uniforms2);
         gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
 
 
