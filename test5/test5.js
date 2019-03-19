@@ -251,22 +251,31 @@ const scene1 = new Scene({
 
         const m4 = twgl.m4;
 
-        let world = m4.multiply(m4.translation([-1,0,0]), m4.rotationY(performance.now()*0.001));
 
         engine.setMaterial(this.material1);
-        engine.setWorldMatrix(world);    
+        const bufferInfo2 = engine.resourceManager.getGeometry("pentagon");
+        engine.setBuffers(bufferInfo2);
+        
+        const dod = regularPolyhedra.dodecahedron;
+        for(var i=0;i<12;i++) {
+
+            let world = m4.translation([0,0,0.7]);
+            world = m4.multiply(dod.rotations[i], world);
+            world = m4.multiply(m4.rotationY(performance.now()*0.001), world);
+    
+            engine.setWorldMatrix(world);    
+            engine.gl.drawElements(engine.gl.TRIANGLES, bufferInfo2.numElements, engine.gl.UNSIGNED_SHORT, 0);
+        }
+
+
     
         /*
         engine.setBuffers(this.vertexArrayInfo);
         twgl.drawBufferInfo(engine.gl, this.vertexArrayInfo, engine.gl.TRIANGLES, 
             this.vertexArrayInfo.numelements, 0, 3);
             */
-
-
-        const bufferInfo2 = engine.resourceManager.getGeometry("pentagon");
-        engine.setBuffers(bufferInfo2);
         // twgl.drawBufferInfo(engine.gl, bufferInfo2, engine.gl.TRIANGLES);
-        engine.gl.drawElements(engine.gl.TRIANGLES, bufferInfo2.numElements, engine.gl.UNSIGNED_SHORT, 0);
+
     },
 });
 
