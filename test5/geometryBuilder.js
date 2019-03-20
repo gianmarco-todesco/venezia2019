@@ -150,3 +150,83 @@ GeometryBuilder.createThickFaceArray = function(gl, n, r, h) {
 GeometryBuilder
 }
 */
+
+// definisce anche du,dv
+class GeometryBuilder2 {
+    constructor(gl) {
+        this.gl = gl;
+
+        this.arrays = {
+            position: [],
+            position_du: { numComponents:3, data: []},
+            position_dv: { numComponents:3, data: []}, 
+            indices: [],     
+        };
+
+        this.vCount = 0;
+
+    }
+
+    addStrip(p0,p1,p2,p3, m) {
+        const v3 = twgl.v3;
+        const arrays = this.arrays;
+        const du = v3.mulScalar(v3.normalize(v3.subtract(p1,p0)),0.01);
+        const dv = v3.mulScalar(v3.normalize(v3.subtract(p3,p0)),0.01);
+        const p01 = v3.create();
+        const p32 = v3.create();        
+        for(let i=0; i<m; i++) {
+            const t = i/(m-1);
+            v3.lerp(p0,p1,t,p01);
+            v3.lerp(p3,p2,t,p32);
+            arrays.position.push(
+                p01[0], p01[1], p01[2],
+                p32[0], p32[1], p32[2]
+            );
+            var p = v3.create();
+            v3.add(p01, du, p); arrays.position_du.data.push(...p);
+            v3.add(p01, dv, p); arrays.position_dv.data.push(...p);
+            v3.add(p32, du, p); arrays.position_du.data.push(...p);
+            v3.add(p32, dv, p); arrays.position_dv.data.push(...p); 
+            var k = this.vCount;
+            this.vCount += 2;
+            if(i>0) arrays.indices.push(k-2,k,k-1, k, k+1, k-1);
+        }
+    }
+
+    createBuffer() {
+        return twgl.createBufferInfoFromArrays(this.gl, this.arrays);
+    }
+}
+
+/*
+GeometryBuilder.createHStrip = function (gl, p0,p1,p2,p3, m) {
+    const v3 = twgl.v3;
+    var arrays = {
+      position: [],
+      position_du: { numComponents:3, data: []},
+      position_dv: { numComponents:3, data: []},            
+    };
+    const du = v3.mulScalar(v3.normalize(v3.subtract(p1,p0)),0.01);
+    const dv = v3.mulScalar(v3.normalize(v3.subtract(p3,p0)),0.01);
+    
+    var i;
+    const p01 = v3.create();
+    const p32 = v3.create();
+    
+    for(i=0; i<m; i++) {
+        const t = i/(m-1);
+        v3.lerp(p0,p1,t,p01);
+        v3.lerp(p3,p2,t,p32);
+        arrays.position.push(
+            p01[0], p01[1], p01[2],
+            p32[0], p32[1], p32[2]
+        );
+        var p = v3.create();
+        v3.add(p01, du, p); arrays.position_du.data.push(...p);
+        v3.add(p01, dv, p); arrays.position_dv.data.push(...p);
+        v3.add(p32, du, p); arrays.position_du.data.push(...p);
+        v3.add(p32, dv, p); arrays.position_dv.data.push(...p);        
+    }
+    return twgl.createBufferInfoFromArrays(gl, arrays);
+}
+*/

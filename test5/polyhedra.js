@@ -13,13 +13,19 @@ class PolyhedronData {
         this.centers = [];
         this.rotations = [];
         const me = this;
-        faces.forEach(f=>{
+        faces.forEach((f,fIndex)=>{
             const m = f.length;
             for(var i=0;i<m;i++) {
                 const a = f[i];
                 const b = f[(i+1)%m];
                 const abId = a>b ? a+"_"+b : b+"_"+a;
-                if(!edgesTb[abId]) { edgesTb[abId] = [a,b]; edges.push([a,b]); }; 
+                if(edgesTb[abId]) {
+                    edgesTb[abId].push(fIndex);
+                } else {
+                    const ab = [a,b,fIndex];
+                    edgesTb[abId] = ab; 
+                    edges.push(ab); 
+                }
             }
 
             const fPts = f.map(i=>me.vertices[i]);
