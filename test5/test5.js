@@ -1,118 +1,5 @@
 
 
-
-class Camera {
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.fov = 30 * Math.PI / 180;
-        this.zNear = 0.1;
-        this.zFar = 500;
-        this.update();
-      }
-
-    update() {
-        const m4 = twgl.m4;
-        const aspect = this.canvas.clientWidth / this.canvas.clientHeight;
-        const projection = m4.perspective(this.fov, aspect, this.zNear, this.zFar);
-        this.projection = projection;
-
-        const eye = [0, 0, -10];
-        const target = [0, 0, 0];
-        const up = [0, 1, 0];
-        this.cameraMatrix = twgl.m4.lookAt(eye, target, up);
-        
-    }
-
-}
-
-function createFpsMeter() {
-    var meter = new FPSMeter(null, {
-        interval:100,
-        smoothing:10,
-        show: 'fps',
-        decimals: 1,
-        maxFps: 60,
-        threshold: 100,
-        
-        position: 'absolute',
-        zIndex: 10,
-        left: '20px',
-        top: '20px',
-        theme: 'dark',
-        heat: 1,
-        graph: 1,
-        history: 20
-    });
-    // this.meter = meter;
-    return meter;    
-}
-
-
-class Engine {
-    
-    constructor(canvasId) {
-        const canvas = this.canvas = document.getElementById(canvasId);
-        const gl = this.gl = canvas.getContext("webgl");
-        twgl.addExtensionsToContext(gl);
-        if (!gl.drawArraysInstanced || !gl.createVertexArray) {
-            alert("need drawArraysInstanced and createVertexArray"); // eslint-disable-line
-            return;
-        }
-        this.camera = new Camera(this.canvas);
-        this.world = twgl.m4.identity();
-
-        this.resourceManager = new ResourceManager(gl);
-
-        this.uniforms = {
-            u_lightWorldPos: [1, 8, -10],
-            u_lightColor: [1, 0.8, 0.8, 1],
-            u_ambient: [0, 0, 0, 1],    
-        };
-    }
-
-
-    setMaterial(material) {
-        if(this.currentProgram != material.program) {
-            this.currentProgram = material.program;
-            this.gl.useProgram(this.currentProgram.pInfo.program);
-        }
-        this.currentMaterial = material;
-        this.gl.useProgram(this.currentProgram.pInfo.program);
-        Object.assign(this.uniforms, material.uniforms);
-        twgl.setUniforms(this.currentProgram.pInfo, this.uniforms);
-    }
-
-    setBuffers(bufferInfo) {
-        twgl.setBuffersAndAttributes(this.gl, this.currentProgram.pInfo, bufferInfo);
-    }
-
-    setWorldMatrix(world) {
-        const m4 = twgl.m4;
-        const view = m4.inverse(this.camera.cameraMatrix);
-        const viewProjection = m4.multiply(this.camera.projection, view);
-        const uniforms = {
-            u_viewInverse : this.camera.cameraMatrix,
-            u_world : world,
-            u_worldInverseTranspose : m4.transpose(m4.inverse(world)),
-            u_worldViewProjection : m4.multiply(viewProjection, world)
-        };
-        twgl.setUniforms(this.currentProgram.pInfo, uniforms);
-    }
-
-
-
-
-    useProgram(program) {
-        this.currentProgram = program;
-        gl.useProgram(prog.pInfo.program);
-        twgl.setBuffersAndAttributes(gl, prog.pInfo, bufferInfo);
-        twgl.setUniforms(prog.pInfo, uniforms);
-        gl.drawElements(gl.TRIANGLES, bufferInfo.numElements, gl.UNSIGNED_SHORT, 0);
-  
-    }
-}
-
-
 SlideManager.slides["slide1"] = {
     initialize : function(engine) {
         this.material = engine.resourceManager.createStandardMaterial(0.8,0.2,0.1);
@@ -320,21 +207,34 @@ SlideManager.slides["534-grid"] = {
         // material.uniforms.u_diffuseColor = [0.7,0.7,0.7,1.0];        
         this.material = material;
 
-        const hMatrix = engine.resourceManager.getGeometry("534-grid-cell").extraData.hMatrix;
+        const bufferInfo = engine.resourceManager.getGeometry("534-grid-cell");
+        const hMatrix = bufferInfo.extraData.hMatrix;
         const mats = regularPolyhedra.dodecahedron.rotations.map(r=>twgl.m4.multiply(r, hMatrix));    
         this.nodes = createCellsTransformations(mats);
+
+        const nodesBuffers = [];
+        this.nodes.forEach(node => {
+            node.mat.forEach(v=>nodesBuffers.push(v));
+        });
+
+        twgl.setAttribInfoBufferFromArray(engine.gl, bufferInfo.attribs.cellMatrix, nodesBuffers);
     },
 
     draw : function(engine) {
         const m4 = twgl.m4;
         const gl = engine.gl;
+
+        let world = m4.rotationY(performance.now()*0.0001);
+        world = m4.multiply(m4.rotationX(0.05), world);
+
+
         engine.setMaterial(this.material);
 
         const bufferInfo = engine.resourceManager.getGeometry("534-grid-cell");
 
-        const world = m4.rotationY(performance.now()*0.0001);
 
-        engine.camera.cameraMatrix = m4.lookAt([0,0,-1],[0,0,0],[0,1,0]);
+
+        engine.camera.cameraMatrix = m4.lookAt([0,0,-0.8],[0,0,0],[0,1,0]);
 
         engine.setWorldMatrix(world);
         engine.setBuffers(bufferInfo);
@@ -352,17 +252,27 @@ SlideManager.slides["534-grid"] = {
         });
         */
 
-        const hMatrix = twgl.m4.identity();
+        let hMatrix = twgl.m4.identity();
+        // hMatrix = KPoint.translationV3(grid534.pts[0], twgl.v3.create(0,0,0));
         
-
         twgl.setUniforms(prog.pInfo, {  hMatrix : hMatrix  });
-        twgl.drawBufferInfo(engine.gl, bufferInfo, engine.gl.TRIANGLES, bufferInfo.numelements);
+        // twgl.drawBufferInfo(engine.gl, bufferInfo, engine.gl.TRIANGLES, bufferInfo.numelements);
 
+
+
+        twgl.drawBufferInfo(engine.gl, bufferInfo, engine.gl.TRIANGLES, 
+            bufferInfo.numelements, 0, this.nodes.length);
+ 
+         engine.gl.vertexAttribDivisor(0,0);
+
+         /*
         this.nodes.forEach(node => {
             twgl.setUniforms(prog.pInfo, {  hMatrix : node.mat });
             twgl.drawBufferInfo(engine.gl, bufferInfo, engine.gl.TRIANGLES, bufferInfo.numelements);
     
         });
+        */
+       // engine.drawGrid(world);
 
         
 
@@ -402,6 +312,7 @@ function shrinkingFactor(mat) {
 }
 
 function createCellsTransformations(mats) {
+    
     const startTime = performance.now();
     const v3 = twgl.v3;
     const m4 = twgl.m4;
@@ -418,11 +329,16 @@ function createCellsTransformations(mats) {
         }
     ];
 
+    /*
+    mats.forEach(mat => { nodes.push({mat:mat}); });
+    return nodes;
+    */
+
     var todo = [nodes[0]];
     var nextTodo = [];
     const rEps = 0.001;
 
-    const rMax = 0.999999;
+    const rMax = 0.999;
     var actualRMax = 0;
 
     var distances = window.distances = [];

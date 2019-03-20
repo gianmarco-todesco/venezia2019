@@ -14,17 +14,28 @@ KPoint.prototype.check = function() {
 
 KPoint.dot = function(a,b) {
     if(!(a instanceof KPoint && b instanceof KPoint)) throw "Expected KPoints";
-    return a.x*b.x+a.y*b.y+a.z*b.z-1;
+    return 1 - (a.x*b.x + a.y*b.y + a.z*b.z);
 }
 
-// attenzione! non sembra funzionare!!
+KPoint.distance = function(a,b) {
+    if(!(a instanceof KPoint && b instanceof KPoint)) throw "Expected KPoints";
+    const ab = 1 - (a.x*b.x + a.y*b.y + a.z*b.z);
+    const aa = 1 - (a.x*a.x + a.y*a.y + a.z*a.z);
+    const bb = 1 - (b.x*b.x + b.y*b.y + b.z*b.z);
+    const v = ab/Math.sqrt(aa*bb);
+    return Math.acosh(v);
+}
+
 KPoint.midPoint = function(a,b) {
     if(!(a instanceof KPoint && b instanceof KPoint)) throw "Expected KPoints";
-    const aa = KPoint.dot(a,a);
-    const bb = KPoint.dot(b,b);
-    const ab = KPoint.dot(a,b);
-    const sa = Math.sqrt(bb*ab);
-    const sb = Math.sqrt(aa*ab);
+    const aa = 1 - (a.x*a.x + a.y*a.y + a.z*a.z);
+    const bb = 1 - (b.x*b.x + b.y*b.y + b.z*b.z);
+    const sqrt_aa = Math.sqrt(aa);
+    const sqrt_bb = Math.sqrt(bb);
+    const den = 1.0 / (sqrt_aa + sqrt_bb);
+    const sa = sqrt_bb * den;
+    const sb = sqrt_aa * den;
+    
     return new KPoint(
         a.x*sa+b.x*sb,
         a.y*sa+b.y*sb,
@@ -34,7 +45,7 @@ KPoint.midPoint = function(a,b) {
 
 KPoint.reflection = function(p) {
     if(!(p instanceof KPoint)) throw "Expected KPoint";
-    const s = -2.0/KPoint.dot(p,p);
+    const s = 2.0/KPoint.dot(p,p);
     return [
         1.0 + p.x*p.x*s, p.x*p.y*s, p.x*p.z*s, p.x*s,
         p.y*p.x*s, 1.0 + p.y*p.y*s, p.y*p.z*s, p.y*s,
@@ -57,6 +68,16 @@ KPoint.translation = function(a,b) {
     const m4 = twgl.m4;
     const m = KPoint.midPoint(a,b);
     return m4.multiply(KPoint.reflection(a), KPoint.reflection(m));
+}
+
+KPoint.translationV3 = function(a,b) {
+    return KPoint.translation(new KPoint(a[0],a[1],a[2]), new KPoint(b[0],b[1],b[2]));
+}
+
+KPoint.transform = function(mat, p) {
+    if(!(p instanceof KPoint)) throw "Expected KPoint";
+    const out = twgl.m4.transformPoint(mat, [p.x,p.y,p.z]);
+    return new KPoint(out[0],out[1],out[2]);
 }
 
 /*
@@ -104,3 +125,27 @@ function computeGrid534Radius() {
 
     return d3;
 }
+
+
+
+function createGrid534() {
+    const startTime = performance.now();
+    const m4 = twgl.m4;
+    const v3 = twgl.v3;
+    const grid = {};
+    const sc = grid.radius = computeGrid534Radius();
+    const dod = regularPolyhedra.dodecahedron;
+    grid.pts = dod.vertices.map(v=>v3.mulScalar(v, sc));
+    const centers = grid.centers = dod.centers.map(v=>v3.mulScalar(v, sc));
+
+    var p = centers[0];
+    var hMatrix = grid.hMatrix = m4.rotateZ(twgl.m4.multiply(
+        KPoint.reflection(new KPoint(0,0,0)),
+        KPoint.reflection(new KPoint(p[0],p[1],p[2]))), Math.PI/5);
+    
+    grid.genMatrices = dod.rotations.map(rot => m4.multiply(rot, hMatrix));
+    console.log("grid534: time=", performance.now()-startTime);
+    return grid;
+}
+
+const grid534 = createGrid534();

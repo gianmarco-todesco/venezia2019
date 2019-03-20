@@ -193,6 +193,22 @@ class GeometryBuilder2 {
         }
     }
 
+    addQuad(p0,p1,p2,p3) {
+        const v3 = twgl.v3;
+        const arrays = this.arrays;
+        const du = v3.mulScalar(v3.normalize(v3.subtract(p1,p0)),0.01);
+        const dv = v3.mulScalar(v3.normalize(v3.subtract(p3,p0)),0.01);
+        const tmp = v3.create();
+        [p0,p1,p2,p3].forEach(p=>{
+            arrays.position.push(p[0],p[1],p[2]);
+            v3.add(p, du, tmp); arrays.position_du.data.push(...tmp);
+            v3.add(p, dv, tmp); arrays.position_dv.data.push(...tmp);    
+        });
+        var k = this.vCount;
+        this.vCount += 4;
+        arrays.indices.push(k,k+1,k+2, k,k+2,k+3);
+    }
+
     createBuffer() {
         return twgl.createBufferInfoFromArrays(this.gl, this.arrays);
     }
@@ -230,3 +246,60 @@ GeometryBuilder.createHStrip = function (gl, p0,p1,p2,p3, m) {
     return twgl.createBufferInfoFromArrays(gl, arrays);
 }
 */
+
+
+
+
+
+function createGrid(gl) {
+    // var m = 9;
+    var arrays = {
+      position: [], // twgl.primitives.createAugmentedTypedArray(3, m*2),
+      color: [], // twgl.primitives.createAugmentedTypedArray(3, m*2),
+    };
+
+    var addLine = function (x0,y0,z0, x1,y1,z1, r,g,b) {
+        arrays.position.push(x0,y0,z0, x1,y1,z1);
+        arrays.color.push(r,g,b,1.0,r,g,b,1.0);
+    }
+
+    var r = 2.0;
+    
+    addLine(-r,0,0, r,0,0, 1,0,0);
+    addLine(0,-r,0, 0,r,0, 0,1,0);
+    addLine(0,0,-r, 0,0,r, 0,0,1);
+
+    var d = 0.1;
+    // x
+    addLine(r,0,0, r-d, d,0, 1,0,0);
+    addLine(r,0,0, r-d,-d,0, 1,0,0);
+
+    // y
+    addLine(0,r,0,  d,r-d,0, 0,1,0);
+    addLine(0,r,0, -d,r-d,0, 0,1,0);
+
+    // z
+    addLine(0,0,r, 0, d,r-d, 0,0,1);
+    addLine(0,0,r, 0,-d,r-d, 0,0,1);
+
+
+    r = 1.0;
+    var m = 100;
+    const color = [0.2,0.6,0.8];
+    for(var i = 0; i<m; i++) {
+        var phi0 = Math.PI*2*i/m;
+        var phi1 = Math.PI*2*(i+1)/m;
+        var cs0 = Math.cos(phi0);
+        var sn0 = Math.sin(phi0);
+        var cs1 = Math.cos(phi1);
+        var sn1 = Math.sin(phi1);
+
+        addLine(cs0,sn0,0,cs1,sn1,0, color[0],color[1],color[2]);
+        addLine(cs0,0,sn0,cs1,0,sn1, color[0],color[1],color[2]);
+        addLine(0,cs0,sn0,0,cs1,sn1, color[0],color[1],color[2]);
+    }
+
+    var bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
+    return bufferInfo;    
+}
+
