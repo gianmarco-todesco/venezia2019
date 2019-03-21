@@ -398,6 +398,7 @@ function createCellsTransformations(mats) {
 
 const slideMngr = new SlideManager({
     slides:[
+        "pdisk",
         "hpolyhedra",
         "534-grid",
         "cube-grid",
@@ -527,7 +528,7 @@ function onMouseDown(e) {
         // console.log("drag", mousePos.x-lastMousePos.x, mousePos.y-lastMousePos.y);
         const slide = slideMngr.currentSlide;
         if(slide && slide.onDrag) slide.onDrag(mousePos.x-lastMousePos.x, mousePos.y-lastMousePos.y);
-        
+
         lastMousePos.x = mousePos.x;
         lastMousePos.y = mousePos.y;
     }

@@ -18,6 +18,26 @@ ResourceStore.shaderPrograms["lines"] = {
     `
 };
 
+
+ResourceStore.shaderPrograms["2D"] = {
+    vs : `
+    precision mediump float;
+    uniform mat4 u_worldViewProjection;
+    attribute vec2 position;
+    void main() {
+        gl_Position = u_worldViewProjection * vec4(position,0.0,1.0);
+    }
+    `,
+    fs:`
+    precision mediump float;
+    uniform vec4 u_color;
+    void main() {
+        gl_FragColor = u_color;
+    }
+    `
+};
+
+
 ResourceStore.shaderPrograms["standard"] = {
     vs : `
     uniform mat4 u_worldViewProjection;

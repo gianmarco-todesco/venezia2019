@@ -99,6 +99,7 @@ class Engine {
             u_worldViewProjection : m4.multiply(viewProjection, world)
         };
         twgl.setUniforms(this.currentProgram.pInfo, uniforms);
+        
     }
 
 
