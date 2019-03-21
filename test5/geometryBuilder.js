@@ -209,6 +209,71 @@ class GeometryBuilder2 {
         arrays.indices.push(k,k+1,k+2, k,k+2,k+3);
     }
 
+    addQuadMesh(p0,p1,p2,p3, n, m) {
+        const v3 = twgl.v3;
+
+        const arrays = this.arrays;
+        const du = v3.mulScalar(v3.normalize(v3.subtract(p1,p0)),0.01);
+        const dv = v3.mulScalar(v3.normalize(v3.subtract(p3,p0)),0.01);
+        const p = v3.create(), p_d = v3.create();
+        const p01 = v3.create(), p32 = v3.create();
+        for(let i=0; i<n; i++) {
+            const t = i/(n-1);
+            v3.lerp(p0,p1,t, p01);
+            v3.lerp(p3,p2,t, p32);
+            for(let j=0; j<m; j++) {
+                const s = j/(m-1);
+                v3.lerp(p01,p32,s,p);
+                arrays.position.push(...p);
+                v3.add(p, du, p_d); arrays.position_du.data.push(...p_d);
+                v3.add(p, dv, p_d); arrays.position_dv.data.push(...p_d);
+            }
+        } 
+        var k = this.vCount;
+        this.vCount += m*n;
+        for(let i=0; i+1<n; i++) {
+            for(let j=0; j+1<m; j++) {
+                var h = k + i*m + j;
+                arrays.indices.push(h,h+1,h+1+m, h,h+1+m,h+m);
+            }
+        }
+    }
+
+    addTriangleMesh(p0,p1,p2, n) {
+        const v3 = twgl.v3;
+
+        const arrays = this.arrays;
+        const du = v3.mulScalar(v3.normalize(v3.subtract(p1,p0)),0.01);
+        const dv = v3.mulScalar(v3.normalize(v3.subtract(p2,p0)),0.01);
+        const p = v3.create(), p_d = v3.create();
+        const p01 = v3.create(), p02 = v3.create();
+
+        arrays.position.push(...p0);
+        v3.add(p0, du, p_d); arrays.position_du.data.push(...p_d);
+        v3.add(p0, dv, p_d); arrays.position_dv.data.push(...p_d);
+
+        for(let i=1; i<n; i++) {
+            const t = i/(n-1);
+            v3.lerp(p0,p1,t, p01);
+            v3.lerp(p0,p2,t, p02);
+            for(let j=0; j<=i; j++) {
+                const s = j/i;
+                v3.lerp(p01,p02,s,p);
+                arrays.position.push(...p);
+                v3.add(p, du, p_d); arrays.position_du.data.push(...p_d);
+                v3.add(p, dv, p_d); arrays.position_dv.data.push(...p_d);
+            }
+        } 
+        const k = this.vCount;
+        this.vCount += n*(n+1)/2;
+        for(let i=0; i+1<n; i++) {
+            const k1 = k + i*(i+1)/2;
+            const k2 = k + (i+1)*(i+2)/2;            
+            for(let j=0; j<=i; j++) arrays.indices.push(k2+j,k1+j,k2+j+1);
+            for(let j=0; j<i; j++) arrays.indices.push(k1+j,k1+j+1,k2+j+1);
+        }
+    }
+
     createBuffer() {
         return twgl.createBufferInfoFromArrays(this.gl, this.arrays);
     }

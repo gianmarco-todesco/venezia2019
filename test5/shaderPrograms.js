@@ -198,8 +198,10 @@ ResourceStore.shaderPrograms["hyperbolic"] = {
             vec3 normal = normalize(v_normal);
             float v = abs(normal.z);
             // if(v_position.z>1.7) discard;
-            float att = exp(-12.0*max(0.0, v_position.z-1.3));
+            float att = 1.0; // exp(-12.0*max(0.0, v_position.z-1.3));
             gl_FragColor = vec4(vec3(0.2,0.6,0.3) * v * att, 1.0);
+            // gl_FragColor = vec4(1.0,1.0,0.0,1.0);
+
         }
     `
 };

@@ -259,9 +259,8 @@ SlideManager.slides["534-grid"] = {
         // twgl.drawBufferInfo(engine.gl, bufferInfo, engine.gl.TRIANGLES, bufferInfo.numelements);
 
 
-
         twgl.drawBufferInfo(engine.gl, bufferInfo, engine.gl.TRIANGLES, 
-            bufferInfo.numelements, 0, this.nodes.length);
+            bufferInfo.numElements, 0, this.nodes.length);
  
          engine.gl.vertexAttribDivisor(0,0);
 
@@ -399,6 +398,7 @@ function createCellsTransformations(mats) {
 
 const slideMngr = new SlideManager({
     slides:[
+        "hpolyhedra",
         "534-grid",
         "cube-grid",
         "slide1",
@@ -481,6 +481,10 @@ function initialize() {
         console.log(e);
     });
 
+    const canvas = engine.canvas;
+    canvas.addEventListener('mousedown', onMouseDown, false);
+
+
 
     window.ggl = gl;
     gl.enable(gl.DEPTH_TEST);
@@ -510,7 +514,33 @@ function initialize() {
       requestAnimationFrame(render);    
 }
 
+function getMousePos(e) {
+    return {x:e.offsetX, y:e.offsetY};
+}
+function onMouseDown(e) {
+    e.preventDefault();
+    let lastMousePos = getMousePos(e);
 
+    function onMouseDrag(e) { 
+        e.preventDefault();
+        let mousePos = getMousePos(e);
+        // console.log("drag", mousePos.x-lastMousePos.x, mousePos.y-lastMousePos.y);
+        const slide = slideMngr.currentSlide;
+        if(slide && slide.onDrag) slide.onDrag(mousePos.x-lastMousePos.x, mousePos.y-lastMousePos.y);
+        
+        lastMousePos.x = mousePos.x;
+        lastMousePos.y = mousePos.y;
+    }
+    function onMouseUp(e) { 
+        e.preventDefault();
+        document.removeEventListener('mousemove', onMouseDrag, false);
+        document.removeEventListener('mouseup', onMouseUp, false);  
+    }
+    
+    document.addEventListener('mousemove', onMouseDrag, false);
+    document.addEventListener('mouseup', onMouseUp, false);
+
+}
 
 
 function dopo() {
