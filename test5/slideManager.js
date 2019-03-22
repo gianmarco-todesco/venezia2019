@@ -17,13 +17,17 @@ class SlideManager {
         });
         if(slides.length==0) throw "No slides";
         this.currentSlideIndex = 0;
-        this.currentSlide = slides[this.currentSlideIndex];
+        this.currentSlide = null;
     }
 
     initialize(engine) {
         this.slides.forEach(slide => {
+            slide.engine = engine;
+            slide.resourceManager = engine.resourceManager;
+            slide.gl = engine.gl;
             if(slide.initialize) slide.initialize(engine);
         });
+        this.setSlide(0);
     }
 
     draw(engine) {
@@ -33,8 +37,10 @@ class SlideManager {
     setSlide(index) {
         if(index<0) index=0;
         else if(index>=this.slides.length) index = this.slides.length-1;
+        if(this.currentSlide && this.currentSlide.stop) this.currentSlide.stop();
         this.currentSlideIndex = index;
         this.currentSlide = this.slides[index];
+        if(this.currentSlide && this.currentSlide.start) this.currentSlide.start();        
     }
 
     nextSlide() { this.setSlide(this.currentSlideIndex+1); }

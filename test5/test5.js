@@ -159,46 +159,6 @@ SlideManager.slides["slide5"] = {
     },
 };
 
-SlideManager.slides["cube-grid"] = {
-    initialize : function(engine) {
-
-        const material = new Material(engine.resourceManager.getShaderProgram("instanced"));
-        material.uniforms.u_diffuseColor = [0.7,0.7,0.7,1.0];        
-        this.material = material;
-    },
-    draw : function(engine) {
-
-        const m4 = twgl.m4;
-
-        engine.setMaterial(this.material);
-        const bufferInfo = engine.resourceManager.getGeometry("cube-grid-cell");
-
-
-        engine.setBuffers(bufferInfo);
-        
-        let world = m4.rotationY(performance.now()*0.0001);
-        world = m4.multiply(m4.rotationX(0.01), world);
-
-
-        
-        engine.setWorldMatrix(world);    
-        /*
-        engine.gl.drawElements(
-            engine.gl.TRIANGLES, 
-            bufferInfo.numElements, 
-            engine.gl.UNSIGNED_SHORT, 
-            0);
-        */
-        const m = 7;
-        const instanceCount = 1+m*(6+m*(6+8*m));
-        twgl.drawBufferInfo(engine.gl, bufferInfo, engine.gl.TRIANGLES, 
-           bufferInfo.numelements, 0, instanceCount);
-
-        engine.gl.vertexAttribDivisor(0,0);
-
-    },
-};
-
 
 SlideManager.slides["534-grid"] = {
     initialize : function(engine) {
@@ -399,14 +359,10 @@ function createCellsTransformations(mats) {
 const slideMngr = new SlideManager({
     slides:[
         "pdisk",
+        "polydron",
+        "cube-grid",
         "hpolyhedra",
         "534-grid",
-        "cube-grid",
-        "slide1",
-        "slide2",
-        "slide3",
-        "slide4",
-        "slide5",
     ]
 });
 
@@ -479,7 +435,11 @@ function initialize() {
     document.addEventListener("keydown", e=>{
         if(e.code == "ArrowDown") slideMngr.nextSlide();
         else if(e.code == "ArrowUp") slideMngr.prevSlide();
-        console.log(e);
+        else {
+            const slide = slideMngr.currentSlide;
+            if(slide && slide.onKeyDown)  slide.onKeyDown(e);
+            // console.log(e);
+        }
     });
 
     const canvas = engine.canvas;
@@ -490,7 +450,7 @@ function initialize() {
     window.ggl = gl;
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    gl.clearColor(0,0,0,1);
+    // gl.clearColor(0.3,0.3,0.3,1);
 
     function render(time) {
         meter.tickStart();

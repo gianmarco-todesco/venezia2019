@@ -5,6 +5,8 @@
         <title>test5</title>
         <script src="../libs/twgl-full_4.min.js"></script>
         <script src="../libs/fpsmeter.min.js"></script>
+        <script src="../libs/quaternion.js"></script>
+        <script src="utils.js"></script>
         <script src="polyhedra.js"></script>
         <script src="h3.js"></script>
         <script src="geometryBuilder.js"></script>
@@ -13,6 +15,8 @@
         <script src="geometries.js"></script>
         <script src="slideManager.js"></script>
         <script src="engine.js"></script>
+        <script src="slides/cubegrid.js"></script>
+        <script src="slides/polydron.js"></script>
         <script src="slides/hpolyhedra.js"></script>
         <script src="slides/pdisk.js"></script>
         <script src="test5.js"></script>
@@ -20,6 +24,8 @@
             html,body {margin:0; padding:0;height:100%; overflow:hidden; }
             canvas { width:100%; height:100%; touch-action: none; cursor:pointer;}
         </style>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    
     </head>
     <body onload="initialize()">
         <canvas id="viewer"></canvas>        

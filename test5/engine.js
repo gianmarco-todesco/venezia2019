@@ -85,6 +85,7 @@ class Engine {
     }
 
     setBuffers(bufferInfo) {
+        this.bufferInfo = bufferInfo;
         twgl.setBuffersAndAttributes(this.gl, this.currentProgram.pInfo, bufferInfo);
     }
 
@@ -104,6 +105,9 @@ class Engine {
 
 
 
+    draw() {
+        twgl.drawBufferInfo(this.gl, this.bufferInfo, this.gl.TRIANGLES);
+    }
 
     useProgram(program) {
         this.currentProgram = program;

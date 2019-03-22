@@ -31,10 +31,15 @@ ResourceStore.geometries["square"] = function(gl) {
     return twgl.createBufferInfoFromArrays(gl, arrays);
 };
 
-
 ResourceStore.geometries["pentagon"] = function(gl) {
     const r = PolygonEdge*0.5/Math.sin(Math.PI/5);
     const arrays = GeometryBuilder.createThickFaceArray(gl, 5, r, PolygonHeight);
+    return twgl.createBufferInfoFromArrays(gl, arrays);
+};
+
+ResourceStore.geometries["decagon"] = function(gl) {
+    const r = PolygonEdge*0.5/Math.sin(Math.PI/10);
+    const arrays = GeometryBuilder.createThickFaceArray(gl, 10, r, PolygonHeight);
     return twgl.createBufferInfoFromArrays(gl, arrays);
 };
 
