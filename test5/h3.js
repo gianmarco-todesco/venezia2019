@@ -54,6 +54,10 @@ KPoint.reflection = function(p) {
     ];
 }
 
+KPoint.reflectionV3 = function(p) {
+    return KPoint.reflection(new KPoint(p[0],p[1],p[2]));
+}
+
 /*
 
 KPoint.translation = function(a,b) {

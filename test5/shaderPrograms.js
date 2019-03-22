@@ -18,6 +18,32 @@ ResourceStore.shaderPrograms["lines"] = {
     `
 };
 
+ResourceStore.shaderPrograms["H2"] = {
+    vs : `
+    uniform mat4 u_worldViewProjection;
+    uniform mat4 u_hMatrix;
+    attribute vec2 position;
+    
+    vec4 toBall(vec4 p) {  
+        vec4 p2 = p * (1.0/p.w);
+        float s2 = min(1.0, p2.x*p2.x + p2.y*p2.y + p2.z*p2.z);
+        float k = 1.0 / (1.0 + sqrt(1.0 - s2));        
+        return vec4(p2.xyz*k,1.0);
+    }
+
+    void main() {
+            vec4 p = toBall(u_hMatrix * vec4(position,0.0,1.0));
+            gl_Position = u_worldViewProjection *  p;
+    }
+    `,
+    fs:`
+    precision mediump float;
+    // varying vec4 v_color;
+    void main() {
+        gl_FragColor = vec4(0.0,0.4,0.8,1.0);
+    }
+    `
+};
 
 ResourceStore.shaderPrograms["2D"] = {
     vs : `
