@@ -38,9 +38,10 @@ ResourceStore.shaderPrograms["H2"] = {
     `,
     fs:`
     precision mediump float;
+    uniform vec4 u_color;
     // varying vec4 v_color;
     void main() {
-        gl_FragColor = vec4(0.0,0.4,0.8,1.0);
+        gl_FragColor = u_color;
     }
     `
 };
@@ -120,7 +121,7 @@ ResourceStore.shaderPrograms["standard"] = {
                             dot(a_normal, halfVector), u_shininess);
         vec4 outColor = vec4((
         u_lightColor * (diffuseColor * litR.y + diffuseColor * u_ambient +
-                        u_specular * litR.z * u_specularFactor)).rgb,
+                        litR.z * u_specularFactor)).rgb,
             diffuseColor.a);
         gl_FragColor = outColor;
     }       

@@ -18,6 +18,10 @@ ResourceStore.geometries["sphere"] = function(gl) {
     return twgl.primitives.createSphereBufferInfo(gl, 1, 20, 20);
 }
 
+ResourceStore.geometries["cylinder"] = function(gl) {
+    return twgl.primitives.createCylinderBufferInfo(gl, 1, 1, 20, 20);
+}
+
 
 ResourceStore.geometries["triangle"] = function(gl) {
     const r = PolygonEdge*0.5/Math.sin(Math.PI/3);

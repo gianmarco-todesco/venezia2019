@@ -51,3 +51,26 @@ function interpolateRotation(mat1, mat2, s) {
     const q = q1.slerp(q2)(s);
     return q.toMatrix4();
 }
+
+// crea una matrice che porta l'origine in p e l'asse y verso e1
+// (e1 deve essere normalizzato)
+function createAlignMatrix(p, e1) {
+    const m4 = twgl.m4;
+    const v3 = twgl.v3;
+    let e0 = [0,0,0];
+    let cc = p.map(c=>Math.abs(c));
+    if(cc[0]<cc[1]) e0[cc[0]<cc[2] ? 0 : 2] = 1;
+    else e0[cc[1]<cc[2] ? 1 : 2] = 1;
+    e0 = v3.normalize(v3.subtract(e0, v3.mulScalar(e1, v3.dot(e1,e0))));
+    const e2 = v3.normalize(v3.cross(e0,e1));
+    return new Float32Array([
+        e0[0],e0[1],e0[2],0,
+        e1[0],e1[1],e1[2],0,
+        e2[0],e2[1],e2[2],0,
+        p[0],p[1],p[2],1        
+    ]);
+}
+
+function assert(cond, msg) {
+    if(!cond) throw msg;
+}

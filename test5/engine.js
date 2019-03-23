@@ -15,7 +15,7 @@ class Camera {
         const projection = m4.perspective(this.fov, aspect, this.zNear, this.zFar);
         this.projection = projection;
 
-        const eye = [0, 0, -10];
+        const eye = [0, 0, 10];
         const target = [0, 0, 0];
         const up = [0, 1, 0];
         this.cameraMatrix = twgl.m4.lookAt(eye, target, up);
@@ -63,9 +63,11 @@ class Engine {
         this.resourceManager = new ResourceManager(gl);
 
         this.uniforms = {
-            u_lightWorldPos: [1, 8, -10],
+            u_lightWorldPos: [1, 8, 10],
             u_lightColor: [1, 0.8, 0.8, 1],
-            u_ambient: [0, 0, 0, 1],    
+            u_ambient: [0.2, 0.2, 0.2, 1],
+            u_specularFactor: 0.5,   
+            u_shininess: 120.0, 
         };
 
         this.grid = createGrid(gl);
@@ -103,6 +105,10 @@ class Engine {
         
     }
 
+    setUniforms(uniforms) {
+        twgl.setUniforms(this.currentProgram.pInfo, uniforms);
+    }
+
 
 
     draw() {
@@ -124,6 +130,9 @@ class Engine {
         this.setWorldMatrix(word);
         twgl.drawBufferInfo(this.gl, this.grid, this.gl.LINES);
     }
+
+    drawAxes(world) { this.drawGrid(world); }
+    
 }
 
 

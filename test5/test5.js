@@ -358,6 +358,7 @@ function createCellsTransformations(mats) {
 
 const slideMngr = new SlideManager({
     slides:[
+        "surfaces",
         "pdisk",
         "polydron",
         "cube-grid",
