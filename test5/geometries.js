@@ -131,6 +131,7 @@ ResourceStore.geometries["534-grid-cell"] = function(gl) {
 
     // const nodes = fooBar(dod, hMatrix);
 
+    const thickness = 0.04;
     regularPolyhedra.dodecahedron.edges.forEach(e => {
         var p0 = pts[e[0]];
         var p1 = pts[e[1]];
@@ -138,13 +139,14 @@ ResourceStore.geometries["534-grid-cell"] = function(gl) {
         var pa = centers[e[2]];
         var pb = centers[e[3]];
 
-        var p2 = v3.lerp(p0,pa,0.05);
-        var p3 = v3.lerp(p1,pa,0.05);
-        var p4 = v3.lerp(p0,pb,0.05);
-        var p5 = v3.lerp(p1,pb,0.05);
+        var p2 = v3.lerp(p0,pa,thickness);
+        var p3 = v3.lerp(p1,pa,thickness);
+        var p4 = v3.lerp(p0,pb,thickness);
+        var p5 = v3.lerp(p1,pb,thickness);
         
-        gb.addStrip(p2,p3,p5,p4, 30);
+        gb.addStrip(p2,p3,p5,p4, 10);
     });
+    
 
 
     // lavoro sui vertici
@@ -176,14 +178,16 @@ ResourceStore.geometries["534-grid-cell"] = function(gl) {
     
         const mat3 = m4.multiply(m4.inverse(mat), mat2);
     
-        const d = 0.02;
-        const d1 = d * 1.12;
+        const d = 0.01;
+        const d1 = d ;
         [
             [[0,0,d], [d,0,d], [d1,d1,d1], [0,d,d]],    
             [[0,d,0], [0,d,d], [d1,d1,d1], [d,d,0]],
             [[d,0,0], [d,d,0], [d1,d1,d1], [d,0,d]],        
         ].forEach(q => {
             const qq = q.map(p => m4.transformPoint(mat3,p));
+            // gb.addQuadMesh(qq[0],qq[1],qq[2],qq[3],3,3);
+            gb.normal = v3.normalize(v3.cross(v3.subtract(qq[3],qq[0]), v3.subtract(qq[1],qq[0])));
             gb.addQuad(qq[0],qq[1],qq[2],qq[3]);
         });
     
@@ -220,3 +224,33 @@ ResourceStore.geometries["534-grid-cell"] = function(gl) {
     return result;
 };
 
+ResourceStore.geometries["534-foo"] = function(gl) {
+    const m4 = twgl.m4;
+    const v3 = twgl.v3;
+
+    const gb = new GeometryBuilder2(gl);
+
+    const { pts, centers } = grid534;
+
+    // const nodes = fooBar(dod, hMatrix);
+
+    const thickness = 0.4;
+
+    var p0 = pts[0];
+    var p1 = pts[10];
+    var p2 = v3.lerp(p1,[0,0,0], 0.1);
+    var p3 = v3.lerp(p0,[0,0,0], 0.1);
+    gb.addStrip(p0,p1,p2,p3, 10);
+
+    gb.arrays.cellMatrix = {
+        numComponents: 16,
+        data: [],
+        divisor: 1
+    };
+
+    const result = gb.createBuffer();
+    result.extraData = {
+        hMatrix : grid534.hMatrix
+    };
+    return result;
+};

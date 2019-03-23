@@ -46,6 +46,8 @@ ResourceStore.shaderPrograms["H2"] = {
     `
 };
 
+
+
 ResourceStore.shaderPrograms["2D"] = {
     vs : `
     precision mediump float;
@@ -206,9 +208,10 @@ ResourceStore.shaderPrograms["hyperbolic"] = {
         uniform mat4 u_world;
         
         uniform mat4 hMatrix;
-        attribute vec4 position;
+        attribute vec4 position;        
         attribute vec4 position_du;
         attribute vec4 position_dv;
+        
         attribute mat4 cellMatrix;
 
         varying vec4 v_position;
@@ -232,6 +235,7 @@ ResourceStore.shaderPrograms["hyperbolic"] = {
             vec4 p_dv = toBall(mat * position_dv);
             vec3 normal = normalize(cross((p_du-p).xyz, (p_dv-p).xyz));
             v_normal = (u_worldInverseTranspose * vec4(normal, 0)).xyz;
+                        
             v_position = u_worldViewProjection *  p;
             gl_Position = u_worldViewProjection *  p;
             

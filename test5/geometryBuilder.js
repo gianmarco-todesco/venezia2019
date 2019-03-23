@@ -160,12 +160,14 @@ class GeometryBuilder2 {
             position: [],
             position_du: { numComponents:3, data: []},
             position_dv: { numComponents:3, data: []}, 
-            indices: [],     
+            indices: [],
+            normal: [],     
         };
 
         this.vCount = 0;
-
+        this.normal = [0,0,1];
     }
+
 
     addStrip(p0,p1,p2,p3, m) {
         const v3 = twgl.v3;
@@ -187,6 +189,10 @@ class GeometryBuilder2 {
             v3.add(p01, dv, p); arrays.position_dv.data.push(...p);
             v3.add(p32, du, p); arrays.position_du.data.push(...p);
             v3.add(p32, dv, p); arrays.position_dv.data.push(...p); 
+
+            arrays.normal.push(this.normal[0], this.normal[1], this.normal[2]);
+            arrays.normal.push(this.normal[0], this.normal[1], this.normal[2]);
+            
             var k = this.vCount;
             this.vCount += 2;
             if(i>0) arrays.indices.push(k-2,k,k-1, k, k+1, k-1);
@@ -203,6 +209,7 @@ class GeometryBuilder2 {
             arrays.position.push(p[0],p[1],p[2]);
             v3.add(p, du, tmp); arrays.position_du.data.push(...tmp);
             v3.add(p, dv, tmp); arrays.position_dv.data.push(...tmp);    
+            arrays.normal.push(this.normal[0], this.normal[1], this.normal[2]);            
         });
         var k = this.vCount;
         this.vCount += 4;
@@ -234,7 +241,7 @@ class GeometryBuilder2 {
         for(let i=0; i+1<n; i++) {
             for(let j=0; j+1<m; j++) {
                 var h = k + i*m + j;
-                arrays.indices.push(h,h+1,h+1+m, h,h+1+m,h+m);
+                arrays.indices.push(h,h+1+m,h+1, h,h+m,h+m+1);
             }
         }
     }
@@ -251,6 +258,7 @@ class GeometryBuilder2 {
         arrays.position.push(...p0);
         v3.add(p0, du, p_d); arrays.position_du.data.push(...p_d);
         v3.add(p0, dv, p_d); arrays.position_dv.data.push(...p_d);
+        arrays.normal.push(this.normal[0], this.normal[1], this.normal[2]);    
 
         for(let i=1; i<n; i++) {
             const t = i/(n-1);
@@ -262,6 +270,7 @@ class GeometryBuilder2 {
                 arrays.position.push(...p);
                 v3.add(p, du, p_d); arrays.position_du.data.push(...p_d);
                 v3.add(p, dv, p_d); arrays.position_dv.data.push(...p_d);
+                arrays.normal.push(this.normal[0], this.normal[1], this.normal[2]);    
             }
         } 
         const k = this.vCount;

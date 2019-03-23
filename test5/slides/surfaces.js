@@ -433,6 +433,14 @@ class Grid {
             energy += 100.0 * Math.pow(dist-edgeLength,2);
         });
         
+        if(vertex.closed) {
+            const center = v3.create(0,0,0);
+            vertex.links.forEach(other => { 
+                v3.add(center, other.pos, center);
+            });
+            v3.divScalar(center, vertex.links.length, center);
+            energy += 10 * v3.distance(center, p0);
+        }
                 
         const nrms = [];
         const faceCount = vertex.closed ? m : m-1;
