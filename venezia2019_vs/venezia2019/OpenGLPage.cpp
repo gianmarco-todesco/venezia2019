@@ -4,6 +4,8 @@
 #include <QGLShaderProgram>
 #include <QGLShader>
 #include <qfile.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 OpenGLPage::OpenGLPage()
 : QGLWidget(0, getShared())
@@ -76,3 +78,39 @@ void OpenGLPage::drawBackground()
   glEnable(GL_LIGHTING);
 }
 
+void OpenGLPage::drawAxes(double r)
+{
+    glDisable(GL_LIGHTING);
+    int m = 50;
+    QVector<QPair<double, double> > cssn;
+    for(int i=0;i<m;i++) {
+        double phi = M_PI * 2 * i / (m-1);
+        cssn.append(qMakePair(cos(phi)*r, sin(phi)*r));
+    }
+    glColor3d(0.5,0.5,0.5);    
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<m;i++) glVertex3d(cssn[i].first,cssn[i].second,0);
+    glEnd();
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<m;i++) glVertex3d(cssn[i].first,0,cssn[i].second);
+    glEnd();
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<m;i++) glVertex3d(0,cssn[i].first,cssn[i].second);
+    glEnd();
+
+
+    glBegin(GL_LINES);
+        glColor3d(1,0,0);
+        glVertex3d(0,0,0);
+        glVertex3d(r,0,0);
+        glColor3d(0,1,0);
+        glVertex3d(0,0,0);
+        glVertex3d(0,r,0);
+        glColor3d(0,0,1);
+        glVertex3d(0,0,0);
+        glVertex3d(0,0,r);
+
+    glEnd();
+
+    glEnable(GL_LIGHTING);
+}

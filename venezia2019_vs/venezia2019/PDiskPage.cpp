@@ -251,9 +251,9 @@ void PDiskPage::drawPattern1()
         {
           double t = (double)q/(qm-1);
           Complex p = (1-t)*(1-t)*Complex(0,0)+t*t*b+2*t*(1-t)*b1;
-          double r = (m_transformStack.back()*p).getNorm();
+          double rd = (m_transformStack.back()*p).getNorm();
           //glColor3d(r*0.5,r*0.8,1);
-          glColor3d(r*0.5,r*0.5,r*0.5);
+          glColor3d(rd*0.5,rd*0.5,rd*0.5);
           hVertex(p);
         }
         glEnd();
@@ -587,9 +587,9 @@ void PDiskPage::paintGL()
       {
         glBegin(GL_TRIANGLE_FAN);
         glVertex(diskToWorld(c));
-        for(int k=0;k<20;k++)
+        for(int kk=0;kk<20;kk++)
         {
-          double t = (double)k/19.0;
+          double t = (double)kk/19.0;
           glVertex(diskToWorld(m_transformStack.back()*m_tess->border(j,t)));
         }
         glEnd();

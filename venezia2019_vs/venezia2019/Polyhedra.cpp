@@ -6,6 +6,9 @@
 #include <algorithm>
 // #include "util.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 const double epsilon = 1.0e-4;
 
 //-------------------------------------------------------------------
@@ -324,7 +327,11 @@ QMatrix4x4 getFaceMatrix(const Polyhedron*ph, int index)
     QVector3D e2 = cn.second;
     QVector3D e0 = (p-fc).normalized();
     QVector3D e1 = QVector3D::crossProduct(e2,e0).normalized();
-    return QMatrix4x4();
+    return QMatrix4x4(
+        e0.x(),e1.x(),e2.x(),fc.x(),
+        e0.y(),e1.y(),e2.y(),fc.y(),
+        e0.z(),e1.z(),e2.z(),fc.z(),
+        0,0,0,1);
 }
 
 
@@ -561,9 +568,10 @@ Polyhedron *makeOctahedron()
 
 //-----------------------------------------------------------------------------
 
-Polyhedron *makeDodecahedron()
+Polyhedron *makeDodecahedron_old()
 {
   double r = 1.0;
+
   double vv[] = {
     0.607062, 0, 0.794654,
    0.982247, 0, 0.187592,
@@ -609,6 +617,76 @@ Polyhedron *makeDodecahedron()
   std::vector<int> faces(ff,ff+6*12);
   Polyhedron *ph = makePolyhedron(pts, faces);
   return ph;
+}
+
+Polyhedron *makeDodecahedron()
+{
+    const double r = 1.0;
+
+    const double f = (1.0+sqrt(5.0))*0.5;
+    const double g = 1.0/f;
+
+    double vv[] = {
+        -1,-1,-1,
+         1,-1,-1,
+        -1, 1,-1,
+         1, 1,-1,
+        -1,-1, 1,
+         1,-1, 1,
+        -1, 1, 1,
+         1, 1, 1,
+
+         0, -f, -g, // 8
+         0, -f,  g,
+         0,  f, -g,
+         0,  f,  g,
+
+        -g,  0, -f, // 12
+         g,  0, -f,
+        -g,  0,  f,
+         g,  0,  f,
+
+        -f, -g,  0, // 16
+        -f,  g,  0,
+         f, -g,  0,
+         f,  g,  0,
+    };
+
+    // voglio due facce perpendicolari all'asse z.
+    double theta = atan(2.0)*0.5;
+
+    QMatrix4x4 rot; 
+    rot.setToIdentity(); 
+    rot.rotate(-90.0, 0,0,1); // centro=>vertice sull'asse x
+    rot.rotate(180.0 * theta / M_PI, 1,0,0);
+
+    double factor = r / QVector3D(vv[0],vv[1],vv[2]).length();
+    std::vector<QVector3D> pts;
+    for(int i=0;i<3*20;i+=3)
+    {
+        QVector3D p(vv[i],vv[i+1],vv[i+2]);
+        // pts.push_back(rot.map(p)*factor);
+        pts.push_back(p*factor);
+    }
+
+    int ff[] = { 
+        5,   4,9,5,15,14,
+        5,   6,14,15,7,11,
+        5,   15,5,18,19,7,
+        5,   4,14,6,17,16,
+        5,   0,12,13,1,8,
+        5,   12,2,10,3,13,
+        5,   18,5,9,8,1,
+        5,   10,11,7,19,3,
+        5,   11,10,2,17,6,
+        5,    0,8,9,4,16,
+        5,   0,16,17,2,12,
+        5,   19,18,1,13,3
+    };
+
+    std::vector<int> faces(ff,ff+6*12);
+    Polyhedron *ph = makePolyhedron(pts, faces);
+    return ph;
 }
 
 //-----------------------------------------------------------------------------

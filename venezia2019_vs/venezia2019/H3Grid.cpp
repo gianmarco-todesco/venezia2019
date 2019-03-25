@@ -135,8 +135,85 @@ QMatrix4x4 H3Grid534::getCornerMatrix()
 }
 
 
+QMatrix4x4 H3Grid534::getCellVertexMatrix(int vIndex)
+{
+    // traslazione iperbolica: vertice vIndex-esimo => origine
+    QMatrix4x4 mat1 = H3::KModel::translation(
+            m_pts[vIndex].toVector3D(), 
+            QVector3D(0,0,0));
+
+    // check!
+    assert(mat1.map(m_pts[vIndex]).toVector3DAffine().length()<1.0e-7);
+
+    // pp[] <= i tre vertici adiacenti h-traslati attorno all'origine 
+    // e normalizzati
+    QVector3D pp[3];
+    for(int j=0;j<3;j++) {
+        int k = m_adjVertTb[vIndex][j];
+        pp[j] = mat1.map(m_pts[k]).toVector3DAffine().normalized();
+    }
+
+    // check!
+    #ifndef  NDEBUG
+    for(int i=0;i<3;i++) {
+        double pd = QVector3D::dotProduct(pp[i],pp[(i+1)%3]);
+        assert(fabs(pd) < 2.0e-7);
+    }
+    #endif
+
+    // ortonormalizzo per maggior precisione
+    pp[1] = (pp[1] - QVector3D::dotProduct(pp[0],pp[1])*pp[0]).normalized();
+    QVector3D pp2 = QVector3D::crossProduct(pp[0],pp[1]).normalized(); 
+    assert(QVector3D::dotProduct(pp2, pp[2])>0.99999);
+    pp[2] = pp2;
+
+
+    // mat : pp[] => x,y,z
+    QMatrix4x4 mat(
+        pp[0].x(), pp[0].y(), pp[0].z(), 0,
+        pp[1].x(), pp[1].y(), pp[1].z(), 0,
+        pp[2].x(), pp[2].y(), pp[2].z(), 0,
+        0,0,0,1
+    ); 
+    
+    return (mat * mat1).inverted();
+}
+
+
+
+
 QMatrix4x4 H3Grid534::getEdgeMatrix()
 {
     QVector3D p(0, H3::KModel::getRadius(edgeLength), 0);
     return H3::KModel::translation(p,QVector3D(0,0,0));
+}
+
+
+void H3Grid534::addDodVertices(GridMatrices &matrices)
+{
+    for(int i=0;i<20;i++)
+        matrices.m_vertexMatrices.append(getCellVertexMatrix(i));
+}
+
+void H3Grid534::addEdgeAndVertex(GridMatrices &matrices, const QMatrix4x4 &mat)
+{
+    matrices.m_edgeMatrices.append(mat);
+    matrices.m_vertexMatrices.append(mat * dirMatrices[2]);
+}
+
+void H3Grid534::flower(GridMatrices &matrices, const QMatrix4x4 &mat, int level)
+{
+    addEdgeAndVertex(matrices, mat);
+    if(level>0)
+    {
+        QMatrix4x4 rot1;
+        rot1.setToIdentity();
+        rot1.rotate(90, 0,0,1);
+        for(int i=0;i<4;i++) {
+            QMatrix4x4 rot2;
+            rot2.setToIdentity();
+            rot2.rotate(90*i, 0,1,0);
+            flower(matrices, mat * dirMatrices[2] * rot2 * rot1, level - 1);    
+        }
+    }
 }

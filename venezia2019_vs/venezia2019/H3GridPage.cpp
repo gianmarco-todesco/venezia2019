@@ -30,6 +30,7 @@ H3GridPage::H3GridPage()
 , m_rotating(true)
 , m_shaderProgram(0)
 , m_grid(new H3Grid534())
+, m_level(0)
 {
     m_hMatrix.setToIdentity();
 }
@@ -89,6 +90,9 @@ void H3GridPage::build()
     mat.setToIdentity();
     m_edgeMatrices.append(mat);
     m_vertexMatrices.append(mat);
+
+
+
     for(int ix=-10;ix<=10;ix++)
     {
         for(int iy=-10; iy<=10; iy++)
@@ -186,6 +190,34 @@ void H3GridPage::paintGL()
     qDebug() << localClock.elapsed() << m_clock.restart();
 }
 
+void H3GridPage::draw(const QMatrix4x4 &mat, const Mesh &mesh)
+{
+    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * mat );
+    mesh.draw();
+}
+
+
+void H3GridPage::draw(const QMatrix4x4 &globalMatrix, const GridMatrices &matrices)
+{
+    if(!matrices.m_vertexMatrices.empty())
+    {
+        m_vertexCube.bind();
+        foreach(QMatrix4x4 mat, matrices.m_vertexMatrices) {
+            draw(globalMatrix * mat, m_vertexCube);
+        }
+        m_vertexCube.release();
+    }
+    if(!matrices.m_edgeMatrices.empty())
+    {
+        m_edgeBox.bind();    
+        foreach(QMatrix4x4 mat, matrices.m_edgeMatrices) {
+            draw(globalMatrix * mat, m_edgeBox);
+        }
+        m_edgeBox.release();
+    }
+}
+
+
 void H3GridPage::draw1()
 {
     setColor(0.8,0.1,0.1);    
@@ -267,7 +299,7 @@ void H3GridPage::draw1()
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
         
-    drawBoundary();
+    drawAxes();
 }
 
 void H3GridPage::draw2()
@@ -302,7 +334,7 @@ void H3GridPage::draw2()
     
 
     glEnable(GL_LIGHTING);
-    drawBoundary();
+    
 
 
     // ----- 
@@ -320,6 +352,7 @@ void H3GridPage::draw2()
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_CULL_FACE);
     
+    /*
     // vertices
     m_vertexCube.bind();    
     for(int i=0;i<m_vertexMatrices.count();i++) {
@@ -327,6 +360,9 @@ void H3GridPage::draw2()
         m_vertexCube.draw();
     }
     m_vertexCube.release();
+    */
+
+    /*
 
     // edges
     m_edgeBox.bind();    
@@ -335,6 +371,28 @@ void H3GridPage::draw2()
         m_edgeBox.draw();
     }
     m_edgeBox.release();
+
+
+    // vertices
+    m_vertexCube.bind();    
+    for(int i=0;i<20;i++) {
+        draw(m_vertexCube,  hMatrix * m_grid->getCellVertexMatrix(i));
+    }
+    m_vertexCube.release();
+    */
+
+
+
+    // GridMatrices matrices;
+    // m_grid->addDodVertices(matrices);
+    // m_grid->addEdgeAndVertex(matrices, mat);
+
+    draw(identity, m_gridMatrices);
+
+
+
+
+
 
     /*
 
@@ -622,44 +680,6 @@ void H3GridPage::drawEdgeWf(const QMatrix4x4 &hMatrix, double d)
 }
 
 
-void H3GridPage::drawBoundary()
-{
-    glDisable(GL_LIGHTING);
-    glColor3d(0,0.2,0.6);
-    int m = 50;
-    double r = 5.0;
-    QVector<QPair<double, double> > cssn;
-    for(int i=0;i<m;i++) {
-        double phi = M_PI * 2 * i / m;
-        cssn.append(qMakePair(cos(phi)*r, sin(phi)*r));
-    }
-    glBegin(GL_LINES);
-    for(int i=0;i<m;i++) 
-    {
-        int i1 = (i+1)%m;
-        double a = cssn[i].first, b = cssn[i].second, c = cssn[i1].first, d = cssn[i1].second;
-        glVertex3d(a,b,0); glVertex3d(c,d,0);
-        glVertex3d(a,0,b); glVertex3d(c,0,d);
-        glVertex3d(0,a,b); glVertex3d(0,c,d);
-    }
-    glEnd();
-
-    glBegin(GL_LINES);
-        glColor3d(1,0,0);
-        glVertex3d(0,0,0);
-        glVertex3d(r,0,0);
-        glColor3d(0,1,0);
-        glVertex3d(0,0,0);
-        glVertex3d(0,r,0);
-        glColor3d(0,0,1);
-        glVertex3d(0,0,0);
-        glVertex3d(0,0,r);
-
-    glEnd();
-
-    glEnable(GL_LIGHTING);
-}
-
 
 void H3GridPage::mousePressEvent(QMouseEvent *e)
 {
@@ -692,7 +712,24 @@ void H3GridPage::mouseMoveEvent(QMouseEvent *e)
 
 void H3GridPage::keyPressEvent(QKeyEvent *e)
 {
-    e->ignore();
+    if(e->key() == Qt::Key_Plus) { 
+        m_level++; 
+        m_gridMatrices.clear();
+        QMatrix4x4 identity; identity.setToIdentity();
+        m_grid->flower(m_gridMatrices, identity, m_level);
+        qDebug() << m_gridMatrices.m_edgeMatrices.count() << " edges" << m_gridMatrices.m_vertexMatrices.count() << " vertices";
+        updateGL(); 
+    }
+    else if(e->key() == Qt::Key_Minus) { 
+        if(m_level>0) m_level--; 
+        m_gridMatrices.clear();
+        QMatrix4x4 identity; identity.setToIdentity();
+        m_grid->flower(m_gridMatrices, identity, m_level);
+        qDebug() << m_gridMatrices.m_edgeMatrices.count() << " edges" << m_gridMatrices.m_vertexMatrices.count() << " vertices";
+        updateGL(); 
+    }
+    else
+      e->ignore();
 }
 
 void H3GridPage::wheelEvent(QWheelEvent*e)

@@ -10,12 +10,16 @@
 
 class QGLShaderProgram;
 
-class OpenGLPage : public QGLWidget
+class OpenGLPage  : public QGLWidget
 {
 
 public:
     OpenGLPage();
     virtual ~OpenGLPage();
+
+
+
+    void drawAxes(double r = 5.0);
 
 protected:
     void initializeGL();
@@ -27,6 +31,8 @@ protected:
 private:
     static std::set<OpenGLPage*> m_sharedSet;
     inline static OpenGLPage* getShared() { return m_sharedSet.empty() ? 0 : *m_sharedSet.begin(); }
+
+
 };
 
 

@@ -69,6 +69,12 @@ public:
     return m_validFaceVertices;
   }
 
+  void scale(double scaleFactor) {
+      for(int i=0;i<(int)m_vertices.size();i++) 
+          m_vertices[i].m_pos *= scaleFactor;
+  }
+
+
 private:
   
   std::vector<Vertex> m_vertices;

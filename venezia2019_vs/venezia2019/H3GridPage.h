@@ -7,10 +7,13 @@
 #include <QMatrix4x4>
 #include <QGLBuffer>
 #include <QTime>
+#include "H3Grid.h"
+
 
 class QGLShaderProgram;
 class Texture;
 class H3Grid534;
+
 
 class H3GridPage : public OpenGLPage
 {
@@ -26,6 +29,10 @@ class H3GridPage : public OpenGLPage
   QTime m_clock;
 
   QList<QMatrix4x4> m_edgeMatrices, m_vertexMatrices;
+  int m_level;
+
+  GridMatrices m_gridMatrices;
+
 
 public:
   H3GridPage();
@@ -38,7 +45,6 @@ protected:
 
   void makeEdgeBox();
   
-  void drawBoundary();
   void draw1();
   void draw2();
 
@@ -49,6 +55,9 @@ protected:
   void drawBoxWf(const QMatrix4x4 &mat, double dx, double dy, double dz);
 
   void drawEdgeWf(const QMatrix4x4 &mat, double d = 0.05);
+
+  void draw(const QMatrix4x4 &mat, const Mesh &mesh);
+  void draw(const QMatrix4x4 &globalMatrix, const GridMatrices &matrices);
 
   void test();
 
@@ -61,6 +70,8 @@ protected:
 
   void showEvent(QShowEvent*);
   void hideEvent(QHideEvent*);
+
+
 };
 
 #endif

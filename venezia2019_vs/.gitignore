@@ -1,6 +1,10 @@
 *.sdf
 *.ipch
 *.tlog
+*.vsp
+*.psess
+*.suo
 Debug
 Release
+GeneratedFiles
 

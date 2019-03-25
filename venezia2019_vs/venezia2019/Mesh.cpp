@@ -2,6 +2,8 @@
 #include <qvector3d.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
+
+
 Mesh::Mesh()
     : m_vertexBuffer( QGLBuffer::VertexBuffer )
     , m_indexBuffer( QGLBuffer::IndexBuffer )
@@ -39,7 +41,7 @@ void Mesh::bind()
     m_indexBuffer.bind();
 }
 
-void Mesh::draw()
+void Mesh::draw() const
 {
     glDrawElements(GL_TRIANGLES, m_indexData.count(), GL_UNSIGNED_SHORT, 0);    
 }
@@ -126,6 +128,7 @@ void Mesh::addFace(const QVector3D &p, const QVector3D &du, const QVector3D &dv,
         {
             // if((i^j)&1) // per debug: uno si e uno no, a scacchiera
             addQuad(k1,k1+m,k1+1+m,k1+1);
+            // addTriangle(k1,k1+m,k1+1+m); // per debug: triangoli invece di quadrati
             k1++;
         }
     }
@@ -138,44 +141,90 @@ void Mesh::makeCube(double r, int n)
 
 void Mesh::makeBox(double rx, double ry, double rz, int nx, int ny, int nz)
 {
-    addFace(
-        QVector3D(-rx,-ry,rz),
+    addBox(QVector3D(0,0,0), rx,ry,rz,nx,ny,nz);    
+    createBuffers();
+}
+
+void Mesh::addBox(const QVector3D &center, double rx, double ry, double rz, int nx, int ny, int nz)
+{
+   addFace(
+        center + QVector3D(-rx,-ry,rz),
         QVector3D(2*rx/(nx-1),0,0),
         QVector3D(0,2*ry/(ny-1),0),
         nx,ny);
     addFace(
-        QVector3D(rx,-ry,-rz),
+        center + QVector3D(rx,-ry,-rz),
         QVector3D(-2*rx/(nx-1),0,0),
         QVector3D(0,2*ry/(ny-1),0),
         nx,ny);
     addFace(
-        QVector3D(-rx,-ry,-rz),
+        center + QVector3D(-rx,-ry,-rz),
         QVector3D(0,0,2*rz/(nz-1)),
         QVector3D(0,2*ry/(ny-1),0),
         nz,ny);
     addFace(
-        QVector3D(rx,-ry,rz),
+        center + QVector3D(rx,-ry,rz),
         QVector3D(0,0,-2*rz/(nz-1)),
         QVector3D(0,2*ry/(ny-1),0),
         nz,ny);
     addFace(
-        QVector3D(-rx,-ry,-rz),
+        center + QVector3D(-rx,-ry,-rz),
         QVector3D(2*rx/(nx-1),0,0),
         QVector3D(0,0,2*rz/(nz-1)),
         nx,nz);
     addFace(
-        QVector3D(rx,ry,-rz),
+        center + QVector3D(rx,ry,-rz),
         QVector3D(-2*rx/(nx-1),0,0),
         QVector3D(0,0,2*rz/(nz-1)),
         nx,nz);
-
-    
-    createBuffers();
 }
+
+
 
 /*
 void Mesh::makeCube(double r, int n, int m)
 {
 }
 */
+
+
+
+void Mesh::makePrism(double r, double h, int n)
+{
+    QVector<QVector3D> pts;
+    for(int i=0;i<n;i++) {
+        double phi = 2*M_PI*i/n;
+        double cs = cos(phi), sn = sin(phi);
+        pts.append(QVector3D(r*cs,r*sn,-h));
+        pts.append(QVector3D(r*cs,r*sn, h));
+    }
+    QVector3D norm;
+    int k = m_vCount;
+    // up face
+    addVertex(QVector3D(0,0,h), QVector3D(0,0,1));
+    for(int i=0;i<n;i++) addVertex(pts[2*i+1], QVector3D(0,0,1));
+    for(int i=0;i+1<n;i++) addTriangle(k,k+1+i,k+2+i);
+    addTriangle(k,k+n,k+1);
+    // dn face
+    k = m_vCount;
+    addVertex(QVector3D(0,0,-h), QVector3D(0,0,-1));
+    for(int i=0;i<n;i++) addVertex(pts[2*i], QVector3D(0,0,-1));
+    for(int i=0;i+1<n;i++) addTriangle(k,k+2+i,k+1+i);
+    addTriangle(k,k+1,k+n);
+    // side faces
+    for(int i=0;i<n;i++)
+    {
+        int i1 = (i+1)%n;
+        k = m_vCount;
+        QVector3D norm = QVector3D::crossProduct(pts[2*i1]-pts[2*i], QVector3D(0,0,1)).normalized();
+        addVertex(pts[2*i], norm);
+        addVertex(pts[2*i1], norm);
+        addVertex(pts[2*i1+1], norm);
+        addVertex(pts[2*i+1], norm);
+        addQuad(k,k+1,k+2,k+3);
+    }
+
+    createBuffers();
+}
+
 

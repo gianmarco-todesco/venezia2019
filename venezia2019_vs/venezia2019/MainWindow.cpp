@@ -5,6 +5,8 @@
 #include "CircleLimit3Page.h"
 #include "TestPage.h"
 #include "H3GridPage.h"
+#include "PolydronPage.h"
+#include "CubeGridPage.h"
 
 
 #include <QKeyEvent>
@@ -113,13 +115,17 @@ void addConference(MainWindow *w)
 
   
   Slide *slide;
-  w->addWidget(new H3GridPage());
-  w->addWidget(new TestPage());
+  w->addWidget(new CubeGridPage());
+  w->addWidget(new PolydronPage());
   /*
+  w->addWidget(new TestPage());
+  */
+ 
   w->addWidget(new PDiskPage());
   w->addWidget(new FoldingFacesPage());
   w->addWidget(new CircleLimit3Page());
-  */
+  w->addWidget(new H3GridPage());
+ 
 }
 
 MainWindow::MainWindow()

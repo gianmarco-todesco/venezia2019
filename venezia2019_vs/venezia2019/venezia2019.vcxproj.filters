@@ -33,6 +33,12 @@
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Source Files\pages">
+      <UniqueIdentifier>{a8614bc8-3084-4347-a6f4-2efab570713a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\pages">
+      <UniqueIdentifier>{55e350eb-a702-40dc-a72b-ef078fdfd0a3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\qrc_venezia2019.cpp">
@@ -53,12 +59,6 @@
     <ClCompile Include="OpenGLPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FoldingFacesPage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PDiskPage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Complex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -77,9 +77,6 @@
     <ClCompile Include="Point3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CircleLimit3Page.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="CircleLimit3Tessellation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -95,16 +92,10 @@
     <ClCompile Include="Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TestPage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Polyhedra.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H3.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H3GridPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="H3Grid.cpp">
@@ -112,6 +103,27 @@
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CircleLimit3Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="FoldingFacesPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="H3GridPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="PDiskPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="PolydronPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="TestPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="CubeGridPage.cpp">
+      <Filter>Source Files\pages</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -124,12 +136,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OpenGLPage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FoldingFacesPage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PDiskPage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Complex.h">
@@ -150,9 +156,6 @@
     <ClInclude Include="Point3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CircleLimit3Page.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="CircleLimit3Tessellation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -168,16 +171,10 @@
     <ClInclude Include="Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TestPage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Polyhedra.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="H3GridPage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="H3Grid.h">
@@ -185,6 +182,27 @@
     </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CircleLimit3Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="FoldingFacesPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="H3GridPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="PolydronPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="TestPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="PDiskPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeGridPage.h">
+      <Filter>Header Files\pages</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
