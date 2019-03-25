@@ -17,7 +17,6 @@ CircleLimit3Page::CircleLimit3Page()
 , m_status(0)
 , m_transfType(0)
 {
-  setFocusPolicy(Qt::ClickFocus);
 }
 
 
@@ -28,7 +27,11 @@ CircleLimit3Page::~CircleLimit3Page()
 
 void CircleLimit3Page::paintGL()
 {
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
   glClear(GL_COLOR_BUFFER_BIT);
+
+  int w = width(), h = height();
 
   m_viewer->resize(width(), height(), height()*0.45);
 
@@ -75,7 +78,7 @@ void CircleLimit3Page::paintGL()
 void CircleLimit3Page::mousePressEvent(QMouseEvent *e)
 {
   m_lastPos = e->pos();
-  grabMouse();
+  // grabMouse();
 
 }
 
@@ -92,7 +95,7 @@ void CircleLimit3Page::mouseMoveEvent(QMouseEvent *e)
 
 void CircleLimit3Page::mouseReleaseEvent(QMouseEvent *)
 {
-  releaseMouse();
+  //releaseMouse();
 }
 
 void CircleLimit3Page::keyPressEvent(QKeyEvent*e)
@@ -103,6 +106,7 @@ void CircleLimit3Page::keyPressEvent(QKeyEvent*e)
     else if(e->key()=='O') m_transfType = 1;
     else m_transfType = 2;
 
+    /*
     if(m_timerId == 0)
     {
       m_timerId = startTimer(40);
@@ -113,6 +117,7 @@ void CircleLimit3Page::keyPressEvent(QKeyEvent*e)
       killTimer(m_timerId);
       m_timerId = 0;
     }
+    */
   }
   else if(e->key()==Qt::Key_F12)
   {
@@ -156,6 +161,7 @@ void CircleLimit3Page::timerEvent(QTimerEvent *)
 
 void CircleLimit3Page::savePage()
 {
+    /*
   QGLFormat fmt;
   fmt.setDoubleBuffer(false);
   fmt.setAlpha(false);
@@ -186,5 +192,6 @@ void CircleLimit3Page::savePage()
   buffer.doneCurrent();
   makeCurrent();
   buffer.toImage().save("screenshot3.png");
+  */
 }
 

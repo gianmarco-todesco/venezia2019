@@ -2,11 +2,20 @@
 #define PDISKPAGE_H
 
 #include "OpenGLPage.h"
+#include "Page.h"
+#include <QPointF>
 #include "HTransform.h"
 #include "HTessellation.h"
 #include "Complex.h"
 #include <vector>
 #include <set>
+
+#include <QGLWidget>
+#include <QGLContext>
+#include <set>
+#include <QPointF>
+#include <qglbuffer.h>
+
 
 struct Color;
 
@@ -94,8 +103,13 @@ public:
   void savePattern1();
   void savePattern2();
 
-protected:
+  void start();
+
+  void initializeGL();
+  void resizeGL(int width, int height);
   void paintGL();
+
+protected:
 
   void mousePressEvent(QMouseEvent *e);
   void mouseMoveEvent(QMouseEvent *e);

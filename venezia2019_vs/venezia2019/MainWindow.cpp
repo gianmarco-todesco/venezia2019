@@ -121,9 +121,9 @@ void addConference(MainWindow *w)
   w->addWidget(new TestPage());
   */
  
-  w->addWidget(new PDiskPage());
-  w->addWidget(new FoldingFacesPage());
-  w->addWidget(new CircleLimit3Page());
+  // w->addWidget(new PDiskPage());
+  // w->addWidget(new FoldingFacesPage());
+  // w->addWidget(new CircleLimit3Page());
   w->addWidget(new H3GridPage());
  
 }

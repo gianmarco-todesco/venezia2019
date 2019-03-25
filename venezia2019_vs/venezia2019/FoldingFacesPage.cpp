@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <fstream>
+#include <set>
 
 #include "Gutil.h"
 #include "Point3.h"
@@ -685,8 +686,7 @@ void Mesh3D::save()
 //=============================================================================
 
 FoldingFacesPage::FoldingFacesPage()
-: OpenGLPage()
-, m_pp(0,0)
+: m_pp(0,0)
 , m_rotating(true)
 , m_timerId(0)
 , m_mesh(new Mesh3D())
@@ -704,7 +704,7 @@ FoldingFacesPage::FoldingFacesPage()
   }
   m_mesh->resetPositions();
   */
-  setFocusPolicy(Qt::ClickFocus);
+  // setFocusPolicy(Qt::ClickFocus);
   memset(m_viewMatrix,0,sizeof(m_viewMatrix));
   for(int i=0;i<16;i+=5) m_viewMatrix[i] = 1.0;
 }
@@ -1201,6 +1201,7 @@ void FoldingFacesPage::wheelEvent(QWheelEvent*e)
   m_cameraDistance = clamp(m_cameraDistance - e->delta()*0.01, 1, 30);
 }
 
+/*
 void FoldingFacesPage::timerEvent(QTimerEvent*)
 {
   updateGL();
@@ -1215,3 +1216,4 @@ void FoldingFacesPage::hideEvent(QHideEvent*)
 {
   if(m_timerId != 0) {killTimer(m_timerId); m_timerId=0;}
 }
+*/

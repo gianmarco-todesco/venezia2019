@@ -102,7 +102,7 @@ PDiskPage::PDiskPage()
 , m_repeatDrawings(false)
 , m_tess(0)
 {
-  setFocusPolicy(Qt::ClickFocus);
+  // setFocusPolicy(Qt::ClickFocus);
   m_transformStack.push_back(HTransform());
   m_pts.push_back(Complex(-0.4,0.6));
   m_pts.push_back(Complex(0.4,0.3));
@@ -111,11 +111,36 @@ PDiskPage::PDiskPage()
   m_pts.push_back(Complex(0.1,-0.8));
 }
 
+
 void PDiskPage::showEvent(QShowEvent *)
 {
   setFocus();
   m_pan = QPointF(width()*0.5, height()*0.5);
   m_scale = height()*0.45;
+}
+
+
+void PDiskPage::initializeGL()
+{
+    glClearColor(1,1,1,1);
+}
+
+void PDiskPage::resizeGL(int width, int height)
+{
+    glViewport(0,0,width,height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0,width,0,height,-1,1);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+
+
+void PDiskPage::start()
+{
+  m_pan = QPointF(width()*0.5, height()*0.5);
+  m_scale = height()*0.45;
+  glDisable(GL_LIGHTING);
 }
 
 Complex PDiskPage::boundPoint(const Complex &c) const
@@ -747,6 +772,7 @@ void PDiskPage::mouseReleaseEvent(QMouseEvent *)
 
 void PDiskPage::saveImage()
 {
+    /*
   QGLFormat fmt;
   fmt.setDoubleBuffer(false);
   fmt.setAlpha(false);
@@ -773,6 +799,7 @@ void PDiskPage::saveImage()
   buffer.doneCurrent();
   makeCurrent();
   buffer.toImage().save("screenshot.png");
+  */
 }
 
 void PDiskPage::savePattern1()

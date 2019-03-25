@@ -125,6 +125,15 @@
     <ClCompile Include="CubeGridPage.cpp">
       <Filter>Source Files\pages</Filter>
     </ClCompile>
+    <ClCompile Include="Viewer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Page.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DummyPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="venezia2019.qrc">
@@ -202,6 +211,15 @@
       <Filter>Header Files\pages</Filter>
     </ClInclude>
     <ClInclude Include="CubeGridPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Viewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Page.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DummyPage.h">
       <Filter>Header Files\pages</Filter>
     </ClInclude>
   </ItemGroup>

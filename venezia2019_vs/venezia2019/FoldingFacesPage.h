@@ -1,13 +1,14 @@
 #ifndef FOLDINGFACESPAGE_H
 #define FOLDINGFACESPAGE_H
 
-#include "OpenGLPage.h"
+#include "Page.h"
+#include "Gutil.h"
 #include <QPointF>
 
 class Mesh3D;
 class QGLShaderProgram;
 
-class FoldingFacesPage : public OpenGLPage
+class FoldingFacesPage : public Page
 {
   QPointF m_pp;
   QPoint m_lastPos;
@@ -39,7 +40,7 @@ protected:
   void wheelEvent(QWheelEvent*);
 
   void timerEvent(QTimerEvent*);
-  void showEvent(QShowEvent*);
+  // void showEvent(QShowEvent*);
   void hideEvent(QHideEvent*);
 
 };

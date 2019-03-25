@@ -82,6 +82,7 @@
     <ClCompile Include="CircleLimit3Viewer.cpp" />
     <ClCompile Include="Complex.cpp" />
     <ClCompile Include="CubeGridPage.cpp" />
+    <ClCompile Include="DummyPage.cpp" />
     <ClCompile Include="FoldingFacesPage.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_MainWindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
@@ -108,12 +109,14 @@
     <ClCompile Include="Mesh2D.cpp" />
     <ClCompile Include="Net.cpp" />
     <ClCompile Include="OpenGLPage.cpp" />
+    <ClCompile Include="Page.cpp" />
     <ClCompile Include="PDiskPage.cpp" />
     <ClCompile Include="Point3.cpp" />
     <ClCompile Include="PolydronPage.cpp" />
     <ClCompile Include="Polyhedra.cpp" />
     <ClCompile Include="TestPage.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="Viewer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="venezia2019.qrc">
@@ -146,6 +149,7 @@
     <ClInclude Include="CircleLimit3Viewer.h" />
     <ClInclude Include="Complex.h" />
     <ClInclude Include="CubeGridPage.h" />
+    <ClInclude Include="DummyPage.h" />
     <ClInclude Include="FoldingFacesPage.h" />
     <ClInclude Include="Gutil.h" />
     <ClInclude Include="H3.h" />
@@ -158,12 +162,14 @@
     <ClInclude Include="Mesh2D.h" />
     <ClInclude Include="Net.h" />
     <ClInclude Include="OpenGLPage.h" />
+    <ClInclude Include="Page.h" />
     <ClInclude Include="PDiskPage.h" />
     <ClInclude Include="Point3.h" />
     <ClInclude Include="PolydronPage.h" />
     <ClInclude Include="Polyhedra.h" />
     <ClInclude Include="TestPage.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="Viewer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,12 +1,13 @@
 #ifndef CIRCLELIMIT3PAGE_H
 #define CIRCLELIMIT3PAGE_H
 
-#include "OpenGLPage.h"
+#include "Page.h"
 #include <QTime>
+#include <qpoint.h>
 
 class CircleLimit3Viewer;
 
-class CircleLimit3Page : public OpenGLPage
+class CircleLimit3Page : public Page
 {
   CircleLimit3Viewer *m_viewer;
   QPoint m_lastPos;
@@ -22,7 +23,6 @@ public:
 protected:
   void paintGL();
 
-  void showEvent(QShowEvent*) {setFocus();}
 
   void mousePressEvent(QMouseEvent *e);
   void mouseReleaseEvent(QMouseEvent *e);
