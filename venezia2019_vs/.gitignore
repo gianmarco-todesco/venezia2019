@@ -4,6 +4,7 @@
 *.vsp
 *.psess
 *.suo
+*.opensdf
 Debug
 Release
 GeneratedFiles
