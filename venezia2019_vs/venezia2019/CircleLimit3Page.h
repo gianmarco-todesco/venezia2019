@@ -9,29 +9,31 @@ class CircleLimit3Viewer;
 
 class CircleLimit3Page : public Page
 {
-  CircleLimit3Viewer *m_viewer;
-  QPoint m_lastPos;
-  QTime m_time;
-  int m_timerId;
-  int m_status;
-  int m_transfType;
+    CircleLimit3Viewer *m_viewer;
+    QPoint m_lastPos;
+    QTime m_time;
+    int m_timerId;
+    int m_status;
+    int m_transfType;
 
 public:
-  CircleLimit3Page();
-  ~CircleLimit3Page();
+    CircleLimit3Page();
+    ~CircleLimit3Page();
 
 protected:
-  void paintGL();
+    void start();
+    void initializeGL();
+    void resizeGL(int w, int h);
+    void paintGL();
 
+    void mousePressEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
+    void mouseMoveEvent(QMouseEvent *e);
 
-  void mousePressEvent(QMouseEvent *e);
-  void mouseReleaseEvent(QMouseEvent *e);
-  void mouseMoveEvent(QMouseEvent *e);
+    void keyPressEvent(QKeyEvent*);
+    void timerEvent(QTimerEvent *);
 
-  void keyPressEvent(QKeyEvent*);
-  void timerEvent(QTimerEvent *);
-
-  void savePage();
+    void savePage();
 };
 
 #endif // CIRCLELIMIT3PAGE_H

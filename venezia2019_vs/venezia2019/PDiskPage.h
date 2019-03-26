@@ -35,7 +35,7 @@ public:
 };
 
 
-class PDiskPage : public OpenGLPage
+class PDiskPage : public Page
 {
 protected:
   int m_status;
@@ -104,7 +104,6 @@ public:
   void savePattern2();
 
   void start();
-
   void initializeGL();
   void resizeGL(int width, int height);
   void paintGL();

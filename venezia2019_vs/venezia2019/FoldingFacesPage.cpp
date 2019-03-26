@@ -718,6 +718,12 @@ FoldingFacesPage::~FoldingFacesPage()
 
 void FoldingFacesPage::initializeGL()
 {
+  // texture = new GLTexture2D(":resources/normal.jpg", 256,256);
+  // m_bumpMapShader = loadProgram("bumpmap");
+}
+
+void FoldingFacesPage::start()
+{
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_LIGHT0);
@@ -737,20 +743,17 @@ void FoldingFacesPage::initializeGL()
   glLightfv(GL_LIGHT1, GL_DIFFUSE, lcolor);
   glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
   glLightfv(GL_LIGHT1, GL_POSITION, lpos);
-
-  // texture = new GLTexture2D(":resources/normal.jpg", 256,256);
-  // m_bumpMapShader = loadProgram("bumpmap");
 }
 
 void FoldingFacesPage::resizeGL(int width, int height)
 {
-  double aspect = (float)width/height;
-  glViewport(0,0,width,height);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(45, aspect, 1.0, 70.0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+    double aspect = (float)width/height;
+    glViewport(0,0,width,height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, aspect, 1.0, 70.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
 
 

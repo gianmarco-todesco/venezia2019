@@ -6,6 +6,7 @@
 #include <set>
 #include <QPointF>
 #include <qglbuffer.h>
+#include <QTime>
 
 
 class QGLShaderProgram;
@@ -14,6 +15,8 @@ class Presentation;
 class Viewer  : public QGLWidget
 {
     Presentation *m_presentation;    
+    QTime m_clock;
+    double m_fps;
 
 public:
     Viewer();

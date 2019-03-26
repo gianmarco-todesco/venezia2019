@@ -7,6 +7,8 @@
 #include <QVector3D>
 #include "Point3.h"
 #include <gl/GLU.h>
+#include <QMatrix4x4>
+#include <QQuaternion>
 
 
 inline double getNorm2(const QPointF &p) {return p.x()*p.x()+p.y()*p.y();}
@@ -60,5 +62,9 @@ inline Color mix(const Color &c0, const Color &c1, double t)
 
 void setColor(double r, double g, double b, double m=1.0);
 inline  void setColor(const Color &c) {setColor(c.r,c.g,c.b,c.m);}
+
+
+QQuaternion extractQuaternion(const QMatrix4x4 &matrix);
+QMatrix4x4 slerp(const QMatrix4x4 &mat1, const QMatrix4x4 &mat2, double t);
 
 #endif // GUTIL_H

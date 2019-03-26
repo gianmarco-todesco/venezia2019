@@ -1,5 +1,6 @@
 #include "Gutil.h"
 #include <assert.h>
+#include <qvector3d.h>
 
 const double pi = 3.14159265;
 
@@ -214,5 +215,63 @@ void setColor(double r, double g, double b, double m)
 {
   GLfloat c[4] = {(GLfloat)r,(GLfloat)g,(GLfloat)b,(GLfloat)m};
   glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, c);
+}
+
+// see: http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
+QQuaternion extractQuaternion(const QMatrix4x4 &matrix)
+{
+    const qreal *m = matrix.constData();
+
+    double m00 = m[0], m01 = m[4], m02 = m[8];
+    double m10 = m[1], m11 = m[5], m12 = m[9];
+    double m20 = m[2], m21 = m[6], m22 = m[10];
+
+    double tr = m00 + m11 + m22;
+    double qw,qx,qy,qz;
+    if(tr>0)
+    {
+        double S = sqrt(tr+1.0) * 2;
+        qw = 0.25 * S;
+        qx = (m21-m12)/S;
+        qy = (m02-m20)/S;
+        qz = (m10-m01)/S;
+    }
+    else if(m00 > m11 && m00 > m22)
+    {
+        double S = sqrt(1.0 + m00 - m11 - m22) * 2; // S=4*qx 
+        qw = (m21 - m12) / S;
+        qx = 0.25 * S;
+        qy = (m01 + m10) / S; 
+        qz = (m02 + m20) / S; 
+    }
+    else if(m11 > m22)
+    {
+        float S = sqrt(1.0 + m11 - m00 - m22) * 2; // S=4*qy
+        qw = (m02 - m20) / S;
+        qx = (m01 + m10) / S; 
+        qy = 0.25 * S;
+        qz = (m12 + m21) / S; 
+    }
+    else
+    {
+        float S = sqrt(1.0 + m22 - m00 - m11) * 2; // S=4*qz
+        qw = (m10 - m01) / S;
+        qx = (m02 + m20) / S;
+        qy = (m12 + m21) / S;
+        qz = 0.25 * S;
+    }
+
+    return QQuaternion(qw,qx,qy,qz).normalized();
+}
+
+QMatrix4x4 slerp(const QMatrix4x4 &mat1, const QMatrix4x4 &mat2, double t)
+{
+    QVector3D p = mat1.map(QVector3D(0,0,0)) * (1-t) + mat2.map(QVector3D(0,0,0)) * t;
+    QQuaternion q = QQuaternion::slerp(extractQuaternion(mat1), extractQuaternion(mat2), t);
+    QMatrix4x4 mat;
+    mat.setToIdentity();
+    mat.translate(p);
+    mat.rotate(q);
+    return mat;
 }
 

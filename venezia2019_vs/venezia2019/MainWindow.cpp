@@ -115,8 +115,7 @@ void addConference(MainWindow *w)
 
   
   Slide *slide;
-  w->addWidget(new CubeGridPage());
-  w->addWidget(new PolydronPage());
+  // w->addWidget(new PolydronPage());
   /*
   w->addWidget(new TestPage());
   */

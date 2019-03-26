@@ -6,15 +6,20 @@
 #include "PDiskPage.h"
 #include "FoldingFacesPage.h"
 #include "CircleLimit3Page.h"
+#include "CubeGridPage.h"
+#include "PolydronPage.h"
 
 
 
 void Presentation::buildPages()
 {
-    addPage(new CircleLimit3Page());
+    addPage(new PolydronPage());
+    addPage(new CubeGridPage());
+    // 
+    //addPage(new CircleLimit3Page());
+    //addPage(new PDiskPage());
+    // addPage(new FoldingFacesPage());
     /*
-    addPage(new FoldingFacesPage());
-    addPage(new PDiskPage());
     addPage(new DummyPage());
     */
 }
@@ -103,6 +108,7 @@ void Presentation::addPage(Page*page)
 
 void Presentation::start(Page *page)
 {
+    page->setSize(m_width, m_height);
     page->resizeGL(m_width, m_height);
     page->start();
 }

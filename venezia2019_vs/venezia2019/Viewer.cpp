@@ -25,6 +25,7 @@
 
 Viewer::Viewer()
 : QGLWidget()
+, m_fps(0)
 {  
     setFocusPolicy(Qt::ClickFocus);
     m_presentation = new Presentation(this);
@@ -68,7 +69,8 @@ void Viewer::initializeGL()
   glLightfv(GL_LIGHT1, GL_POSITION, lpos);
   m_presentation->initializeGL();
 
-  startTimer(40);
+  startTimer(20);
+  m_clock.start();
 }
 
 void Viewer::resizeGL(int width, int height)
@@ -120,7 +122,14 @@ void Viewer::paintGL()
     err = glGetError() ;
     assert(err == GL_NO_ERROR);
 
-
+    int ms = m_clock.restart();
+    if(ms>0)
+    {
+        double fps = 1000.0/(double)ms;
+        m_fps = 0.9 * m_fps + 0.1 * fps;
+    }
+    qglColor(Qt::cyan);
+    renderText(50,50,QString::number((int)m_fps), QFont("Calibri", 24));
 }
 
 

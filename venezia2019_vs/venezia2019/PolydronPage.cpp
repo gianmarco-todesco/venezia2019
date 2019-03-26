@@ -21,22 +21,126 @@
 #include <qmap.h>
 
 
+namespace polydron {
+
+    class Piece;
+    
+    class Behavior {
+    public:
+        const Piece *piece;
+        virtual QMatrix4x4 getMatrix(int time) const = 0;
+        // virtual QString getName() const = 0;
+        Behavior(Piece *p) : piece(p) {}
+    };
+
+    class PieceType {
+    public:
+        const int index;
+        Mesh mesh;
+        Color color;
+        double radius;
+        QList<Piece*> pieces;
+        PieceType(int i) : index(i), color(1,1,1), radius(0) {}
+    };
+
+    class Piece {
+    public:
+        const int index;
+        const PieceType *type;
+        QMatrix4x4 worldMatrix;
+        Behavior *behaviour;
+        Piece(PieceType *t, int i) : type(t), index(i), behaviour(0) {}
+        ~Piece() { delete behaviour; }
+
+        void setBehavior(Behavior *b) { delete behaviour; behaviour = b; }
+        void animate(int t) {
+            if(behaviour) worldMatrix = behaviour->getMatrix(t);
+        };
+    };
+
+
+    class RestBehavior : public Behavior {
+
+    public:
+        RestBehavior(Piece *p) 
+            : Behavior(p)
+        {
+        }
+
+        QMatrix4x4 getMatrix(int time) const {
+           
+            double t = (double)piece->index / (double)piece->type->pieces.count();
+            double phi = time*0.0001 + 2*M_PI*t;
+            double r = piece->type->radius*4;
+            QMatrix4x4 matrix; matrix.setToIdentity();
+            matrix.translate(r*cos(phi), r*sin(phi), -20);
+            matrix.rotate(phi*180/M_PI, 0,0,1);
+            
+            return matrix;
+        }
+    };
+
+    class PolyhedronBehavior : public Behavior {
+        QMatrix4x4 m_faceMatrix;
+    public:
+        PolyhedronBehavior(Piece *p, const Polyhedron *ph, int faceIndex) 
+        : Behavior(p)
+        {
+            m_faceMatrix = getFaceMatrix(ph, faceIndex);
+        }
+
+        QMatrix4x4 getMatrix(int time) const {
+            QMatrix4x4 matrix;
+            // matrix.setToIdentity();
+            
+            // matrix.translate(0,0,3);
+            matrix.rotate(time * 0.01, 0,1,0);
+            matrix = matrix * m_faceMatrix;
+            return matrix;
+        }
+
+    };
+
+    class TransitionBehavior : public Behavior {
+        Behavior *m_b1, *m_b2;
+        double m_start, m_duration;
+    public:
+        TransitionBehavior(Piece *p, Behavior *b1, Behavior *b2, double start, double duration)
+            : Behavior(p)
+            , m_b1(b1)
+            , m_b2(b2)
+            , m_start(start)
+            , m_duration(duration)
+        {
+        }
+
+        QMatrix4x4 getMatrix(int time) const {
+            double t = ((double)time*0.001 - m_start) / m_duration;
+            if(t<=0) return m_b1->getMatrix(time);
+            else if(t>=1) return m_b2->getMatrix(time);
+            QMatrix4x4 mat1 = m_b1->getMatrix(time);
+            QMatrix4x4 mat2 = m_b2->getMatrix(time);
+
+            QMatrix4x4 mat = slerp(mat1, mat2, t);
+            return mat;
+        }
+
+    };
+
+};
+
+using namespace polydron;
+
+
+
+
+
+
 class Polydron {
 public:
     const double edgeLength;
 
-    class Piece;
-    struct PieceType {
-        Mesh mesh;
-        Color color;
-        QList<Piece*> pieces;
-    };
-
-    struct Piece {
-        PieceType *type;
-        QMatrix4x4 worldMatrix;
-    };
-
+    
 
     QList<PieceType*> m_types;
     QList<Piece*> m_pieces;
@@ -48,17 +152,18 @@ public:
     
     void buildPolyhedra();
     void buildPieces();
-    void buildPieces(int edgeCount, int count, const Color color);
+    void buildPieces(int edgeCount, int count, const Color color, double radius);
+    void animate(int t);
     void draw();
 
-    void place();
-    void place(int phIndex);
+    void place(int time);
+    void place(int time, int phIndex);
 
 };
 
 
 Polydron::Polydron()
-    : edgeLength(0.6)
+    : edgeLength(3)
 {
     buildPolyhedra();
 }
@@ -102,31 +207,37 @@ void Polydron::buildPieces()
         Color(0.2,0.4,0.8),
         Color(0.8,0.2,0.9)
     };
-    buildPieces(3, 20, colors[0]);
-    buildPieces(4, 6, colors[1]);
-    buildPieces(5, 12, colors[2]);
-    buildPieces(10, 12, colors[3]);
+    buildPieces(3, 20, colors[0], 3.7);
+    buildPieces(4, 6, colors[1], 1);
+    buildPieces(5, 12, colors[2], 2.3);
+    buildPieces(10, 12, colors[3], 5);
 }
 
-void Polydron::buildPieces(int edgeCount, int count, Color color)
+void Polydron::buildPieces(int edgeCount, int count, Color color, double radius)
 {
     int index = m_types.count();
     m_edgeCountTable[edgeCount] = index;
-    PieceType *type = new PieceType();
+    PieceType *type = new PieceType(index);
     type->color = color;
+    type->radius = radius;
     double r = edgeLength*0.5/sin(M_PI/edgeCount);
     type->mesh.makePrism(r,0.03,edgeCount);
     m_types.append(type);
     for(int i=0;i<count; i++)
     {
-        Piece *piece = new Piece();
-        piece->type = type;
+        Piece *piece = new Piece(type, i);
         type->pieces.append(piece);
         piece->worldMatrix.setToIdentity();
         piece->worldMatrix.translate(2*i, index*2, 0);
         m_pieces.append(piece);
     }
-    place();
+    
+    place(0);
+}
+
+void Polydron::animate(int t)
+{
+    foreach(Piece*piece, m_pieces) piece->animate(t);
 }
 
 void Polydron::draw()
@@ -146,27 +257,18 @@ void Polydron::draw()
 }
 
 
-void Polydron::place()
+void Polydron::place(int time)
 {
-    int n = m_types.count();
-    for(int i=0;i<n;i++)
+    foreach(Piece *piece, m_pieces)
     {
-        int m = m_types[i]->pieces.count();
-        for(int j=0; j<m; j++) 
-        {
-            QMatrix4x4 mat;mat.setToIdentity();
-            mat.translate(2.5*(j-(m-1)*0.5), 2.5*(i-(n-1)*0.5),0);
-            m_types[i]->pieces[j]->worldMatrix = mat;
-        }
+        piece->setBehavior(new RestBehavior(piece));
     }
 }
 
-void Polydron::place(int phIndex)
+void Polydron::place(int time, int phIndex)
 {
     QVector<int> used(m_types.count(), 0);
-    QMap<int,int> usedCount;
     if(phIndex<0 || phIndex>=m_polyhedra.count()) return;
-    place();
     const Polyhedron *ph = m_polyhedra[phIndex];
     for(int i=0;i<ph->getFaceCount();i++) 
     {
@@ -178,7 +280,15 @@ void Polydron::place(int phIndex)
         const PieceType *type = m_types[typeIndex];
         assert(j<type->pieces.count());
         Piece *piece = type->pieces[j];
-        piece->worldMatrix = getFaceMatrix(ph, i);
+        Behavior *b1 = new RestBehavior(piece);
+        Behavior *b2 = new PolyhedronBehavior(piece, ph, i);
+        double start = time * 0.001 + j * 0.5;
+        piece->setBehavior(new TransitionBehavior(piece, b1,b2, start, 1));
+    }
+    foreach(Piece*piece, m_pieces)
+    {
+        if(piece->index >= used[piece->type->index])
+            piece->setBehavior(new RestBehavior(piece));
     }
 }
 
@@ -190,8 +300,7 @@ void Polydron::place(int phIndex)
 
 
 PolydronPage::PolydronPage()
-: OpenGLPage()
-, m_cameraDistance(15)
+: m_cameraDistance(15)
 , m_theta(0)
 , m_phi(0)
 , m_rotating(true)
@@ -206,27 +315,33 @@ PolydronPage::~PolydronPage()
 
 void PolydronPage::initializeGL()
 {
-  glEnable(GL_LIGHTING);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_LIGHT0);
-  // glEnable(GL_LIGHT1);
-  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE,1.0);
-  glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,1.0);
+    m_polydron->buildPieces();
+}
 
-  GLfloat lcolor[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
-  GLfloat lpos[]   = { 5, 7, 10, 1.0f};
-  glLightfv(GL_LIGHT0, GL_AMBIENT, lcolor);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE, lcolor);
-  glLightfv(GL_LIGHT0, GL_SPECULAR, lcolor);
-  glLightfv(GL_LIGHT0, GL_POSITION, lpos);
+void PolydronPage::start()
+{
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHT0);
+    // glEnable(GL_LIGHT1);
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE,1.0);
+    glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,1.0);
 
-  lpos[0] = -5;
-  glLightfv(GL_LIGHT1, GL_AMBIENT, lcolor);
-  glLightfv(GL_LIGHT1, GL_DIFFUSE, lcolor);
-  glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
-  glLightfv(GL_LIGHT1, GL_POSITION, lpos);
+    GLfloat lcolor[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
+    GLfloat lpos[]   = { 5, 7, 10, 1.0f};
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lcolor);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lcolor);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lcolor);
+    glLightfv(GL_LIGHT0, GL_POSITION, lpos);
 
-  m_polydron->buildPieces();
+    lpos[0] = -5;
+    glLightfv(GL_LIGHT1, GL_AMBIENT, lcolor);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, lcolor);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
+    glLightfv(GL_LIGHT1, GL_POSITION, lpos);
+
+  
+    m_clock.start();
 
 }
 
@@ -264,6 +379,8 @@ void PolydronPage::paintGL()
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_CULL_FACE);
+
+    m_polydron->animate(m_clock.elapsed());
 
     m_polydron->draw();
     glDisable(GL_CULL_FACE);
@@ -327,17 +444,18 @@ void PolydronPage::mouseMoveEvent(QMouseEvent *e)
     m_phi -= 0.25*delta.x();
     m_theta -= 0.25*delta.y();
   }
-  updateGL();
+  // updateGL();
 }
 
 void PolydronPage::keyPressEvent(QKeyEvent *e)
 {
-    if(e->key() == Qt::Key_0) m_polydron->place();
-    else if(e->key() == Qt::Key_1) m_polydron->place(0);
-    else if(e->key() == Qt::Key_2) m_polydron->place(1);
-    else if(e->key() == Qt::Key_3) m_polydron->place(2);
-    else if(e->key() == Qt::Key_4) m_polydron->place(3);
-    else if(e->key() == Qt::Key_5) m_polydron->place(4);
+    int time = m_clock.elapsed();
+    if(e->key() == Qt::Key_0) m_polydron->place(time);
+    else if(e->key() == Qt::Key_1) m_polydron->place(time,0);
+    else if(e->key() == Qt::Key_2) m_polydron->place(time,1);
+    else if(e->key() == Qt::Key_3) m_polydron->place(time,2);
+    else if(e->key() == Qt::Key_4) m_polydron->place(time,3);
+    else if(e->key() == Qt::Key_5) m_polydron->place(time,4);
     else {
       e->ignore();
     }
@@ -348,13 +466,4 @@ void PolydronPage::wheelEvent(QWheelEvent*e)
 {
     m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,50);
     updateGL();
-}
-
-void PolydronPage::showEvent(QShowEvent*)
-{
-    setFocus();
-}
-
-void PolydronPage::hideEvent(QHideEvent*)
-{
 }

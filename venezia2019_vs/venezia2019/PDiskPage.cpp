@@ -114,7 +114,7 @@ PDiskPage::PDiskPage()
 
 void PDiskPage::showEvent(QShowEvent *)
 {
-  setFocus();
+  // setFocus();
   m_pan = QPointF(width()*0.5, height()*0.5);
   m_scale = height()*0.45;
 }
@@ -122,7 +122,6 @@ void PDiskPage::showEvent(QShowEvent *)
 
 void PDiskPage::initializeGL()
 {
-    glClearColor(1,1,1,1);
 }
 
 void PDiskPage::resizeGL(int width, int height)
@@ -135,19 +134,20 @@ void PDiskPage::resizeGL(int width, int height)
 }
 
 
-
 void PDiskPage::start()
 {
-  m_pan = QPointF(width()*0.5, height()*0.5);
-  m_scale = height()*0.45;
-  glDisable(GL_LIGHTING);
+    m_pan = QPointF(width()*0.5, height()*0.5);
+    m_scale = height()*0.45;
+    glClearColor(1,1,1,1);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
 }
 
 Complex PDiskPage::boundPoint(const Complex &c) const
 {
-  double d2 = c.getNorm2();
-  if(d2<1) return c;
-  else return c * (1.0/sqrt(d2));
+    double d2 = c.getNorm2();
+    if(d2<1) return c;
+    else return c * (1.0/sqrt(d2));
 }
 
 double PDiskPage::getThickness(const Complex &c) const
@@ -476,7 +476,7 @@ void PDiskPage::paintGL()
 {
   glClear(GL_COLOR_BUFFER_BIT);
   // glEnable(GL_MULTISAMPLE);
-
+  
   double r = m_scale;
   const QPointF center = m_pan;
 
@@ -589,7 +589,7 @@ void PDiskPage::paintGL()
   else if(4<=m_status && m_status<=6 || m_status==10)
   {
     // tre pattern diversi
-    int nn[][2] = {{8,3},{6,4},{5,5}};
+    int nn[][2] = {{8,3},{6,4},{5,4}};
     int k = m_status-4;
     if(m_status>6) k = 0;
     int n = nn[k][0], m = nn[k][1];

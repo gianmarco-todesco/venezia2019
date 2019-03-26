@@ -27,21 +27,22 @@ public:
   void drawSurface();
 
 protected:
-  void initializeGL();
-  void paintGL();
-  void paintGL2();
-  void resizeGL(int width, int height);
+    void start();
+    void initializeGL();
+    void paintGL();
+    void paintGL2();
+    void resizeGL(int width, int height);
 
-  void mousePressEvent(QMouseEvent *e);
-  void mouseReleaseEvent(QMouseEvent *e);
-  void mouseMoveEvent(QMouseEvent *e);
+    void mousePressEvent(QMouseEvent *e);
+    void mouseReleaseEvent(QMouseEvent *e);
+    void mouseMoveEvent(QMouseEvent *e);
 
-  void keyPressEvent(QKeyEvent *e);
-  void wheelEvent(QWheelEvent*);
+    void keyPressEvent(QKeyEvent *e);
+    void wheelEvent(QWheelEvent*);
 
-  void timerEvent(QTimerEvent*);
-  // void showEvent(QShowEvent*);
-  void hideEvent(QHideEvent*);
+    // void timerEvent(QTimerEvent*);
+    // void showEvent(QShowEvent*);
+    // void hideEvent(QHideEvent*);
 
 };
 

@@ -13,7 +13,8 @@ int main(int argc, char *argv[])
     QGLFormat::setDefaultFormat(fmt);
 
     QApplication a(argc, argv);
-    PDiskPage w;
+    // PDiskPage w;
+    Viewer w;
     w.show();
     // w.showFullScreen();
     return a.exec();

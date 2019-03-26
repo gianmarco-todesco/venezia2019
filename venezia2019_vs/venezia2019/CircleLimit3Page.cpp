@@ -25,10 +25,28 @@ CircleLimit3Page::~CircleLimit3Page()
   delete m_viewer;
 }
 
-void CircleLimit3Page::paintGL()
+void CircleLimit3Page::start()
 {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
+    glClearColor(1,1,1,1);
+}
+
+void CircleLimit3Page::initializeGL()
+{
+}
+
+void CircleLimit3Page::resizeGL(int w, int h)
+{
+    glViewport(0,0,w,h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0,w,0,h,-1,1);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void CircleLimit3Page::paintGL()
+{
   glClear(GL_COLOR_BUFFER_BIT);
 
   int w = width(), h = height();

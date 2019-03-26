@@ -14,8 +14,7 @@
 
 
 CubeGridPage::CubeGridPage()
-: OpenGLPage()
-, m_cameraDistance(15)
+: m_cameraDistance(15)
 , m_theta(0)
 , m_phi(0)
 , m_rotating(true)
@@ -50,8 +49,12 @@ void CubeGridPage::buildMesh()
     m_mesh.createBuffers();
 }
 
-
 void CubeGridPage::initializeGL()
+{
+    buildMesh();
+}
+
+void CubeGridPage::start()
 {
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
@@ -72,9 +75,6 @@ void CubeGridPage::initializeGL()
   glLightfv(GL_LIGHT1, GL_DIFFUSE, lcolor);
   glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
   glLightfv(GL_LIGHT1, GL_POSITION, lpos);
-
-  buildMesh();
-
 }
 
 void CubeGridPage::resizeGL(int width, int height)
@@ -178,14 +178,4 @@ void CubeGridPage::wheelEvent(QWheelEvent*e)
     m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,50);
     updateGL();
 }
-
-void CubeGridPage::showEvent(QShowEvent*)
-{
-    setFocus();
-}
-
-void CubeGridPage::hideEvent(QHideEvent*)
-{
-}
-
 
