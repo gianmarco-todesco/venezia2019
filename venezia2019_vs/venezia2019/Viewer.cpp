@@ -2,6 +2,7 @@
 #include "Gutil.h"
 #include "Mesh.h"
 #include "Page.h"
+#include "Overlay.h"
 
 
 //#include <QPainter>
@@ -21,7 +22,7 @@
 #include <qvector.h>
 #include <qlist.h>
 
-
+GLuint texid;
 
 Viewer::Viewer()
 : QGLWidget()
@@ -30,10 +31,13 @@ Viewer::Viewer()
     setFocusPolicy(Qt::ClickFocus);
     m_presentation = new Presentation(this);
     m_presentation->buildPages();
+    m_overlay = new Overlay();
 }
 
 Viewer::~Viewer()
 {
+    delete m_presentation;
+    delete m_overlay;
 }
 
 QSize Viewer::sizeHint() const
@@ -68,6 +72,37 @@ void Viewer::initializeGL()
   glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
   glLightfv(GL_LIGHT1, GL_POSITION, lpos);
   m_presentation->initializeGL();
+
+
+  texid = bindTexture("images/cubic-space-division.jpg");
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+
+  /*
+  QImage img("images/cubic-space-division.jpg");
+  int w = img.width();
+  int h = img.height();
+
+
+  //------------------------------
+   glGenTextures(1, &texid);
+
+   QImage img2 = img.convertToFormat(QImage::Format_ARGB32);
+   glBindTexture(GL_TEXTURE_2D, texid);
+   gluBuild2DMipmaps( GL_TEXTURE_2D, 4, img.width(), img.height(),
+                   GL_BGRA_EXT, GL_UNSIGNED_BYTE, img.bits() );
+  //glTexImage2D(GL_TEXTURE_2D, 0, 4, image.width(), image.height(), 0,
+  //  GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
+  */
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  //.--------------------------------
+  m_overlay->initializeGL();
 
   startTimer(20);
   m_clock.start();
@@ -122,14 +157,24 @@ void Viewer::paintGL()
     err = glGetError() ;
     assert(err == GL_NO_ERROR);
 
+    qglColor(Qt::cyan);
+    renderText(50,50,QString::number((int)m_fps), QFont("Calibri", 24));
+
+    m_overlay->draw(width(), height());
+
+
+
+    
+
+
+
     int ms = m_clock.restart();
     if(ms>0)
     {
         double fps = 1000.0/(double)ms;
         m_fps = 0.9 * m_fps + 0.1 * fps;
     }
-    qglColor(Qt::cyan);
-    renderText(50,50,QString::number((int)m_fps), QFont("Calibri", 24));
+
 }
 
 

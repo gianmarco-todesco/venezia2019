@@ -8,7 +8,7 @@ class QMouseEvent;
 class QShowEvent;
 class QKeyEvent;
 class QWheelEvent;
-
+class QGLShaderProgram;
 
 class Page {
     Viewer *m_viewer;
@@ -33,6 +33,8 @@ public:
 
     void drawBackground();
     void drawAxes();
+    QGLShaderProgram *loadProgram(QString name);
+    void setViewUniforms(QGLShaderProgram*);
 
     virtual void mousePressEvent(QMouseEvent *e) {}
     virtual void mouseMoveEvent(QMouseEvent *e) {}

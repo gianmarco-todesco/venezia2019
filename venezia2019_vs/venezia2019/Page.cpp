@@ -8,13 +8,13 @@
 #include "CircleLimit3Page.h"
 #include "CubeGridPage.h"
 #include "PolydronPage.h"
-
+#include <qglshaderprogram.h>
 
 
 void Presentation::buildPages()
 {
-    addPage(new PolydronPage());
     addPage(new CubeGridPage());
+    addPage(new PolydronPage());
     // 
     //addPage(new CircleLimit3Page());
     //addPage(new PDiskPage());
@@ -54,11 +54,28 @@ void Page::drawAxes()
     m_viewer->drawAxes();
 }
 
+QGLShaderProgram *Page::loadProgram(QString name)
+{
+    return m_viewer->loadProgram(name);
+}
+
 void Page::updateGL()
 {
     m_viewer->updateGL();
 }
 
+void Page::setViewUniforms(QGLShaderProgram*program)
+{
+    GLdouble viewArr[16];
+    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
+    QMatrix4x4 view(viewArr);
+    QMatrix4x4 mview;
+
+    program->setUniformValue("view", view);
+    program->setUniformValue("mview", mview);
+    program->setUniformValue("iview", view.inverted());
+
+}
 
 //=============================================================================
 

@@ -11,10 +11,12 @@
 
 class QGLShaderProgram;
 class Presentation;
+class Overlay;
 
 class Viewer  : public QGLWidget
 {
-    Presentation *m_presentation;    
+    Presentation *m_presentation;
+    Overlay *m_overlay;
     QTime m_clock;
     double m_fps;
 
