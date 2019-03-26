@@ -107,6 +107,34 @@ bool Polyhedron::isValid() const
 
 //-------------------------------------------------------------------
 
+void checkOrientation(Polyhedron *ph)
+{
+    qDebug() << "--------------------------";
+    for(int i=0;i<ph->getFaceCount();i++)
+    {
+        Polyhedron::Indices vv;
+        getFaceVertices(vv, ph, i);
+        QVector3D fc = getFaceCenter(ph, i);
+        QList<QVector3D> pts;
+        int m = (int)vv.size();
+        assert(m>=3);
+        for(int j=0;j<m;j++)
+        {
+            QVector3D p = ph->getVertex(vv[j]).m_pos;
+            pts.append(p);
+        }
+        for(int j=0; j<m;j++)
+        {
+            QVector3D u = QVector3D::crossProduct(pts[(j+1)%m]-fc, pts[j]-fc);
+            // assert(QVector3D::dotProduct(u, fc)>0);
+            if(QVector3D::dotProduct(u, fc)<=0)
+                qDebug() << i << j;
+        }
+    }
+}
+
+//-------------------------------------------------------------------
+
 void unroll(
   std::vector<int> &result,
   std::vector<std::pair<int, int> > links)
@@ -783,4 +811,171 @@ Polyhedron *makeDual(const Polyhedron *src)
   return new Polyhedron(vv,ee,ff);
 }
 
+
+void getAdjacentVertices(Polyhedron::Indices &indices, const Polyhedron*ph, int vi)
+{
+    const Polyhedron::Vertex &v = ph->getVertex(vi);
+    std::vector<std::pair<int, int> > links;
+    QVector3D p0 = v.m_pos;
+    for(int fi=0;fi<ph->getFaceCount();fi++)
+    {
+        QList<int> ab;
+        const Polyhedron::Face &f = ph->getFace(fi);
+        for(int j=0;j<(int)f.m_edges.size();j++)
+        {
+            int ei = f.m_edges[j];
+            const Polyhedron::Edge &e = ph->getEdge(ei);
+            if(e.m_a == vi) ab.append(e.m_b);
+            else if(e.m_b == vi) ab.append(e.m_a);
+        }
+        assert(ab.empty() || ab.count()==2);
+        if(!ab.empty())
+        {
+            int a = ab[0], b = ab[1];
+            if(QVector3D::dotProduct(QVector3D::crossProduct(ph->getVertex(b).m_pos-p0, ph->getVertex(a).m_pos-p0), p0)>0) qSwap(a,b);
+            links.push_back(std::make_pair(a,b));
+
+            assert(QVector3D::dotProduct(p0, QVector3D::crossProduct(ph->getVertex(b).m_pos-p0, ph->getVertex(a).m_pos-p0))<0);
+
+        }
+    }
+
+    unroll(indices, links);
+
+    int m = (int)indices.size();
+    for(int j=0;j<m;j++)
+    {
+        QVector3D p1 = ph->getVertex(indices[j]).m_pos;
+        QVector3D p2 = ph->getVertex(indices[(j+1)%m]).m_pos;
+        QVector3D u = QVector3D::crossProduct(p2-p0,p1-p0);
+        assert(QVector3D::dotProduct(u, p0)>0.0);
+
+    }
+
+}
+
+
+Polyhedron *rectificate(const Polyhedron *src)
+{
+    std::vector<QVector3D> pts;
+    QMap<QPair<int, int>, int> table; // (a,b) => pts index
+    for(int i=0;i<src->getEdgeCount();i++)
+    {
+        const Polyhedron::Edge &edge = src->getEdge(i);
+        int a = edge.m_a;
+        int b = edge.m_b;
+        QVector3D pa = src->getVertex(a).m_pos;
+        QVector3D pb = src->getVertex(b).m_pos;
+        int index = (int)pts.size();
+        pts.push_back(0.5*(pa+pb));
+        table[qMakePair(a,b)] = index;
+        table[qMakePair(b,a)] = index;
+    }
+    std::vector<int> faces;
+    // vertex faces
+    for(int i=0;i<src->getVertexCount();i++)
+    {
+        Polyhedron::Indices vv;
+        getAdjacentVertices(vv, src, i);
+        faces.push_back(vv.size());
+        for(int j=0; j<vv.size();j++)
+        {
+            int k = table[qMakePair(i, vv[j])];
+            faces.push_back(k);
+        }
+    }
+    
+    // face faces
+
+    for(int i=0;i<src->getFaceCount();i++)
+    {
+        const Polyhedron::Face &face = src->getFace(i);
+        faces.push_back(face.m_edges.size());
+        for(int j=0;j<face.m_edges.size();j++)
+        {
+            const Polyhedron::Edge &edge = src->getEdge(face.m_edges[j]);
+            int k = table[qMakePair(edge.m_a, edge.m_b)];
+            faces.push_back(k);
+        }
+    }
+    // attenzione! C'è una pazzia: makePolyhedron non rispetta l'orientamento delle facce :(
+    return makePolyhedron(pts, faces);
+}
+
+
+Polyhedron *truncate(const Polyhedron *src, double t) 
+{
+    assert(t<0.5);
+    std::vector<QVector3D> pts;
+    QMap<QPair<int, int>, int> table; // (a,b) => indice del nuovo punto più vicino ad a
+    for(int i=0;i<src->getEdgeCount();i++)
+    {
+        const Polyhedron::Edge &edge = src->getEdge(i);
+        int a = edge.m_a;
+        int b = edge.m_b;
+        QVector3D pa = src->getVertex(a).m_pos;
+        QVector3D pb = src->getVertex(b).m_pos;
+        
+        table[qMakePair(a,b)] = pts.size();
+        pts.push_back((1-t)*pa + t*pb);
+        table[qMakePair(b,a)] = pts.size();
+        pts.push_back((1-t)*pb + t*pa);
+    }
+
+    std::vector<int> faces;
+    // vertex faces
+    for(int i=0;i<src->getVertexCount();i++)
+    {
+        Polyhedron::Indices vv;
+        getAdjacentVertices(vv, src, i);
+        faces.push_back(vv.size());
+        for(int j=0; j<vv.size();j++)
+        {
+            int k = table[qMakePair(i, vv[j])];
+            faces.push_back(k);
+        }
+    }
+    
+    // face faces
+
+    for(int i=0;i<src->getFaceCount();i++)
+    {
+
+        Polyhedron::Indices vv;
+        getFaceVertices(vv, src, i);
+        int m = (int)vv.size();
+        faces.push_back(2*m);
+        for(int j=0;j<m;j++)
+        {
+            int a = vv[j], b = vv[(j+1)%m];
+            faces.push_back(table[qMakePair(a,b)]);
+            faces.push_back(table[qMakePair(b,a)]);
+        }
+    }
+    // attenzione! C'è una pazzia: makePolyhedron non rispetta l'orientamento delle facce :(
+    return makePolyhedron(pts, faces);
+
+}
+
+
+
+Polyhedron *makeCuboctahedron()
+{
+    Polyhedron *cube = makeCube();
+    //checkOrientation(cube);
+    Polyhedron *ph = rectificate(cube);
+    delete cube;
+    //checkOrientation(ph);
+    return ph;
+}
+
+
+Polyhedron *makeTruncatedDodecahedron()
+{
+    Polyhedron *dod = makeDodecahedron();
+    const double t = 0.1*(5-sqrt(5.0));
+    Polyhedron *ph = truncate(dod,t);
+    delete dod;
+    return ph;
+}
 

@@ -110,6 +110,9 @@ void getFaceVertices(Polyhedron::Indices &result,const Polyhedron*ph, int index)
 void getVertexFaces(Polyhedron::Indices &result,const Polyhedron*ph, int index);
 bool isFaceSmall(const Polyhedron*ph, int index);
 
+// find indices of the vertices adjacent to the index-th vertex. 
+// the order is ccw looking at the origin
+void getAdjacentVertices(Polyhedron::Indices &indices, const Polyhedron*ph, int index);
 
 QVector3D getCenter(const Polyhedron*ph);
 
@@ -130,5 +133,12 @@ Polyhedron *makeIcosahedron();
 inline Polyhedron *makeCube() {return makeEsahedron();}
 
 Polyhedron *makeDual(const Polyhedron *src);
+
+Polyhedron *rectificate(const Polyhedron *src);
+Polyhedron *truncate(const Polyhedron *src, double t); // 0<t<0.5
+
+Polyhedron *makeCuboctahedron();
+Polyhedron *makeTruncatedDodecahedron();
+
 
 #endif

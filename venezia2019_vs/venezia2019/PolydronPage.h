@@ -19,6 +19,7 @@ class PolydronPage : public Page
   Polydron *m_polydron;
   QTime m_clock;
 
+
 public:
   PolydronPage();
  ~PolydronPage();

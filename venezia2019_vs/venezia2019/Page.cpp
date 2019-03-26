@@ -13,8 +13,8 @@
 
 void Presentation::buildPages()
 {
-    addPage(new CubeGridPage());
     addPage(new PolydronPage());
+    addPage(new CubeGridPage());
     // 
     //addPage(new CircleLimit3Page());
     //addPage(new PDiskPage());

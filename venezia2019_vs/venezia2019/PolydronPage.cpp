@@ -23,14 +23,19 @@
 
 namespace polydron {
 
+
     class Piece;
     
     class Behavior {
     public:
-        const Piece *piece;
-        virtual QMatrix4x4 getMatrix(int time) const = 0;
-        // virtual QString getName() const = 0;
+        Piece * const piece;
+
+        virtual void compute(double time) = 0;
+        virtual bool isTransition() const { return false; }
+        virtual bool hasFinished() const { return false; }
+        virtual bool isRest() const { return false; }
         Behavior(Piece *p) : piece(p) {}
+        virtual ~Behavior() {}
     };
 
     class PieceType {
@@ -50,12 +55,11 @@ namespace polydron {
         QMatrix4x4 worldMatrix;
         Behavior *behaviour;
         Piece(PieceType *t, int i) : type(t), index(i), behaviour(0) {}
-        ~Piece() { delete behaviour; }
-
-        void setBehavior(Behavior *b) { delete behaviour; behaviour = b; }
-        void animate(int t) {
-            if(behaviour) worldMatrix = behaviour->getMatrix(t);
-        };
+        ~Piece() { delete behaviour; behaviour=0; }
+        
+        Behavior *compute(Behavior *b, double time);
+        void compute(double time);
+        void addBehaviour(Behavior *b, double time, double startTime);
     };
 
 
@@ -66,68 +70,165 @@ namespace polydron {
             : Behavior(p)
         {
         }
-
-        QMatrix4x4 getMatrix(int time) const {
+        bool isRest() const { return true; }
+        void compute(double time) {
            
             double t = (double)piece->index / (double)piece->type->pieces.count();
-            double phi = time*0.0001 + 2*M_PI*t;
+            double phi = 0.2*time + 2*M_PI*t;
             double r = piece->type->radius*4;
             QMatrix4x4 matrix; matrix.setToIdentity();
-            matrix.translate(r*cos(phi), r*sin(phi), -20);
+            matrix.translate(r*cos(phi), r*sin(phi), -30);
             matrix.rotate(phi*180/M_PI, 0,0,1);
-            
-            return matrix;
+            piece->worldMatrix = matrix;
         }
     };
 
+
+
     class PolyhedronBehavior : public Behavior {
         QMatrix4x4 m_faceMatrix;
+        QMatrix4x4 *m_phMatrix;
     public:
-        PolyhedronBehavior(Piece *p, const Polyhedron *ph, int faceIndex) 
+        PolyhedronBehavior(Piece *p, const Polyhedron *ph, int faceIndex, QMatrix4x4 *phMatrix) 
         : Behavior(p)
+        , m_phMatrix(phMatrix)
         {
             m_faceMatrix = getFaceMatrix(ph, faceIndex);
         }
 
-        QMatrix4x4 getMatrix(int time) const {
-            QMatrix4x4 matrix;
-            // matrix.setToIdentity();
-            
-            // matrix.translate(0,0,3);
-            matrix.rotate(time * 0.01, 0,1,0);
-            matrix = matrix * m_faceMatrix;
-            return matrix;
-        }
+        void compute(double time) {
 
+            piece->worldMatrix = (*m_phMatrix) * m_faceMatrix;
+        }
     };
 
     class TransitionBehavior : public Behavior {
-        Behavior *m_b1, *m_b2;
-        double m_start, m_duration;
+        Behavior *m_oldBehavior, *m_newBehavior;
+        double m_startTime;
+        bool m_started, m_finished;
     public:
-        TransitionBehavior(Piece *p, Behavior *b1, Behavior *b2, double start, double duration)
+        TransitionBehavior(Piece *p, Behavior *b1, Behavior *b2, double startTime)
             : Behavior(p)
-            , m_b1(b1)
-            , m_b2(b2)
-            , m_start(start)
-            , m_duration(duration)
+            , m_oldBehavior(b1)
+            , m_newBehavior(b2)
+            , m_startTime(startTime)
+            , m_started(false)
+            , m_finished(false)
         {
         }
-
-        QMatrix4x4 getMatrix(int time) const {
-            double t = ((double)time*0.001 - m_start) / m_duration;
-            if(t<=0) return m_b1->getMatrix(time);
-            else if(t>=1) return m_b2->getMatrix(time);
-            QMatrix4x4 mat1 = m_b1->getMatrix(time);
-            QMatrix4x4 mat2 = m_b2->getMatrix(time);
-
-            QMatrix4x4 mat = slerp(mat1, mat2, t);
-            return mat;
+        ~TransitionBehavior()
+        {
+            delete m_oldBehavior;
+            delete m_newBehavior;
         }
 
+        virtual bool isTransition() const { return true; }
+
+        double getStartTime() const { return m_startTime; }
+
+        Behavior *getOldBehaviour() const { return m_oldBehavior; }
+        Behavior *getNewBehaviour() const { return m_newBehavior; }
+        bool hasFinished() const { return m_finished; }
+        bool hasStarted() const { return m_started; }
+
+        Behavior *removeNewBehaviour() { Behavior *b = m_newBehavior; m_newBehavior = 0; return b; }
+        Behavior *removeOldBehaviour() { Behavior *b = m_oldBehavior; m_oldBehavior = 0; return b; }
+        
+        void compute(double time) {
+            if(m_finished) m_newBehavior->compute(time);
+            else if(time <= m_startTime) m_oldBehavior->compute(time);
+            else 
+            {
+                m_oldBehavior = piece->compute(m_oldBehavior, time);
+                if(m_oldBehavior->isTransition()) return;
+                if(!m_started)
+                {
+                    if(m_startTime<time) m_startTime = time;
+                     m_started = true;
+                }
+                double t = (time - m_startTime) / 0.5;
+                if(t<=0) return; // this should never happen
+                else if(t>=1)
+                {
+                    m_finished = true;
+                    m_newBehavior->compute(time); 
+                }
+                else 
+                {
+                    const QMatrix4x4 oldMatrix = piece->worldMatrix;
+                    m_newBehavior->compute(time);
+                    const QMatrix4x4 newMatrix = piece->worldMatrix;
+                    blend(oldMatrix, newMatrix, t);
+                }
+            }
+        }
+        void blend(const QMatrix4x4 oldMatrix, const QMatrix4x4 newMatrix, double t);
     };
 
-};
+    void TransitionBehavior::blend(const QMatrix4x4 oldMatrix, const QMatrix4x4 newMatrix, double t) 
+    {
+        QMatrix4x4 mat = slerp(oldMatrix, newMatrix, t);
+        piece->worldMatrix = mat;
+    }
+
+    Behavior *Piece::compute(Behavior *b, double time)
+    {
+        if(!b) return b;
+        b->compute(time);
+        if(!b->isTransition()) return b;
+        TransitionBehavior *tb = dynamic_cast<TransitionBehavior *>(b);
+        assert(tb);
+        if(tb->hasFinished()) 
+        {
+            b = tb->removeNewBehaviour();
+            delete tb;
+        }
+        return b;
+    }
+
+    void Piece::compute(double time)
+    {
+        behaviour = compute(behaviour, time);
+    }
+
+    void Piece::addBehaviour(Behavior *newBehavior, double time, double startTime)
+    {
+        assert(!newBehavior->isTransition());
+        if(!behaviour)
+        {
+            // nessun vecchio comportamento ( non dovrebbe succedere)
+            // parto subito
+            behaviour = newBehavior;
+        }
+        else
+        {
+            if(!behaviour->isTransition())
+            {
+                // il vecchio comportamento è semplice: creo una transizione
+                behaviour = new TransitionBehavior(this, behaviour, newBehavior, startTime);
+            }
+            else
+            {
+                // il vecchio comportamento e' una transizione
+                TransitionBehavior *oldTb = dynamic_cast<TransitionBehavior*>(behaviour);
+                assert(oldTb);
+                if(!oldTb->hasStarted())
+                {
+                    // non è ancora partita
+                    behaviour = new TransitionBehavior(this, oldTb->removeNewBehaviour(), newBehavior, startTime);
+                    delete oldTb;
+                }
+                else
+                {
+                    // è già partita: mi accodo:
+                    behaviour = new TransitionBehavior(this, behaviour, newBehavior, startTime);
+                }               
+            }
+        }
+    }
+
+
+} // namespace polydron
 
 using namespace polydron;
 
@@ -140,12 +241,20 @@ class Polydron {
 public:
     const double edgeLength;
 
-    
-
     QList<PieceType*> m_types;
     QList<Piece*> m_pieces;
     QList<Polyhedron*> m_polyhedra;
     QMap<int,int> m_edgeCountTable;
+
+    struct {
+        QMatrix4x4 worldMatrix;
+        QMatrix4x4 manualRotation;
+        QMatrix4x4 translation;
+    } m_polyhedronPlacement;
+
+
+    bool m_automaticRotation;
+    double m_oldTime;
 
     Polydron();
     ~Polydron();
@@ -153,19 +262,24 @@ public:
     void buildPolyhedra();
     void buildPieces();
     void buildPieces(int edgeCount, int count, const Color color, double radius);
-    void animate(int t);
+    void animate(double time);
     void draw();
 
-    void place(int time);
-    void place(int time, int phIndex);
+    void rest(double time);
+    void makePolyhedron(double time, int phIndex);
 
 };
 
 
 Polydron::Polydron()
     : edgeLength(3)
+    , m_automaticRotation(true)
+    , m_oldTime(0)
 {
     buildPolyhedra();
+    m_polyhedronPlacement.manualRotation.setToIdentity();
+    m_polyhedronPlacement.worldMatrix.setToIdentity();
+    m_polyhedronPlacement.translation.setToIdentity();
 }
 
 Polydron::~Polydron()
@@ -188,6 +302,9 @@ void Polydron::buildPolyhedra()
     m_polyhedra.append(makeOctahedron());
     m_polyhedra.append(makeDodecahedron());
     m_polyhedra.append(makeIcosahedron());
+
+    m_polyhedra.append(makeCuboctahedron());
+    m_polyhedra.append(makeTruncatedDodecahedron());
 
     foreach(Polyhedron *ph, m_polyhedra) 
     {
@@ -232,12 +349,22 @@ void Polydron::buildPieces(int edgeCount, int count, Color color, double radius)
         m_pieces.append(piece);
     }
     
-    place(0);
+    rest(0);
 }
 
-void Polydron::animate(int t)
+void Polydron::animate(double time)
 {
-    foreach(Piece*piece, m_pieces) piece->animate(t);
+    double dt = time - m_oldTime; m_oldTime = time;
+
+    QMatrix4x4 spin; spin.setToIdentity();
+    spin.rotate(time*10, 0,1,0);
+
+    m_polyhedronPlacement.worldMatrix = 
+        m_polyhedronPlacement.translation * 
+        m_polyhedronPlacement.manualRotation * 
+        spin;
+
+    foreach(Piece*piece, m_pieces) piece->compute(time);
 }
 
 void Polydron::draw()
@@ -257,19 +384,26 @@ void Polydron::draw()
 }
 
 
-void Polydron::place(int time)
+void Polydron::rest(double time)
 {
     foreach(Piece *piece, m_pieces)
     {
-        piece->setBehavior(new RestBehavior(piece));
+        piece->addBehaviour(new RestBehavior(piece), time, time);
     }
 }
 
-void Polydron::place(int time, int phIndex)
+void Polydron::makePolyhedron(double time, int phIndex)
 {
     QVector<int> used(m_types.count(), 0);
     if(phIndex<0 || phIndex>=m_polyhedra.count()) return;
     const Polyhedron *ph = m_polyhedra[phIndex];
+
+    double distance = ph->getVertex(0).m_pos.length() * 2;
+    m_polyhedronPlacement.translation.setToIdentity();
+    m_polyhedronPlacement.translation.translate(0,0,-distance);
+    m_polyhedronPlacement.manualRotation.setToIdentity();
+    m_polyhedronPlacement.worldMatrix = m_polyhedronPlacement.translation;
+    
     for(int i=0;i<ph->getFaceCount();i++) 
     {
         const Polyhedron::Indices &ii = ph->getFace(i).m_vertices;
@@ -280,15 +414,15 @@ void Polydron::place(int time, int phIndex)
         const PieceType *type = m_types[typeIndex];
         assert(j<type->pieces.count());
         Piece *piece = type->pieces[j];
-        Behavior *b1 = new RestBehavior(piece);
-        Behavior *b2 = new PolyhedronBehavior(piece, ph, i);
-        double start = time * 0.001 + j * 0.5;
-        piece->setBehavior(new TransitionBehavior(piece, b1,b2, start, 1));
+        piece->addBehaviour(new PolyhedronBehavior(piece, ph, i, &m_polyhedronPlacement.worldMatrix), time, time + j * 0.5);
     }
     foreach(Piece*piece, m_pieces)
     {
         if(piece->index >= used[piece->type->index])
-            piece->setBehavior(new RestBehavior(piece));
+        {
+            if(!piece->behaviour || !piece->behaviour->isRest())
+                piece->addBehaviour(new RestBehavior(piece), time, time);
+        }
     }
 }
 
@@ -300,7 +434,7 @@ void Polydron::place(int time, int phIndex)
 
 
 PolydronPage::PolydronPage()
-: m_cameraDistance(15)
+: m_cameraDistance(25)
 , m_theta(0)
 , m_phi(0)
 , m_rotating(true)
@@ -365,9 +499,7 @@ void PolydronPage::paintGL()
 
     glPushMatrix();
     glTranslated(0,0,-m_cameraDistance);
-    glRotated(m_theta,1,0,0);
-    glRotated(m_phi,0,1,0);
-
+    
 
     GLfloat specular[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
@@ -380,7 +512,7 @@ void PolydronPage::paintGL()
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_CULL_FACE);
 
-    m_polydron->animate(m_clock.elapsed());
+    m_polydron->animate(m_clock.elapsed()*0.001);
 
     m_polydron->draw();
     glDisable(GL_CULL_FACE);
@@ -425,10 +557,12 @@ void PolydronPage::mousePressEvent(QMouseEvent *e)
 {
       m_lastPos = e->pos();
       m_rotating = e->button() == Qt::RightButton;
+      m_polydron->m_automaticRotation = false;
 }
 
 void PolydronPage::mouseReleaseEvent(QMouseEvent *e)
 {
+      m_polydron->m_automaticRotation = true;
 
 }
 
@@ -443,19 +577,29 @@ void PolydronPage::mouseMoveEvent(QMouseEvent *e)
   {
     m_phi -= 0.25*delta.x();
     m_theta -= 0.25*delta.y();
+
+    QMatrix4x4 &rot = m_polydron->m_polyhedronPlacement.manualRotation;
+    rot.setToIdentity();
+    rot.rotate(m_theta, 1,0,0);
+    rot.rotate(m_phi, 0,1,0);
+
+
+
   }
   // updateGL();
 }
 
 void PolydronPage::keyPressEvent(QKeyEvent *e)
 {
-    int time = m_clock.elapsed();
-    if(e->key() == Qt::Key_0) m_polydron->place(time);
-    else if(e->key() == Qt::Key_1) m_polydron->place(time,0);
-    else if(e->key() == Qt::Key_2) m_polydron->place(time,1);
-    else if(e->key() == Qt::Key_3) m_polydron->place(time,2);
-    else if(e->key() == Qt::Key_4) m_polydron->place(time,3);
-    else if(e->key() == Qt::Key_5) m_polydron->place(time,4);
+    double time = 0.001 * m_clock.elapsed();
+    if(e->key() == Qt::Key_0) m_polydron->rest(time);
+    else if(e->key() == Qt::Key_1) m_polydron->makePolyhedron(time,0);
+    else if(e->key() == Qt::Key_2) m_polydron->makePolyhedron(time,1);
+    else if(e->key() == Qt::Key_3) m_polydron->makePolyhedron(time,2);
+    else if(e->key() == Qt::Key_4) m_polydron->makePolyhedron(time,3);
+    else if(e->key() == Qt::Key_5) m_polydron->makePolyhedron(time,4);
+    else if(e->key() == Qt::Key_6) m_polydron->makePolyhedron(time,5);
+    else if(e->key() == Qt::Key_7) m_polydron->makePolyhedron(time,6);
     else {
       e->ignore();
     }
