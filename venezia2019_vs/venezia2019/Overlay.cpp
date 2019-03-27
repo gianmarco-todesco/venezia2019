@@ -1,9 +1,11 @@
 #include "Overlay.h"
+#include "Gutil.h"
 
+#include "Viewer.h"
+#include <QGLWidget>
 
-
-
-Overlay::Overlay()
+Overlay::Overlay(Viewer *viewer)
+    : m_viewer(viewer)
 {
 }
 
@@ -34,11 +36,11 @@ void Overlay::draw(int width, int height)
     double time = m_clock.elapsed() * 0.001;
 
 
-    /*
-        qglColor(Qt::magenta);
-    renderText(50,100,"Hyperbolic honeycomb", QFont("Calibri", 60, QFont::Bold));
-    renderText(50,200,"Gian Marco Todesco", QFont("Calibri", 30));
+    m_viewer->qglColor(Qt::magenta);
+    m_viewer->renderText(50,100,"Hyperbolic honeycomb", QFont("Calibri", 60, QFont::Bold));
+    m_viewer->renderText(50,200,"Gian Marco Todesco", QFont("Calibri", 30));
 
+    /*
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -74,5 +76,11 @@ void Overlay::draw(int width, int height)
     glMatrixMode(GL_MODELVIEW);
     
 */
+
+}
+
+OverlayPanel::OverlayPanel(const QString &filename)
+{
+    QImage img(filename);
 
 }

@@ -64,6 +64,11 @@ void Page::updateGL()
     m_viewer->updateGL();
 }
 
+Overlay *Page::getOverlay() const
+{
+    return m_viewer->getOverlay();
+}
+
 void Page::setViewUniforms(QGLShaderProgram*program)
 {
     GLdouble viewArr[16];

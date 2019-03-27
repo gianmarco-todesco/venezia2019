@@ -9,6 +9,7 @@ class QShowEvent;
 class QKeyEvent;
 class QWheelEvent;
 class QGLShaderProgram;
+class Overlay;
 
 class Page {
     Viewer *m_viewer;
@@ -30,6 +31,7 @@ public:
     virtual void initializeGL() {}
     virtual void resizeGL(int width, int height) {}
     virtual void paintGL() {}
+    Overlay *getOverlay() const;
 
     void drawBackground();
     void drawAxes();

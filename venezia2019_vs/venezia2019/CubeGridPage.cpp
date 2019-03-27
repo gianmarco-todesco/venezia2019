@@ -23,11 +23,15 @@ CubeGridPage::CubeGridPage()
 , m_rotating(true)
 , m_gridSmallUnit(0)
 , m_gridBigUnit(1)
+, m_title(0)
+, m_escher(0)
 {
 }
 
 CubeGridPage::~CubeGridPage()
 {
+    delete m_title;
+    delete m_escher;
 }
 
 void CubeGridPage::buildMesh()
@@ -66,6 +70,8 @@ void CubeGridPage::initializeGL()
 {
     buildMesh();
     m_shaderProgram = loadProgram("cubeGrid");
+    m_title = new OverlayPanel("images/cubic-space-division.jpg");
+
 }
 
 void CubeGridPage::start()
@@ -227,6 +233,9 @@ void CubeGridPage::keyPressEvent(QKeyEvent *e)
     else if(e->key() == Qt::Key_S) moveOffset(getCurrentDirection());
     //else if(e->key() == Qt::Key_3) m_offset += QVector3D(m_gridBigUnit,0,0);
     //else if(e->key() == Qt::Key_4) m_offset -= QVector3D(m_gridBigUnit,0,0);
+    else if(e->key() == Qt::Key_Z) {
+        getOverlay()->add(m_title);
+    }
     e->ignore();
     updateGL();
 }

@@ -28,6 +28,7 @@ public:
     void drawBackground();
     QGLShaderProgram *loadProgram(QString name);
 
+    Overlay *getOverlay() { return m_overlay; }
 
 protected:
     void initializeGL();

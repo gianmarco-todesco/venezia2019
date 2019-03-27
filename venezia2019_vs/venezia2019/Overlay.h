@@ -6,13 +6,16 @@
 #include <QList>
 #include <QTime>
 
+class Viewer;
+
+
 class OverlayPanel {
     GLuint m_textureId;
     int m_width, m_height;
 
 public:
     OverlayPanel(const QImage &image);
-    OverlayPanel(const QString imageFileName);
+    OverlayPanel(const QString &imageFileName);
 
 
 
@@ -23,9 +26,10 @@ public:
 class Overlay {
     QList<OverlayPanel*> m_panels;
     QTime m_clock;
+    Viewer *m_viewer;
 public:
 
-    Overlay();
+    Overlay(Viewer *);
     ~Overlay();
 
     void initializeGL();

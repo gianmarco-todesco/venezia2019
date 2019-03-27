@@ -31,7 +31,7 @@ Viewer::Viewer()
     setFocusPolicy(Qt::ClickFocus);
     m_presentation = new Presentation(this);
     m_presentation->buildPages();
-    m_overlay = new Overlay();
+    m_overlay = new Overlay(this);
 }
 
 Viewer::~Viewer()
