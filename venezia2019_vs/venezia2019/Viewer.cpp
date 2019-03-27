@@ -5,7 +5,7 @@
 #include "Overlay.h"
 
 
-//#include <QPainter>
+#include <QPainter>
 #include <QDebug>
 #include <QGLShaderProgram>
 #include <QGLShader>
@@ -102,6 +102,7 @@ void Viewer::initializeGL()
   //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
   glBindTexture(GL_TEXTURE_2D, 0);
   //.--------------------------------
+  glGenTextures(1, &m_textTextureId);
   m_overlay->initializeGL();
 
   startTimer(20);
@@ -160,8 +161,8 @@ void Viewer::paintGL()
     qglColor(Qt::cyan);
     renderText(50,50,QString::number((int)m_fps), QFont("Calibri", 24));
 
-    m_overlay->draw(width(), height());
-
+    m_overlay->draw(size());
+    
 
 
     
@@ -316,3 +317,51 @@ void Viewer::timerEvent(QTimerEvent*)
 {
     updateGL();
 }
+
+
+
+void Viewer::drawText(const QVector3D &pos, const QString &text, double r, const QColor &color)
+{
+    GLdouble viewArr[16];
+    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
+    
+    QVector3D du = QVector3D(viewArr[0], viewArr[4], viewArr[8]) * r;
+    QVector3D dv = QVector3D(viewArr[1], viewArr[5], viewArr[9]) * r * 0.5;
+    QVector3D pp[4] = {pos-du-dv, pos+du-dv, pos+du+dv, pos-du+dv};
+    GLfloat ppc[4][3];
+    for(int i=0;i<4;i++) {const QVector3D &p = pp[i]; ppc[i][0] = p.x(); ppc[i][1] = p.y(); ppc[i][2] = p.z(); }
+     
+    QImage img(64,32,QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::transparent);
+    // img.fill(QColor(200,200,200,127));
+    QPainter pa;
+    pa.begin(&img);
+    pa.setFont(QFont("Arial", 20));
+    pa.setPen(color);
+    pa.drawText(QRect(0,0,img.width(),img.height()), Qt::AlignCenter, text);
+    pa.drawRect(0,0,img.width()-1, img.height()-1);
+    pa.end();
+    QImage glImg = img.convertToFormat(QImage::Format_ARGB32);
+    glBindTexture(GL_TEXTURE_2D, m_textTextureId);
+    gluBuild2DMipmaps( GL_TEXTURE_2D, 4, glImg.width(), glImg.height(),
+                   GL_BGRA_EXT, GL_UNSIGNED_BYTE, glImg.bits() );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    glDisable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); glVertex3fv(ppc[0]);
+    glTexCoord2f(1.0f, 1.0f); glVertex3fv(ppc[1]);
+    glTexCoord2f(1.0f, 0.0f); glVertex3fv(ppc[2]);
+    glTexCoord2f(0.0f, 0.0f); glVertex3fv(ppc[3]);
+    glEnd();
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glEnable(GL_LIGHTING);
+    
+}
+

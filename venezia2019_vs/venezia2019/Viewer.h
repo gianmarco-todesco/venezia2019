@@ -19,6 +19,7 @@ class Viewer  : public QGLWidget
     Overlay *m_overlay;
     QTime m_clock;
     double m_fps;
+    GLuint m_textTextureId;
 
 public:
     Viewer();
@@ -29,6 +30,8 @@ public:
     QGLShaderProgram *loadProgram(QString name);
 
     Overlay *getOverlay() { return m_overlay; }
+
+    void drawText(const QVector3D &pos, const QString &text, double r=1.0, const QColor &color = Qt::black);
 
 protected:
     void initializeGL();
@@ -45,6 +48,8 @@ protected:
     void wheelEvent(QWheelEvent*);
 
     void timerEvent(QTimerEvent*);
+
+
 
 private:
     /*

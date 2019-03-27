@@ -22,16 +22,23 @@
 #include <QGLBuffer>
 #include <QTIme>
 
+
+#include "Viewer.h"
+// #include <QGLWidget>
+
 H3GridPage::H3GridPage()
-: OpenGLPage()
-, m_theta(0)
+: m_theta(0)
 , m_phi(0)
 , m_cameraDistance(10)
 , m_rotating(true)
 , m_shaderProgram(0)
 , m_grid(new H3Grid534())
 , m_level(0)
+
 {
+    m_grid2 = new H3Grid(*m_grid);
+    buildGrid();
+
     m_hMatrix.setToIdentity();
 }
 
@@ -70,13 +77,10 @@ void H3GridPage::initializeGL()
   m_texture = Texture::get(":resources/checkboard.png");
   */
  
-  QGLFormat glFormat = QGLWidget::format();
-  if ( !glFormat.sampleBuffers() )
-    qWarning() << "Could not enable sample buffers";
-
   m_sphere.makeSphere(0.3,10,10);
   
   m_vertexCube.makeCube(0.1,8);
+
   makeEdgeBox();
   
   build();
@@ -86,6 +90,7 @@ void H3GridPage::initializeGL()
 
 void H3GridPage::build()
 {
+    /*
     QMatrix4x4 mat;
     mat.setToIdentity();
     m_edgeMatrices.append(mat);
@@ -102,6 +107,7 @@ void H3GridPage::build()
             }
         }
     }
+    */
 }
 
 void H3GridPage::resizeGL(int width, int height)
@@ -114,6 +120,7 @@ void H3GridPage::resizeGL(int width, int height)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 }
+
 
 
 void H3GridPage::makeEdgeBox()
@@ -169,7 +176,7 @@ void H3GridPage::paintGL()
 
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    drawBackground();
+    // drawBackground();
 
     glPushMatrix();
     glTranslated(0,0,-m_cameraDistance);
@@ -182,12 +189,10 @@ void H3GridPage::paintGL()
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 90.0);
     // glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[0]);
 
-    draw2();
+    draw3();
 
 
     glPopMatrix();
-  
-    qDebug() << localClock.elapsed() << m_clock.restart();
 }
 
 void H3GridPage::draw(const QMatrix4x4 &mat, const Mesh &mesh)
@@ -710,8 +715,17 @@ void H3GridPage::mouseMoveEvent(QMouseEvent *e)
   updateGL();
 }
 
+
+void H3GridPage::wheelEvent(QWheelEvent*e)
+{
+  m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,50);
+  updateGL();
+}
+
+
 void H3GridPage::keyPressEvent(QKeyEvent *e)
 {
+    /*
     if(e->key() == Qt::Key_Plus) { 
         m_level++; 
         m_gridMatrices.clear();
@@ -728,21 +742,239 @@ void H3GridPage::keyPressEvent(QKeyEvent *e)
         qDebug() << m_gridMatrices.m_edgeMatrices.count() << " edges" << m_gridMatrices.m_vertexMatrices.count() << " vertices";
         updateGL(); 
     }
+    */
+    if(e->key() == Qt::Key_Plus) { 
+        test3();
+    }
     else
       e->ignore();
 }
 
-void H3GridPage::wheelEvent(QWheelEvent*e)
+
+void H3GridPage::test3()
 {
-  m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,50);
-  updateGL();
+
 }
 
-void H3GridPage::showEvent(QShowEvent*)
+void H3GridPage::buildGrid()
 {
-  setFocus();
+    QTime clock;
+    clock.start();
+    m_grid2->createFirstVertex();
+
+    // 7
+    for(int step=0; step<5; step++)
+    {
+        QList<QPair<int, int> > todo;
+        for(int i=0;i<m_grid2->m_vertices.count();i++)
+        {
+            for(int j=0;j<6;j++)
+            {
+                if(m_grid2->m_vertices[i].links[j]== -1) todo.append(qMakePair(i,j));
+            }
+        }
+        qDebug() << "todo size = " << todo.count();
+        for(int i=0;i<todo.count();i++)
+        {
+            int vIndex = todo[i].first;
+            int dir = todo[i].second;
+            m_grid2->closeIfNeeded(vIndex, dir);
+            if(m_grid2->m_vertices[vIndex].links[dir]>=0) continue;
+            m_grid2->addVertex(vIndex, dir);
+        }
+        qDebug() << "Step finished. vertex count = " << m_grid2->m_vertices.count();
+    }
+
+    // chiudo tutto
+    for(int i=0;i<m_grid2->m_vertices.count();i++)
+    {
+        for(int j=0;j<6;j++)
+        {
+            m_grid2->closeIfNeeded(i, j);
+        }
+    }
+
+    /*
+
+    for(int i=0;i<6;i++)
+        m_grid2->addVertex(0,i);
+
+    for(int i=1;i<=6;i++)
+        for(int j=1;j<=4;j++)
+            m_grid2->addVertex(i,j);
+            */
+
+
+//     m_grid2->foo(7);
+//    for(int i=7; i<7+24; i++)
+//         m_grid2->foo(i);
+
+    qDebug() << "GRID BUILD: "<< clock.elapsed();
+    /*
+
+    for(int i=0;i<m_grid2->m_vertices.count();i++)
+    {
+        for(int j=0;j<24;j++)
+        {
+            QList<int> face;
+            int m = m_grid2->getFace(face, i, j);
+            if(m>1)
+            {
+                qDebug() << m << face;
+            }
+        }
+    }
+    */
+    /*
+    // m_grid2->addVertex(m_grid2->m_edges[1]);
+    */
 }
 
-void H3GridPage::hideEvent(QHideEvent*)
+
+//------------------------
+//
+// draw
+//
+//------------------------
+
+
+void H3GridPage::draw3()
 {
+    // drawAxes();
+
+    GLdouble viewArr[16];
+    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
+    QMatrix4x4 view(viewArr);
+
+
+    m_shaderProgram->bind();
+    setViewUniforms(m_shaderProgram);    
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_CULL_FACE);
+    
+    QMatrix4x4 globalMatrix; globalMatrix.setToIdentity();
+
+
+    
+    m_vertexCube.bind();
+    for(int i=0;i<m_grid2->m_vertices.count();i++) {
+        const QMatrix4x4 &mat = m_grid2->m_vertices.at(i).matrix;
+        
+        draw(globalMatrix * mat, m_vertexCube);
+    }
+    m_vertexCube.release();
+        
+    m_edgeBox.bind();    
+    for(int i=0;i<m_grid2->m_edgeMatrices.count();i++) {
+        const QMatrix4x4 &mat = m_grid2->m_edgeMatrices.at(i);
+        draw(globalMatrix * mat, m_edgeBox);
+    }
+    m_edgeBox.release();
+    
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisable(GL_CULL_FACE);
+    m_shaderProgram->release();
+
+
+    // setColor(1,0.5,0.0);
+
+    // drawChannels();
+
+    
+    /*
+    for(int i=1;i<m_grid2->m_edges.count();i++) {
+        const H3Grid::Edge &edge = m_grid2->m_edges.at(i);
+        const QMatrix4x4 &mat = globalMatrix* edge.matrix;
+
+        double d = 0.1, y = 0.3;
+        const QVector4D edgeFacePts[4] = {
+            QVector4D(d,y,0,1),
+            QVector4D(0,y,d,1),
+            QVector4D(-d,y,0,1),
+            QVector4D(0,y,-d,1)
+        };
+        for(int j=0; j<4; j++) {
+            QVector3D p = H3::KModel::toBall(mat.map(edgeFacePts[j]));
+            v()->drawText(p, QString::number(edge.sides[j]), 0.125, Qt::black);
+        }
+
+    }
+    */
+    
+
+    /*
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 1);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); glVertex3d(p.x()-1,p.y()-1,p.z());
+    glTexCoord2f(1.0f, 1.0f); glVertex3d(p.x()+1,p.y()-1,p.z());
+    glTexCoord2f(1.0f, 0.0f); glVertex3d(p.x()+1,p.y()+1,p.z());
+    glTexCoord2f(0.0f, 0.0f); glVertex3d(p.x()-1,p.y()+1,p.z());
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    // v()->renderText(p.x(),p.y(),p.z(),"ecco");
+    */
+}
+
+void H3GridPage::drawChannels()
+{
+    QMatrix4x4 globalMatrix = m_hMatrix; //  globalMatrix.setToIdentity();
+
+    const double t = 0.2, s = 0.1;
+    const double pts[][3] = {
+        {s,t,0}, {0,t,s}, {-s,t,0}, {0,t,-s},
+        {t,s,0}, {t,0,-s}, {t,-s,0}, {t,0,s},
+        {0,s,t}, {s,0,t}, {0,-s,t}, {-s,0,t},
+        {-t,s,0}, {-t,0,s}, {-t,-s,0}, {-t,0,-s}, 
+        {0,s,-t},{-s,0,-t},{0,-s,-t},{s,0,-t},
+        {-s,-t,0},{0,-t,s},{s,-t,0},{0,-t,-s}
+    };
+    double sc = 0.9;
+
+    glDisable(GL_LIGHTING);
+
+    glBegin(GL_LINES);
+
+    for(int i=0;i<m_grid2->m_vertices.count();i++)
+    {
+        const H3Grid::Vertex &vertex0 = m_grid2->m_vertices[i];
+        const QMatrix4x4 &mat0 = globalMatrix * vertex0.matrix;
+
+
+        for(int c0=0; c0<24;c0++) {
+            int c1 = vertex0.channels[c0];
+            // links consistente con channels
+            assert((c1>=0) == (vertex0.links[c0/4]>=0));
+            if(c1<0) continue;
+
+            const H3Grid::Vertex &vertex1 = m_grid2->m_vertices[vertex0.links[c0/4]];
+            const QMatrix4x4 &mat1 = globalMatrix *  vertex1.matrix;
+
+            QVector3D p0 = H3::KModel::toBall(mat0.map( QVector4D(pts[c0][0],pts[c0][1],pts[c0][2],1) ));
+            QVector3D p1 = H3::KModel::toBall(mat1.map( QVector4D(sc*pts[c1][0],sc*pts[c1][1],sc*pts[c1][2],1) ));
+
+            glColor3d(1,0,1);
+            glVertex3d(p0.x(),p0.y(),p0.z());
+            glColor3d(0,1,1);
+            glVertex3d(p1.x(),p1.y(),p1.z());
+        }
+
+        for(int c0=0; c0<24;c0++) {
+            int c1 = H3Grid::innerLink(c0);
+            QVector3D p0 = H3::KModel::toBall(mat0.map( QVector4D(pts[c0][0],pts[c0][1],pts[c0][2],1) ));
+            QVector3D p1 = H3::KModel::toBall(mat0.map( QVector4D(sc*pts[c1][0],sc*pts[c1][1],sc*pts[c1][2],1) ));
+
+            glColor3d(0.5,0.5,0.5);
+            glVertex3d(p0.x(),p0.y(),p0.z());
+            glColor3d(1,1,1);
+            glVertex3d(p1.x(),p1.y(),p1.z());
+        }
+    }
+    glEnd();
+    glEnable(GL_LIGHTING);
 }

@@ -1,7 +1,7 @@
 #ifndef H3GRID_PAGE_INCLUDED
 #define H3GRID_PAGE_INCLUDED
 
-#include "OpenGLPage.h"
+#include "Page.h"
 #include "Mesh.h"
 #include <QPointF>
 #include <QMatrix4x4>
@@ -13,9 +13,16 @@
 class QGLShaderProgram;
 class Texture;
 class H3Grid534;
+class H3Grid;
 
 
-class H3GridPage : public OpenGLPage
+struct Uffa {
+  QGLBuffer vbuffer, ibuffer;
+  int ibufferCount;
+  Uffa() : vbuffer(QGLBuffer::VertexBuffer), ibuffer(QGLBuffer::IndexBuffer) {}
+};
+
+class H3GridPage : public Page
 {
   double m_theta, m_phi;
   double m_cameraDistance;
@@ -25,6 +32,7 @@ class H3GridPage : public OpenGLPage
   QMatrix4x4 m_hMatrix;
   QVector3D m_hOffset;
   H3Grid534 *m_grid;
+  H3Grid *m_grid2;
   Mesh m_sphere, m_vertexCube, m_edgeBox;
   QTime m_clock;
 
@@ -33,7 +41,8 @@ class H3GridPage : public OpenGLPage
 
   GridMatrices m_gridMatrices;
 
-
+  QList<Uffa> uffa;
+  
 public:
   H3GridPage();
  ~H3GridPage();
@@ -47,6 +56,7 @@ protected:
   
   void draw1();
   void draw2();
+  void draw3();
 
   void drawVertices();
   void build();
@@ -59,7 +69,12 @@ protected:
   void draw(const QMatrix4x4 &mat, const Mesh &mesh);
   void draw(const QMatrix4x4 &globalMatrix, const GridMatrices &matrices);
 
+  void drawChannels();
+
   void test();
+  void test3();
+  void buildGrid();
+
 
   void mousePressEvent(QMouseEvent *e);
   void mouseReleaseEvent(QMouseEvent *e);
@@ -68,10 +83,7 @@ protected:
   void keyPressEvent(QKeyEvent *e);
   void wheelEvent(QWheelEvent*);
 
-  void showEvent(QShowEvent*);
-  void hideEvent(QHideEvent*);
-
-
+  void uffauffa();
 };
 
 #endif

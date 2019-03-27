@@ -217,3 +217,429 @@ void H3Grid534::flower(GridMatrices &matrices, const QMatrix4x4 &mat, int level)
         }
     }
 }
+
+
+//=============================================================================
+
+void H3Grid::createFirstVertex()
+{
+    clear();
+    Vertex v;
+    v.matrix.setToIdentity();
+    for(int i=0;i<6;i++) v.links[i] = -1;
+    for(int i=0;i<24;i++) v.channels[i] = -1;
+    m_vertices.append(v);
+}
+
+
+/*
+    for(int i=0;i<6;i++)
+    {
+        Edge edge;
+        edge.index = i;
+        edge.v0 = 0;
+        edge.v1 = -1;
+        m_edges.append(edge);
+    }
+
+    Edge *edge = &m_edges[0];
+    edge->matrix.setToIdentity();
+    edge->setSides(1,2,3,4);
+
+    edge = &m_edges[1];
+    edge->matrix.setToIdentity();edge->matrix.rotate(-90,0,0,1);
+    edge->setSides(6,7,-1,5);    
+        
+    edge = &m_edges[2];
+    edge->matrix.setToIdentity();edge->matrix.rotate(90,1,0,0);
+    edge->setSides(-7,8,9,-2);    
+    
+    edge = &m_edges[3];
+    edge->matrix.setToIdentity();edge->matrix.rotate(90,0,0,1);
+    edge->setSides(-3,-9,10,11);    
+
+    edge = &m_edges[4];
+    edge->matrix.setToIdentity();edge->matrix.rotate(-90,1,0,0);
+    edge->setSides(-5,-4,-11,12);    
+
+    edge = &m_edges[5];
+    edge->matrix.setToIdentity();edge->matrix.rotate(180,0,0,1);
+    edge->setSides(-10, -8,-6,-12);
+
+}
+    */
+
+
+const int channelTable[] = {
+    4,8,12,16, 
+    0,19,22,9,
+    1,7,21,13,
+    2,11,20,17,
+    3,15,23,5,
+    14,10,6,18
+};
+
+int H3Grid::innerLink(int j)
+{
+    assert(0<=j && j<24);
+    return channelTable[j];
+}
+
+
+void H3Grid::addVertex(int srcVertexIndex, int direction)
+{
+    assert(0<=direction && direction<6);
+    assert(0<=srcVertexIndex && srcVertexIndex<m_vertices.count());
+
+    Vertex &srcVertex = m_vertices[srcVertexIndex];
+    if(srcVertex.links[direction]!= -1) return;
+
+    // index of the new vertex
+    int vertexIndex = m_vertices.count();
+
+    // old vertex => new vertex
+    srcVertex.links[direction] = vertexIndex;
+
+    Vertex vertex;
+    for(int i=0;i<6;i++) vertex.links[i] = -1;
+    for(int j=0;j<24;j++) vertex.channels[j] = -1;
+
+    // new vertex => old vertex
+    vertex.links[5] = srcVertexIndex;
+
+    const int linkTable[6][4] = {
+        { 22 ,21 ,20 ,23 },
+        { 20 ,23 ,22 ,21 },
+        { 23 ,22 ,21 ,20 },
+        { 22 ,21 ,20 ,23 },
+        { 21 ,20 ,23 ,22 },
+        { 22 ,21 ,20 ,23 }
+    };
+
+    for(int j=0;j<4;j++) 
+    {
+        int a = direction * 4 + j;
+        int b = linkTable[direction][j];
+        srcVertex.channels[a] = b;
+        vertex.channels[b] = a;
+    }
+
+    QMatrix4x4 edgeMatrix = srcVertex.matrix * m_rotations[direction];
+
+    m_edgeMatrices.append(edgeMatrix);
+
+    vertex.matrix = edgeMatrix * m_gridData.dirMatrices[2];
+
+    m_vertices.append(vertex);
+
+}
+
+int H3Grid::getOtherEnd(int &vIndex, int &channelIndex)
+{
+    int i0 = vIndex;
+    int i = vIndex;
+    int c = channelTable[channelIndex];
+    int m = 1;
+    for(;;)
+    {
+        const Vertex &vertex = m_vertices[i];
+        vIndex = i;
+        channelIndex = c;
+        i = vertex.links[c>>2];
+        if(i<0 || i==vIndex) break;
+        m++;
+        c = vertex.channels[c];
+        assert(c>=0);
+        c = channelTable[c];
+    }
+    return m;
+}
+
+/*
+
+
+int H3Grid::getFace(QList<int> &face, int vIndex, int channelIndex)
+{
+    assert(0<=vIndex && vIndex<m_vertices.count());
+    assert(0<=channelIndex && channelIndex<24);
+    face.clear();
+    face.append(vIndex);
+    int i,c;
+    i = vIndex;
+    c = channelIndex;
+    for(;;)
+    {
+        const Vertex &vertex = m_vertices[i];
+        i = vertex.links[c>>2];
+        if(i<0) break;
+        face.append(i);
+        c = vertex.channels[c];
+        assert(c>=0);
+        c = channelTable[c];
+    }
+    i = vIndex;
+    c = channelTable[channelIndex];
+    for(;;)
+    {
+        const Vertex &vertex = m_vertices[i];
+        i = vertex.links[c>>2];
+        if(i<0) break;
+        face.push_front(i);
+        c = vertex.channels[c];
+        assert(c>=0);
+        c = channelTable[c];
+    }
+    return face.count();
+}
+*/
+
+void H3Grid::closeIfNeeded(int vIndex, int dir)
+{
+    assert(0<=vIndex && vIndex<m_vertices.count());
+    Vertex &vertex = m_vertices[vIndex];
+    // already linked: nothing to do
+    if(vertex.links[dir] != -1) 
+        return;
+
+    // search for full faces
+    int channel = -1;
+    int otherIndex = -1;
+    int otherChannel = -1;
+    for(int j=0;j<4;j++)
+    {
+        int c0 = dir*4+j;
+        int i = vIndex;
+        int c = c0;
+        int m = getOtherEnd(i,c);
+        if(m==5)
+        {
+            otherIndex = i;
+            otherChannel = c;
+            channel = c0;
+            break;
+        }
+    }
+
+    if(otherIndex<0) // nothing to do 
+        return; 
+
+    Vertex &otherVertex = m_vertices[otherIndex];
+    int direction = channel/4;
+
+    // set links
+    vertex.links[direction] = otherIndex;
+    int otherDirection = otherChannel/4;
+    assert(otherVertex.links[otherDirection] == -1);
+    otherVertex.links[otherDirection] = vIndex;
+
+    // link channels
+    int j0 = channel%4;
+    int j1 = otherChannel%4;
+    for(int j=0;j<4;j++) {
+        int a = direction * 4 + ((j0+j)%4);
+        int b = otherDirection * 4 + ((j1+4-j)%4);
+        assert(vertex.channels[a] == -1);
+        assert(otherVertex.channels[b] == -1);
+        vertex.channels[a] = b;
+        otherVertex.channels[b] = a;
+    }
+
+    // create the edge 
+
+    QMatrix4x4 rot;
+    QMatrix4x4 edgeMatrix = vertex.matrix * m_rotations[direction];
+    m_edgeMatrices.append(edgeMatrix);
+}
+
+// OBSOLETO
+void H3Grid::foo(int vIndex)
+{
+    assert(0<=vIndex && vIndex<m_vertices.count());
+    Vertex &vertex = m_vertices[vIndex];
+
+    for(int dir=0;dir<6;dir++)
+    {
+        if(vertex.links[dir] != -1) continue;
+
+        int channel = -1;
+        int otherIndex = -1;
+        int otherChannel = -1;
+        for(int j=0;j<4;j++)
+        {
+            int c0 = dir*4+j;
+            int i = vIndex;
+            int c = c0;
+            int m = getOtherEnd(i,c);
+            if(m==5)
+            {
+                otherIndex = i;
+                otherChannel = c;
+                channel = c0;
+                break;
+            }
+        }
+
+        if(otherIndex>=0)
+        {
+            Vertex &otherVertex = m_vertices[otherIndex];
+            int direction = channel/4;
+
+            vertex.links[direction] = otherIndex;
+            int otherDirection = otherChannel/4;
+            assert(otherVertex.links[otherDirection] == -1);
+            otherVertex.links[otherDirection] = vIndex;
+
+            int j0 = channel%4;
+            int j1 = otherChannel%4;
+            for(int j=0;j<4;j++) {
+                int a = direction * 4 + ((j0+j)%4);
+                int b = otherDirection * 4 + ((j1+4-j)%4);
+                assert(vertex.channels[a] == -1);
+                assert(otherVertex.channels[b] == -1);
+                vertex.channels[a] = b;
+                otherVertex.channels[b] = a;
+            }
+
+
+            QMatrix4x4 rot;
+            QMatrix4x4 edgeMatrix = vertex.matrix * m_rotations[direction];
+            m_edgeMatrices.append(edgeMatrix);
+
+
+
+            break;
+        }
+    }
+
+    /*
+    if(maxm == 5)
+    {
+    }
+    */
+
+}
+
+
+void H3Grid::initRotations()
+{
+    const double angles[] = {0,-90,90,90,-90,180};
+    for(int i=0;i<6;i++)
+    {
+        QMatrix4x4 &rot = m_rotations[i];
+        rot.setToIdentity();
+        rot.rotate(angles[i], (i&1)==1 ? QVector3D(0,0,1) : QVector3D(1,0,0));    
+    }
+}
+
+
+
+
+#ifdef CICCIO
+void H3Grid::addVertex(int vIndex, int direction)
+{
+    Vertex &srcVertex = m_vertices[vIndex];
+    if(srcVertex.edges[direction] != 0) 
+        return;
+
+    Edge edge;
+    edge.index = m_edges.count();
+    edge.v0 = srcVertex.index;
+    edge.v1 = -1;
+
+    const double angles[] = {0,-90,90,90,-90,180};
+    QMatrix4x4 rot; rot.setToIdentity();
+    rot.rotate(angles[direction], (direction&1)==1 ? QVector3D(0,0,1) : QVector3D(1,0,0));
+    edge.matrix = srcVertex.matrix * rot;
+
+    // set edges
+    {
+        const int edgeDirections[6][4] = {
+            {0,1,2,3},
+            {8,4,0,7},
+        
+            {-1,-1,-1,-1},
+            {-1,-1,-1,-1},
+            {-1,-1,-1,-1},
+            {-1,-1,-1,-1}
+        };
+        const int *v1 = edgeDirections[direction];
+        int *v2 = srcVertex.faces;
+        edge.setSides(v2[v1[0]], v2[v1[1]], v2[v1[2]], v2[v1[3]]); 
+    }
+    
+
+    m_edges.append(edge);
+
+
+    // aggiungo il nuovo vertice
+    Vertex v;
+    v.index = m_vertices.count();
+    v.matrix = edge.matrix * m_gridData.dirMatrices[2];
+    for(int i=0;i<6;i++) v.edges[i] = 0;
+    v.edges[5] = edge.index;
+    // v.faces; ?? 
+
+    m_vertices.append(v);
+
+
+    /*
+    if(stem.v1>=0) return;
+    const QMatrix4x4 matrix;
+
+    Vertex v;
+    v.index = m_vertices.count();
+    v.matrix = stem.matrix * m_gridData.dirMatrices[2];
+    m_vertices.append(v);
+
+    stem.v1 = v.index;
+    int nf[8]; // new faces
+    for(int i=0; i<8; i++)
+    {
+        Face face;
+        nf[i] = face.index = face.actualIndex = m_faces.count();
+        face.closed = false;
+        face.vertices.append(v.index);
+        m_faces.append(face);
+    }
+
+    int e0 = m_edges.count();
+    for(int i=0;i<5;i++)
+    {
+        Edge edge;
+        edge.index = e0+i;
+        edge.v0 = v.index;
+        edge.v1 = -1;
+        m_edges.append(edge);
+    }
+    Edge *edge;
+    QMatrix4x4 rot;
+
+    edge = &m_edges[e0+0];
+    rot.setToIdentity();rot.rotate(-90,0,0,1);
+    edge->matrix = v.matrix * rot;
+    edge->setSides(stem.sides[0],nf[0],nf[4],-nf[3]);
+
+    edge = &m_edges[e0+1];
+    rot.setToIdentity();rot.rotate(90,1,0,0);
+    edge->matrix = v.matrix * rot;
+    edge->setSides(-nf[0],stem.sides[1],nf[1],nf[5]);
+    
+    edge = &m_edges[e0+2];
+    rot.setToIdentity();rot.rotate(90,0,0,2);
+    edge->matrix = v.matrix * rot;
+    edge->setSides(nf[6],-nf[1],stem.sides[2],nf[2]);
+
+    edge = &m_edges[e0+3];
+    rot.setToIdentity();rot.rotate(-90,1,0,0);
+    edge->matrix = v.matrix * rot;
+    edge->setSides(nf[3],nf[7],-nf[2],stem.sides[3]);
+
+    edge = &m_edges[e0+4];
+    rot.setToIdentity();rot.rotate(-90,1,0,0);
+    edge->matrix = v.matrix;
+    edge->setSides(-nf[4],-nf[5],-nf[6],-nf[7]);
+    */
+
+}
+#endif
+

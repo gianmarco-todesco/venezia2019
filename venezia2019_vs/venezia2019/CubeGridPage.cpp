@@ -14,6 +14,7 @@
 
 #include <QTime>
 #include <qdebug.h>
+#include <QPainter>
 
 
 CubeGridPage::CubeGridPage()
@@ -70,8 +71,17 @@ void CubeGridPage::initializeGL()
 {
     buildMesh();
     m_shaderProgram = loadProgram("cubeGrid");
-    m_title = new OverlayPanel("images/cubic-space-division.jpg");
+    m_title = new OverlayPanel(QImage("images/cubic-space-division.jpg"));
 
+    QImage img(600,600,QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    QPainter pa;
+    pa.begin(&img);
+    pa.setFont(QFont("Calibri", 80, QFont::Bold));
+    pa.setPen(Qt::white);
+    pa.drawText(QRect(0,0,600,600), Qt::AlignCenter, "HELLO");
+    pa.end();
+    m_escher = new OverlayPanel(img);
 }
 
 void CubeGridPage::start()
@@ -234,7 +244,9 @@ void CubeGridPage::keyPressEvent(QKeyEvent *e)
     //else if(e->key() == Qt::Key_3) m_offset += QVector3D(m_gridBigUnit,0,0);
     //else if(e->key() == Qt::Key_4) m_offset -= QVector3D(m_gridBigUnit,0,0);
     else if(e->key() == Qt::Key_Z) {
-        getOverlay()->add(m_title);
+        // getOverlay()->add(m_title);
+        getOverlay()->add(m_escher);
+
     }
     e->ignore();
     updateGL();

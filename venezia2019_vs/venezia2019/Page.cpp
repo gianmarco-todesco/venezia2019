@@ -8,13 +8,17 @@
 #include "CircleLimit3Page.h"
 #include "CubeGridPage.h"
 #include "PolydronPage.h"
+#include "H3GridPage.h"
+
+
 #include <qglshaderprogram.h>
 
 
 void Presentation::buildPages()
 {
-    addPage(new PolydronPage());
+    addPage(new H3GridPage());
     addPage(new CubeGridPage());
+    addPage(new PolydronPage());
     // 
     //addPage(new CircleLimit3Page());
     //addPage(new PDiskPage());

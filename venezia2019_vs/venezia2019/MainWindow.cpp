@@ -123,7 +123,7 @@ void addConference(MainWindow *w)
   // w->addWidget(new PDiskPage());
   // w->addWidget(new FoldingFacesPage());
   // w->addWidget(new CircleLimit3Page());
-  w->addWidget(new H3GridPage());
+  // w->addWidget(new H3GridPage());
  
 }
 
