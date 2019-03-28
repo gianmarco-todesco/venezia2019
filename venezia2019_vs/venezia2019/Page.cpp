@@ -9,6 +9,9 @@
 #include "CubeGridPage.h"
 #include "PolydronPage.h"
 #include "H3GridPage.h"
+#include "ImpossiblePolyhedronPage.h"
+#include "HyperbolicPolyhedronPage.h"
+#include "TestPage.h"
 
 
 #include <qglshaderprogram.h>
@@ -16,9 +19,16 @@
 
 void Presentation::buildPages()
 {
-    addPage(new H3GridPage());
+    addPage(new TestPage());
+
+    addPage(new HyperbolicPolyhedronPage());
+    addPage(new ImpossiblePolyhedronPage());
+    
+
     addPage(new CubeGridPage());
     addPage(new PolydronPage());
+
+    addPage(new H3GridPage());
     // 
     //addPage(new CircleLimit3Page());
     //addPage(new PDiskPage());

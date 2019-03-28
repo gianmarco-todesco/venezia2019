@@ -173,8 +173,7 @@ public:
 using namespace GmLib;
 
 TestPage::TestPage()
-: OpenGLPage()
-, m_theta(0)
+: m_theta(0)
 , m_phi(0)
 , m_pp(10,0)
 , m_rotating(true)
@@ -419,38 +418,11 @@ void TestPage::mouseMoveEvent(QMouseEvent *e)
 
 void TestPage::keyPressEvent(QKeyEvent *e)
 {
-  if(e->key() == Qt::Key_P)
-  {
-     if(m_timerId == 0) m_timerId = startTimer(40);
-  }
-  else
-    e->ignore();
+  e->ignore();
 }
 
 void TestPage::wheelEvent(QWheelEvent*e)
 {
   m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,50);
   updateGL();
-}
-
-void TestPage::timerEvent(QTimerEvent*)
-{
-  if(m_pp.x()*m_pp.x()+m_pp.y()*m_pp.y()>0.01) m_pp = m_pp * 0.9;
-  else if(m_pp.x() != 0.0 || m_pp.y() != 0.0) m_pp = QPointF(0.0,0.0);
-  else
-  {
-    if(m_timerId != 0) {killTimer(m_timerId); m_timerId=0;}
-  }
-  updateGL();
-}
-
-void TestPage::showEvent(QShowEvent*)
-{
-  setFocus();
-//  if(m_timerId == 0) m_timerId = startTimer(40);
-}
-
-void TestPage::hideEvent(QHideEvent*)
-{
-  if(m_timerId != 0) {killTimer(m_timerId); m_timerId=0;}
 }

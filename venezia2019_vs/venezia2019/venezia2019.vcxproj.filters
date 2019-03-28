@@ -140,6 +140,12 @@
     <ClCompile Include="Overlay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImpossiblePolyhedronPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="HyperbolicPolyhedronPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="venezia2019.qrc">
@@ -230,6 +236,12 @@
     </ClInclude>
     <ClInclude Include="Overlay.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImpossiblePolyhedronPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="HyperbolicPolyhedronPage.h">
+      <Filter>Header Files\pages</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

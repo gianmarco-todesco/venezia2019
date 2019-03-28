@@ -1,13 +1,13 @@
 #ifndef TESTPAGE_H
 #define TESTPAGE_H
 
-#include "OpenGLPage.h"
+#include "Page.h"
 #include <QPointF>
 
 class QGLShaderProgram;
 class Texture;
 
-class TestPage : public OpenGLPage
+class TestPage : public Page
 {
   double m_theta, m_phi;
   QPointF m_pp;
@@ -38,9 +38,7 @@ protected:
   void keyPressEvent(QKeyEvent *e);
   void wheelEvent(QWheelEvent*);
 
-  void timerEvent(QTimerEvent*);
-  void showEvent(QShowEvent*);
-  void hideEvent(QHideEvent*);
+  
 };
 
 
