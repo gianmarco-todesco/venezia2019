@@ -1,6 +1,7 @@
 #include "Texture.h"
 #include <QImage>
 #include <gl/GLU.h>
+#include <assert.h>
 
 Texture::Texture(const QString& fileName)
 : m_failed(false)
@@ -106,3 +107,61 @@ void Texture::discard(Texture *texture)
       ++it;
   }
 }
+
+
+//=============================================================================
+
+
+MyTexture::MyTexture()
+    : m_textureId(0)
+{
+}
+
+MyTexture::~MyTexture()
+{
+    if(m_textureId) destroyTexture();
+}
+
+
+void MyTexture::createTexture(const QImage &img)
+{
+    GLuint err;
+    err = glGetError();
+    assert(err == GL_NO_ERROR);
+    QImage glImg = img.convertToFormat(QImage::Format_ARGB32);
+    glGenTextures(1, &m_textureId);
+    glBindTexture(GL_TEXTURE_2D, m_textureId);
+    gluBuild2DMipmaps( GL_TEXTURE_2D, 4, glImg.width(), glImg.height(),
+                   GL_BGRA_EXT, GL_UNSIGNED_BYTE, glImg.bits() );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    err = glGetError();
+    assert(err == GL_NO_ERROR);
+
+}
+
+void MyTexture::destroyTexture()
+{
+    if(m_textureId) 
+    {
+        glDeleteTextures(1, &m_textureId);
+        m_textureId = 0;
+    }
+}
+
+
+void MyTexture::bind()
+{
+    glBindTexture(GL_TEXTURE_2D, m_textureId);
+}
+
+void MyTexture::release()
+{
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+

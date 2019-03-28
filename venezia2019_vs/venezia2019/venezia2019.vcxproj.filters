@@ -269,5 +269,11 @@
     <None Include="Resources\cubeGrid.vsh">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Resources\h3basic.fsh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resources\h3basic.vsh">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

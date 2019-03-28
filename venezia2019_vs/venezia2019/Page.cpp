@@ -20,22 +20,29 @@
 
 void Presentation::buildPages()
 {
-    addPage(new PolydronPage());
+    addPage(new HyperbolicPolyhedronPage());
 
-    addPage(new JohnsonSolidsPage());
+
+    /*
     addPage(new CubeGridPage());
-    addPage(new TestPage());
+    addPage(new PolydronPage());
+    addPage(new JohnsonSolidsPage());
+    addPage(new ImpossiblePolyhedronPage());
+    addPage(new CircleLimit3Page());
+    addPage(new PDiskPage());
+    addPage(new FoldingFacesPage());
 
     addPage(new HyperbolicPolyhedronPage());
-    addPage(new ImpossiblePolyhedronPage());
+    addPage(new H3GridPage());
+    */
+
+
+    // addPage(new TestPage());
     
 
 
-    addPage(new H3GridPage());
     // 
-    //addPage(new CircleLimit3Page());
-    //addPage(new PDiskPage());
-    // addPage(new FoldingFacesPage());
+    // 
     /*
     addPage(new DummyPage());
     */

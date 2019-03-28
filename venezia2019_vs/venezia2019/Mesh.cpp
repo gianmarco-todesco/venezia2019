@@ -2,12 +2,13 @@
 #include <qvector3d.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
-
+#include <assert.h>
 
 Mesh::Mesh()
     : m_vertexBuffer( QGLBuffer::VertexBuffer )
     , m_indexBuffer( QGLBuffer::IndexBuffer )
     , m_vCount(0)
+    , m_hasTexCoords(false)
 {
 }
 
@@ -35,9 +36,12 @@ void Mesh::createBuffers()
 
 void Mesh::bind()
 {
+    int m = m_hasTexCoords ? 8 : 6;
     m_vertexBuffer.bind();
-    glVertexPointer(3, GL_FLOAT, sizeof(GL_FLOAT)*6, 0);
-    glNormalPointer(GL_FLOAT, sizeof(GL_FLOAT)*6, (GLubyte*) NULL + sizeof(GL_FLOAT)*3);
+    glVertexPointer(3, GL_FLOAT, sizeof(GL_FLOAT)*m, 0);
+    glNormalPointer(GL_FLOAT, sizeof(GL_FLOAT)*m, (GLubyte*) NULL + sizeof(GL_FLOAT)*3);
+    if(m_hasTexCoords)
+        glTexCoordPointer(2, GL_FLOAT, sizeof(GL_FLOAT)*m, (GLubyte*) NULL + sizeof(GL_FLOAT)*6);
     m_indexBuffer.bind();
 }
 
@@ -57,11 +61,24 @@ void Mesh::release()
 
 GLushort Mesh::addVertex(const QVector3D &pos, const QVector3D &normal)
 {
+    assert(!m_hasTexCoords);
     m_vertexData 
         << pos.x() << pos.y() << pos.z() 
         << normal.x() << normal.y() << normal.z();
     return m_vCount++;
 }
+
+GLushort Mesh::addVertex(const QVector3D &pos, const QVector3D &normal, const QPointF &uv)
+{
+    assert(m_hasTexCoords);
+    m_vertexData 
+        << pos.x() << pos.y() << pos.z() 
+        << normal.x() << normal.y() << normal.z()
+        << uv.x() << uv.y();
+    return m_vCount++;
+
+}
+
 
 void Mesh::addTriangle(int a, int b, int c)
 {
@@ -81,20 +98,31 @@ void Mesh::makeSphere(double r, int n, int m)
 {
     for(int i=0; i<n; i++)
     {
-        double theta = M_PI*(double)(i+1)/(n+1);
+        double u = (double)(i+1)/(n+1);
+        double theta = M_PI*u;
         double csTheta = cos(theta), snTheta = sin(theta);
         for(int j=0;j<m;j++)
         {
-            double phi = 2*M_PI*j/m;
+            double v = (double)j/m;
+            double phi = 2*M_PI*v;
             double csPhi = cos(phi), snPhi = sin(phi);
             QVector3D norm(csPhi*snTheta, csTheta, snPhi*snTheta);
-            addVertex(norm*r, norm);
+            if(m_hasTexCoords) addVertex(norm*r, norm, QPointF(u,v));
+            else addVertex(norm*r, norm);
         }
     }
     int k = m_vCount;
 
-    addVertex(QVector3D(0,r,0), QVector3D(0,1,0));
-    addVertex(QVector3D(0,-r,0), QVector3D(0,-1,0));
+    if(m_hasTexCoords)
+    {
+        addVertex(QVector3D(0,r,0), QVector3D(0,1,0), QPointF(0,0));
+        addVertex(QVector3D(0,-r,0), QVector3D(0,-1,0), QPointF(1,0));
+    }
+    else
+    {
+        addVertex(QVector3D(0,r,0), QVector3D(0,1,0));
+        addVertex(QVector3D(0,-r,0), QVector3D(0,-1,0));
+    }
 
     for(int j=0;j<m;j++)
     {
@@ -118,7 +146,10 @@ void Mesh::addFace(const QVector3D &p, const QVector3D &du, const QVector3D &dv,
     {
         for(int j=0;j<m;j++)
         {
-            addVertex(p+du*i+dv*j,norm);
+            if(m_hasTexCoords)
+                addVertex(p+du*i+dv*j,norm, QPointF((double)i/(n-1), (double)j/(m-1)));
+            else
+                addVertex(p+du*i+dv*j,norm);
         }
     }
     for(int i=0;i+1<n;i++)
@@ -228,3 +259,14 @@ void Mesh::makePrism(double r, double h, int n)
 }
 
 
+void Mesh::addTriangleGrid(int n, int m, int firstIndex)
+{
+    for(int i=0; i+1<n; i++)
+    {
+        for(int j=0;j+1<m;j++)
+        {
+            int k = firstIndex + i*m + j;
+            addQuad(k, k+1, k+1+m, k+m);
+        }
+    }
+}

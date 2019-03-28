@@ -3,6 +3,7 @@
 
 #include <QtOpenGL>
 #include <map>
+#include <QImage>
 
 class Texture
 {
@@ -27,6 +28,21 @@ protected:
 private:
   static std::map<QString, Texture *> m_textures;
 
+};
+
+
+// fatta per paura di rompere le pagine vecchie. Bisogna unificare Texture, MyTexture e OverlayPanel
+class MyTexture {
+    GLuint m_textureId;
+public:
+    MyTexture();
+    ~MyTexture();
+
+    void createTexture(const QImage &img);
+    void destroyTexture();
+
+    void bind();
+    void release();
 };
 
 #endif // TEXTURE_H

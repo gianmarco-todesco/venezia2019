@@ -31,5 +31,5 @@ void main() {
     specular = vec4(0.0, 0.0, 0.0, 0.0);
   }
 
-  gl_FragColor = vec4(1.0,0.0,0.0,0.0); // 0.1*gl_FrontMaterial.ambient + diffuse + specular + vec4(1.0,0.0,0.0,0.0);
+  gl_FragColor = 0.1*gl_FrontMaterial.ambient + diffuse + specular ;
 }

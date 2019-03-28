@@ -184,6 +184,8 @@
     <None Include="Resources\basic.vsh" />
     <None Include="Resources\cubeGrid.fsh" />
     <None Include="Resources\cubeGrid.vsh" />
+    <None Include="Resources\h3basic.fsh" />
+    <None Include="Resources\h3basic.vsh" />
     <None Include="Resources\h3grid.fsh" />
     <None Include="Resources\h3grid.vsh" />
   </ItemGroup>

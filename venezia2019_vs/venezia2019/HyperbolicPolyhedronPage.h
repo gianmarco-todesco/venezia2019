@@ -4,6 +4,7 @@
 
 #include "Page.h"
 #include "Mesh.h"
+#include "Texture.h"
 #include <QPointF>
 #include <QTime>
 
@@ -19,6 +20,13 @@ class HyperbolicPolyhedronPage : public Page
   bool m_rotating;
   QTime m_clock;
 
+  MyTexture m_texture1;
+  Mesh m_mesh, m_hlineMesh;
+  Mesh m_outSphereMesh;
+  QGLShaderProgram *m_h3ShaderProgram;
+  QGLShaderProgram *m_stdShaderProgram;
+
+  double m_parameter;
 
 public:
   HyperbolicPolyhedronPage();
@@ -30,7 +38,10 @@ protected:
     void paintGL();
     void resizeGL(int width, int height);
 
+    void createHLineMesh();
+
     void draw();
+    void drawOutSphere();
 
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
