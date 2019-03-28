@@ -59,19 +59,19 @@ protected:
   void draw3();
 
   void drawVertices();
-  
+  void build();
+
   void drawDodWf(const QMatrix4x4 &mat);
   void drawBoxWf(const QMatrix4x4 &mat, double dx, double dy, double dz);
 
   void drawEdgeWf(const QMatrix4x4 &mat, double d = 0.05);
 
   void draw(const QMatrix4x4 &mat, const Mesh &mesh);
-  
-  // void draw(const QMatrix4x4 &globalMatrix, const GridMatrices &matrices);
+  void draw(const QMatrix4x4 &globalMatrix, const GridMatrices &matrices);
 
   void drawChannels();
 
-  //void test();
+  void test();
   void test3();
   void buildGrid();
 

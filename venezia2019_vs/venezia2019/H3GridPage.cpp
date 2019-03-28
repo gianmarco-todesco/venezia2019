@@ -24,12 +24,11 @@
 
 
 #include "Viewer.h"
-// #include <QGLWidget>
 
 H3GridPage::H3GridPage()
-: m_theta(0)
-, m_phi(0)
-, m_cameraDistance(10)
+: m_theta(10)
+, m_phi(20)
+, m_cameraDistance(5)
 , m_rotating(true)
 , m_shaderProgram(0)
 , m_grid(new H3Grid534())
@@ -71,11 +70,6 @@ void H3GridPage::initializeGL()
   glLightfv(GL_LIGHT1, GL_POSITION, lpos);
 
   m_shaderProgram = loadProgram("h3grid");
-  /*
-  m_shader0 = loadProgram("rollingSphere");
-  m_shaderBG = loadProgram("rollingSphereBg");
-  m_texture = Texture::get(":resources/checkboard.png");
-  */
  
   m_sphere.makeSphere(0.3,10,10);
   
@@ -83,32 +77,9 @@ void H3GridPage::initializeGL()
 
   makeEdgeBox();
   
-  build();
-  // m_vertexCube.makeBox(0.1,0.2,0.3,5,10,15);
   m_clock.start();
 }
 
-void H3GridPage::build()
-{
-    /*
-    QMatrix4x4 mat;
-    mat.setToIdentity();
-    m_edgeMatrices.append(mat);
-    m_vertexMatrices.append(mat);
-
-
-
-    for(int ix=-10;ix<=10;ix++)
-    {
-        for(int iy=-10; iy<=10; iy++)
-        {
-            for(int iz=-10;iz<=10; iz++)
-            {
-            }
-        }
-    }
-    */
-}
 
 void H3GridPage::resizeGL(int width, int height)
 {
@@ -120,8 +91,6 @@ void H3GridPage::resizeGL(int width, int height)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 }
-
-
 
 void H3GridPage::makeEdgeBox()
 {
@@ -201,395 +170,6 @@ void H3GridPage::draw(const QMatrix4x4 &mat, const Mesh &mesh)
     mesh.draw();
 }
 
-
-void H3GridPage::draw(const QMatrix4x4 &globalMatrix, const GridMatrices &matrices)
-{
-    if(!matrices.m_vertexMatrices.empty())
-    {
-        m_vertexCube.bind();
-        foreach(QMatrix4x4 mat, matrices.m_vertexMatrices) {
-            draw(globalMatrix * mat, m_vertexCube);
-        }
-        m_vertexCube.release();
-    }
-    if(!matrices.m_edgeMatrices.empty())
-    {
-        m_edgeBox.bind();    
-        foreach(QMatrix4x4 mat, matrices.m_edgeMatrices) {
-            draw(globalMatrix * mat, m_edgeBox);
-        }
-        m_edgeBox.release();
-    }
-}
-
-
-void H3GridPage::draw1()
-{
-    setColor(0.8,0.1,0.1);    
-    // drawSphere(QVector3D(-3,0,0), 1);
-
-    setColor(0.8,0.8,0.1);    
-    
-    QVector<GLushort> indices;
-    QVector<GLfloat> buffer;
-    int vCount;
-    int m = 10, n = 10;
-    for(int i=0; i<n; i++)
-    {
-        double t = (double)i/(double)(n-1);
-        for(int j=0;j<m;j++)
-        {
-            double s = (double)j/(double)(m-1);
-            buffer << (2*s-1) * 0.1 << (2*t-1) * 0.1 << 0;
-            buffer << 0 << 0 << -1;
-            if(i+1<n && j+1<m) {
-                indices 
-                    << i*m+j << i*m+j+1 << (i+1)*m+j+1
-                    << i*m+j << (i+1)*m+j+1 << (i+1)*m+j;
-            }
-        }
-    }
-
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glNormalPointer(GL_FLOAT, sizeof(GL_FLOAT)*6, &buffer[0]+3);
-    glVertexPointer(3, GL_FLOAT, sizeof(GL_FLOAT)*6, &buffer[0]);
-   
-    GLdouble viewArr[16];
-    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
-    QMatrix4x4 view(viewArr);
-    QMatrix4x4 mview;
-    //  mview.translate(m_pp.x(), 0, m_pp.y());
-
-
-    m_shaderProgram->bind();
-    m_shaderProgram->setUniformValue("view", view);
-    m_shaderProgram->setUniformValue("mview", mview);
-    m_shaderProgram->setUniformValue("iview", view.inverted());
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix);
-
-    /*
-    m_shaderProgram->setUniformValue("cam_x", (GLfloat)cam.x());
-    m_shaderProgram->setUniformValue("cam_y", (GLfloat)cam.y());
-    m_shaderProgram->setUniformValue("cam_z", (GLfloat)cam.z());
-    m_shader0->setUniformValue("sphere_x", (GLfloat)m_pp.x());
-    m_shader0->setUniformValue("sphere_z", (GLfloat)m_pp.y());
-    m_shader0->setUniformValue("tex", (GLuint)0);
-    */
-  
-
-    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-
-    //m_shaderProgram->setUniformValue("hMatrix", m_hMatrix);
-    //glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, &indices[0]);
-    
-    QMatrix4x4 ht = H3::KModel::translation(QVector3D(-.1,-.1,0), QVector3D(.1,.1,0));
-    //m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * ht);
-    //glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, &indices[0]);
-
-
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix);
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, &indices[0]);
-
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * ht);
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, &indices[0]);
-
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * ht * ht);
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, &indices[0]);
-
-
-    m_shaderProgram->release();
-
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-        
-    drawAxes();
-}
-
-void H3GridPage::draw2()
-{
-    glDisable(GL_LIGHTING);
-    glColor3d(0.9,0.1,1);
-
-    QMatrix4x4 hMatrix;
-    hMatrix.setToIdentity();
-
-    QMatrix4x4 identity;
-    identity.setToIdentity();
-
-
-    hMatrix = m_hMatrix * m_grid->getCornerMatrix();
-
-    QMatrix4x4 edgeMatrix = m_grid->getEdgeMatrix();
-    drawDodWf(hMatrix);
-
-    /*
-    drawDodWf(edgeMatrix * hMatrix);
-
-    drawBoxWf(identity, 0.1,0.1,0.1);
-    drawBoxWf(edgeMatrix, 0.1,0.1,0.1);
-    drawBoxWf(edgeMatrix * edgeMatrix, 0.1,0.1,0.1);
-
-    drawEdgeWf(identity);
-    drawEdgeWf(m_grid->dirMatrices[0]);
-    drawEdgeWf(m_grid->dirMatrices[4]);
-    */
-    drawEdgeWf(m_hMatrix * m_grid->dirMatrices[0]);
-    
-
-    glEnable(GL_LIGHTING);
-    
-
-
-    // ----- 
-    GLdouble viewArr[16];
-    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
-    QMatrix4x4 view(viewArr);
-    QMatrix4x4 mview;
-    m_shaderProgram->bind();
-    m_shaderProgram->setUniformValue("view", view);
-    m_shaderProgram->setUniformValue("mview", mview);
-    m_shaderProgram->setUniformValue("iview", view.inverted());
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix);
-    
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_CULL_FACE);
-    
-    /*
-    // vertices
-    m_vertexCube.bind();    
-    for(int i=0;i<m_vertexMatrices.count();i++) {
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * m_vertexMatrices[i] );
-        m_vertexCube.draw();
-    }
-    m_vertexCube.release();
-    */
-
-    /*
-
-    // edges
-    m_edgeBox.bind();    
-    for(int i=0;i<m_edgeMatrices.count();i++) {
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * m_edgeMatrices[i] );
-        m_edgeBox.draw();
-    }
-    m_edgeBox.release();
-
-
-    // vertices
-    m_vertexCube.bind();    
-    for(int i=0;i<20;i++) {
-        draw(m_vertexCube,  hMatrix * m_grid->getCellVertexMatrix(i));
-    }
-    m_vertexCube.release();
-    */
-
-
-
-    // GridMatrices matrices;
-    // m_grid->addDodVertices(matrices);
-    // m_grid->addEdgeAndVertex(matrices, mat);
-
-    draw(identity, m_gridMatrices);
-
-
-
-
-
-
-    /*
-
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix );  
-    m_edgeBox.draw();
-
-    QMatrix4x4 rot; rot.setToIdentity(); rot.rotate(90, QVector3D(1,0,0));
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * rot);  
-    m_edgeBox.draw();
-
-    rot.setToIdentity(); rot.rotate(90, QVector3D(0,0,-1));
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * rot);  
-    m_edgeBox.draw();
-
-
-    QMatrix4x4 mat,dmat;
-    dmat = m_grid->dirMatrices[2];
-    mat = dmat;
-    for(int i=0;i<10;i++)
-    {
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * mat);
-        mat = mat * dmat;
-        m_edgeBox.draw();
-    }
-
-    dmat = m_grid->dirMatrices[2];
-    mat.setToIdentity();
-    for(int i=0;i<10;i++)
-    {
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * m_grid->dirMatrices[0] * mat);
-        m_edgeBox.draw();
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * m_grid->dirMatrices[1] * mat);
-        m_edgeBox.draw();
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * m_grid->dirMatrices[4] * mat);
-        m_edgeBox.draw();
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * m_grid->dirMatrices[5] * mat);
-        m_edgeBox.draw();
-        QMatrix4x4 ugh;
-        ugh = m_grid->dirMatrices[0] * m_grid->dirMatrices[4];
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * ugh * mat);
-        m_edgeBox.draw();
-        ugh = m_grid->dirMatrices[4] * m_grid->dirMatrices[0];
-        m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * ugh * mat);
-        m_edgeBox.draw();
-        
-        mat = mat * dmat;
-        
-    }
-
-    
-
-    m_edgeBox.release();    
-    */
-
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisable(GL_CULL_FACE);
-    m_shaderProgram->release();
-
-
-    // test();
-
-
-
-}
-
-
-void H3GridPage::drawVertices()
-{
-    m_vertexCube.bind();    
-    m_shaderProgram->setUniformValue("hMatrix", m_hMatrix );  
-
-    m_vertexCube.draw();
-    for(int i=0;i<6;i++)
-    {
-        QMatrix4x4 dir = m_grid->dirMatrices[i];
-        QMatrix4x4 mat = m_hMatrix * dir;
-        for(int j = 0; j<10; j++) 
-        {
-            m_shaderProgram->setUniformValue("hMatrix", mat );  
-            m_vertexCube.draw();
-            mat = mat * dir;
-        }
-    }
-
-    for(int i=0; i<4; i++)
-    {
-        for(int j=4; j<6; j++)
-        {
-            QMatrix4x4 mat = m_hMatrix * m_grid->dirMatrices[i] * m_grid->dirMatrices[j];
-            QMatrix4x4 dmat = m_grid->dirMatrices[j];
-            for(int k = 0; k<10; k++) 
-            {
-                m_shaderProgram->setUniformValue("hMatrix", mat );  
-                m_vertexCube.draw();
-                mat = mat * dmat;
-            }
-        }
-    }
-
-
-    m_vertexCube.draw();
-    m_vertexCube.release();
-
-}
-
-void H3GridPage::test()
-{
-    
-
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_CULL_FACE);
-    
-    m_vertexCube.release();
-    
-    
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisable(GL_CULL_FACE);
-
-    return;
-
-
-    QVector<GLushort> indices;
-    QVector<GLfloat> buffer;
-    int vCount;
-    int m = 10, n = 10;
-    for(int i=0; i<n; i++)
-    {
-        double t = (double)i/(double)(n-1);
-        for(int j=0;j<m;j++)
-        {
-            double s = (double)j/(double)(m-1);
-            buffer << (2*s-1) * 0.1 << (2*t-1) * 0.1 << 0;
-            buffer << 0 << 0 << -1;
-            if(i+1<n && j+1<m) {
-                indices 
-                    << i*m+j << i*m+j+1 << (i+1)*m+j+1
-                    << i*m+j << (i+1)*m+j+1 << (i+1)*m+j;
-            }
-        }
-    }
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_CULL_FACE);
-    m_sphere.bind();
-    
-
-    //glNormalPointer(GL_FLOAT, sizeof(GL_FLOAT)*6, &buffer[0]+3);
-    //glVertexPointer(3, GL_FLOAT, sizeof(GL_FLOAT)*6, &buffer[0]);
-   
-    
-    m_shaderProgram->bind();
-    
-    double eps = 0.2;
-    QMatrix4x4 matx = H3::KModel::translation(QVector3D(0,0,0), QVector3D(eps,0,0));
-    QMatrix4x4 maty = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,eps,0));
-    QMatrix4x4 matz = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,eps));
-
-    QMatrix4x4 mati;
-    for(int i=0; i<30;i++)
-    {
-        QMatrix4x4 matj = mati;
-        for(int j=0; j<30;j++)
-        {
-            QMatrix4x4 matk = matj;
-            for(int k=0; k<30;k++)
-            {
-                m_shaderProgram->setUniformValue("hMatrix", m_hMatrix * matk);
-                m_sphere.draw();
-                matk = matz*matk;
-            }
-            matj = maty*matj;
-        }
-        mati = matx * mati;
-    }
-
-    
-
-    
-
-
-    m_sphere.release();
-    m_shaderProgram->release();
-    
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisable(GL_CULL_FACE);
-
-}
 
 void H3GridPage::drawDodWf(const QMatrix4x4 &hMatrix)
 {
@@ -703,9 +283,11 @@ void H3GridPage::mouseMoveEvent(QMouseEvent *e)
   m_lastPos = e->pos();
   if(!m_rotating)
   {
-      m_hOffset += QVector3D(delta.x()*0.01, delta.y()*0.01, 0.0);
-      m_hMatrix = H3::KModel::translation(m_hOffset, QVector3D(0,0,0));
+      // m_hOffset += QVector3D(delta.x()*0.01, delta.y()*0.01, 0.0);
+      // m_hMatrix = H3::KModel::translation(m_hOffset, QVector3D(0,0,0));
 
+      m_hOffset += QVector3D(0,0,delta.y()*0.01);
+      m_hMatrix = H3::KModel::translation(m_hOffset, QVector3D(0,0,0));
   }
   else
   {
@@ -725,35 +307,13 @@ void H3GridPage::wheelEvent(QWheelEvent*e)
 
 void H3GridPage::keyPressEvent(QKeyEvent *e)
 {
-    /*
-    if(e->key() == Qt::Key_Plus) { 
-        m_level++; 
-        m_gridMatrices.clear();
-        QMatrix4x4 identity; identity.setToIdentity();
-        m_grid->flower(m_gridMatrices, identity, m_level);
-        qDebug() << m_gridMatrices.m_edgeMatrices.count() << " edges" << m_gridMatrices.m_vertexMatrices.count() << " vertices";
-        updateGL(); 
-    }
-    else if(e->key() == Qt::Key_Minus) { 
-        if(m_level>0) m_level--; 
-        m_gridMatrices.clear();
-        QMatrix4x4 identity; identity.setToIdentity();
-        m_grid->flower(m_gridMatrices, identity, m_level);
-        qDebug() << m_gridMatrices.m_edgeMatrices.count() << " edges" << m_gridMatrices.m_vertexMatrices.count() << " vertices";
-        updateGL(); 
-    }
-    */
-    if(e->key() == Qt::Key_Plus) { 
-        test3();
+    if(e->key() == Qt::Key_Z) { 
+        double r = -H3::KModel::getRadius(m_grid->edgeLength);
+        if(e->modifiers() & Qt::ShiftModifier) r=-r;
+        m_hMatrix = m_hMatrix * H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,r));
     }
     else
       e->ignore();
-}
-
-
-void H3GridPage::test3()
-{
-
 }
 
 void H3GridPage::buildGrid()
@@ -763,7 +323,7 @@ void H3GridPage::buildGrid()
     m_grid2->createFirstVertex();
 
     // 7
-    for(int step=0; step<5; step++)
+    for(int step=0; step<6; step++)
     {
         QList<QPair<int, int> > todo;
         for(int i=0;i<m_grid2->m_vertices.count();i++)
@@ -793,41 +353,8 @@ void H3GridPage::buildGrid()
             m_grid2->closeIfNeeded(i, j);
         }
     }
-
-    /*
-
-    for(int i=0;i<6;i++)
-        m_grid2->addVertex(0,i);
-
-    for(int i=1;i<=6;i++)
-        for(int j=1;j<=4;j++)
-            m_grid2->addVertex(i,j);
-            */
-
-
-//     m_grid2->foo(7);
-//    for(int i=7; i<7+24; i++)
-//         m_grid2->foo(i);
-
     qDebug() << "GRID BUILD: "<< clock.elapsed();
-    /*
-
-    for(int i=0;i<m_grid2->m_vertices.count();i++)
-    {
-        for(int j=0;j<24;j++)
-        {
-            QList<int> face;
-            int m = m_grid2->getFace(face, i, j);
-            if(m>1)
-            {
-                qDebug() << m << face;
-            }
-        }
-    }
-    */
-    /*
-    // m_grid2->addVertex(m_grid2->m_edges[1]);
-    */
+    
 }
 
 
@@ -837,38 +364,59 @@ void H3GridPage::buildGrid()
 //
 //------------------------
 
+inline bool check(const QMatrix4x4 &mpv, const QMatrix4x4 &hMatrix, const QMatrix4x4 &mat)
+{
+    QVector4D p4 = (hMatrix * mat).map(QVector4D(0,0,0,1));
+    QVector3D p = H3::KModel::toBall(p4);
+    QVector4D q4 = mpv.map(QVector4D(p, 1.0));
+    QVector3D q = q4.toVector3DAffine();
+    
+    return  -1.1<=q.x() && q.x()<=1.1 && 
+            -1.1<=q.y() && q.y()<=1.1 &&
+            -0.5 <= q.z() && q.z() <= 0.7;
+    
+}
 
 void H3GridPage::draw3()
 {
     // drawAxes();
 
-    GLdouble viewArr[16];
+    qreal viewArr[16], projArr[16];
     glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
-    QMatrix4x4 view(viewArr);
+    glGetDoublev(GL_PROJECTION_MATRIX, projArr);
+    QMatrix4x4 view(viewArr), proj(projArr);
+
+    QMatrix4x4 projView = proj.transposed() * view.transposed();
+
+    QMatrix4x4 identity; identity.setToIdentity();
 
 
     m_shaderProgram->bind();
-    setViewUniforms(m_shaderProgram);    
+    // setViewUniforms(m_shaderProgram);    
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnable(GL_CULL_FACE);
     
     QMatrix4x4 globalMatrix; globalMatrix.setToIdentity();
 
+    
 
     
     m_vertexCube.bind();
+
+    
     for(int i=0;i<m_grid2->m_vertices.count();i++) {
-        const QMatrix4x4 &mat = m_grid2->m_vertices.at(i).matrix;
-        
-        draw(globalMatrix * mat, m_vertexCube);
+        const QMatrix4x4 &mat = m_grid2->m_vertices.at(i).matrix;  
+        if(check(projView, m_hMatrix, mat))
+          draw(mat, m_vertexCube);
     }
-    m_vertexCube.release();
-        
+         
+    
     m_edgeBox.bind();    
     for(int i=0;i<m_grid2->m_edgeMatrices.count();i++) {
         const QMatrix4x4 &mat = m_grid2->m_edgeMatrices.at(i);
-        draw(globalMatrix * mat, m_edgeBox);
+        if(check(projView, m_hMatrix, mat))
+            draw(mat, m_edgeBox);
     }
     m_edgeBox.release();
     
@@ -883,42 +431,16 @@ void H3GridPage::draw3()
 
     // drawChannels();
 
+    static double zz = 0.0;
+
+    zz += .01;
+    if(zz>m_grid->edgeLength) zz -= m_grid->edgeLength;
+
+    double r = H3::KModel::getRadius(fabs(zz));
+
     
-    /*
-    for(int i=1;i<m_grid2->m_edges.count();i++) {
-        const H3Grid::Edge &edge = m_grid2->m_edges.at(i);
-        const QMatrix4x4 &mat = globalMatrix* edge.matrix;
+    m_hMatrix = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,zz > 0 ? r : -r));
 
-        double d = 0.1, y = 0.3;
-        const QVector4D edgeFacePts[4] = {
-            QVector4D(d,y,0,1),
-            QVector4D(0,y,d,1),
-            QVector4D(-d,y,0,1),
-            QVector4D(0,y,-d,1)
-        };
-        for(int j=0; j<4; j++) {
-            QVector3D p = H3::KModel::toBall(mat.map(edgeFacePts[j]));
-            v()->drawText(p, QString::number(edge.sides[j]), 0.125, Qt::black);
-        }
-
-    }
-    */
-    
-
-    /*
-
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 1);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f); glVertex3d(p.x()-1,p.y()-1,p.z());
-    glTexCoord2f(1.0f, 1.0f); glVertex3d(p.x()+1,p.y()-1,p.z());
-    glTexCoord2f(1.0f, 0.0f); glVertex3d(p.x()+1,p.y()+1,p.z());
-    glTexCoord2f(0.0f, 0.0f); glVertex3d(p.x()-1,p.y()+1,p.z());
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-
-    // v()->renderText(p.x(),p.y(),p.z(),"ecco");
-    */
 }
 
 void H3GridPage::drawChannels()

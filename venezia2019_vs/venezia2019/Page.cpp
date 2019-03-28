@@ -22,11 +22,12 @@
 void Presentation::buildPages()
 {
 
-    addPage(new H3GridBuildPage());
+    addPage(new H3GridPage());
 
 
 
     /*
+    addPage(new H3GridBuildPage());
     addPage(new HyperbolicPolyhedronPage());
     addPage(new CubeGridPage());
     addPage(new PolydronPage());
@@ -37,7 +38,6 @@ void Presentation::buildPages()
     addPage(new FoldingFacesPage());
 
     addPage(new HyperbolicPolyhedronPage());
-    addPage(new H3GridPage());
     */
 
 

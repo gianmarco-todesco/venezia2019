@@ -26,6 +26,7 @@ void main() {
   
   // float att = exp(-130.0*max(0.0, gl_FragCoord.z-0.97));
   float att = max(0.0, min(1.0, (0.95 - gl_FragCoord.z)/0.4));
+  att = 1.0;
 
   gl_FragColor = vec4((ambientColor +
                       lambertian*diffuseColor +
