@@ -146,6 +146,9 @@
     <ClCompile Include="HyperbolicPolyhedronPage.cpp">
       <Filter>Source Files\pages</Filter>
     </ClCompile>
+    <ClCompile Include="JohnsonSolidsPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="venezia2019.qrc">
@@ -241,6 +244,9 @@
       <Filter>Header Files\pages</Filter>
     </ClInclude>
     <ClInclude Include="HyperbolicPolyhedronPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="JohnsonSolidsPage.h">
       <Filter>Header Files\pages</Filter>
     </ClInclude>
   </ItemGroup>

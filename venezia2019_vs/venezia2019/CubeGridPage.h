@@ -3,6 +3,7 @@
 
 #include "Page.h"
 #include "Mesh.h"
+#include "Overlay.h"
 #include <QPointF>
 #include <QVector3D>
 
@@ -22,7 +23,10 @@ class CubeGridPage : public Page
     QVector3D m_offset;
     double m_gridSmallUnit;
     double m_gridBigUnit;
-    OverlayPanel *m_title, *m_escher;
+    int m_status;
+    struct {
+        OverlayPanel title, title2, escher, escherCaption, grids;
+    } m_panels;
 
 public:
     CubeGridPage();
@@ -31,6 +35,7 @@ public:
 
 protected:
     void start();
+    void stop();
     void initializeGL();
     void paintGL();
     void resizeGL(int width, int height);
@@ -43,6 +48,11 @@ protected:
 
     void keyPressEvent(QKeyEvent *e);
     void wheelEvent(QWheelEvent*);
+
+    void createTextures();
+    void destroyTextures();
+
+    void setStatus(int status);
 
 private:
     void buildMesh();

@@ -30,6 +30,11 @@ void Overlay::remove(OverlayPanel *panel)
     m_panels.removeAll(panel);
 }
 
+void Overlay::removeAll()
+{
+    m_panels.clear();
+}
+
 
 void Overlay::draw(const QSize &winSize)
 {
@@ -49,6 +54,7 @@ void Overlay::draw(const QSize &winSize)
     glLoadIdentity();
 
     glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
     glColor3d(1,1,1);
 
     glEnable(GL_BLEND);
@@ -76,6 +82,7 @@ void Overlay::draw(const QSize &winSize)
     
 
     glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
 
     // reset coords
     glPopMatrix();
@@ -89,20 +96,18 @@ void Overlay::draw(const QSize &winSize)
 //=============================================================================
 
 
-OverlayPanel::OverlayPanel(const QImage &img)
+OverlayPanel::OverlayPanel()
     : m_textureId(0)
     , m_size(90)
     , m_pos(0.5,0.5)
     , m_hasAlpha(false)
 {
-    createTexture(img);
 }
 
 
 void OverlayPanel::createTexture(const QImage &img)
 {
     QImage glImg = img.convertToFormat(QImage::Format_ARGB32);
-
     m_width = img.width();
     m_height = img.height();
     glGenTextures(1, &m_textureId);
@@ -118,6 +123,12 @@ void OverlayPanel::createTexture(const QImage &img)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+OverlayPanel::~OverlayPanel()
+{
+    if(m_textureId!=0) deleteTexture();
+}
+
+
 void OverlayPanel::deleteTexture()
 {
     glDeleteTextures(1, &m_textureId);
@@ -128,6 +139,7 @@ void OverlayPanel::deleteTexture()
 
 void OverlayPanel::draw(const QSize &winSize)
 {
+    if(m_textureId==0) return;
     double sz = m_size * 0.01 * winSize.height();
     double ry = 0.5 * sz;
     double rx = ry * m_width / m_height;

@@ -23,6 +23,189 @@
 
 namespace polydron {
 
+    enum TypeId {
+        T_NONE = 0,
+        T_TRIANGLE,
+        T_SQUARE,
+        T_PENTAGON,
+        T_DECAGON,
+        T_TRIANGLE2
+    };
+
+    class MyPolyhedron {
+    public:
+
+        QList<QPair<TypeId, QMatrix4x4> > faces;
+        double radius;
+
+        MyPolyhedron() : radius(1) {}
+    
+        static QMatrix4x4 computeMatrixFromFace(const QVector3D &center, const QVector3D &p1, const QVector3D &p2);
+        static QMatrix4x4 computeMatrixFromTriangle(const QVector3D &p0, const QVector3D &p1, const QVector3D &p2);
+
+        static MyPolyhedron*make(const Polyhedron *ph, double edgeLength);
+        static MyPolyhedron*makeDeltahedron(double edgeLength, int index);
+        static MyPolyhedron*makeImpossible(double edgeLength, double parameter);
+
+    };
+
+    QMatrix4x4 MyPolyhedron::computeMatrixFromFace(const QVector3D &center, const QVector3D &p1, const QVector3D &p2)
+    {
+        QVector3D e0 = (p1-center).normalized();
+        QVector3D e1 = p2-center;
+        e1 = (e1 - e0*QVector3D::dotProduct(e0,e1)).normalized();
+        QVector3D e2 = QVector3D::crossProduct(e0,e1);
+        return QMatrix4x4(
+            e0.x(),e1.x(),e2.x(),center.x(),
+            e0.y(),e1.y(),e2.y(),center.y(),
+            e0.z(),e1.z(),e2.z(),center.z(),
+            0,0,0,1);
+    }
+
+    QMatrix4x4 MyPolyhedron::computeMatrixFromTriangle(const QVector3D &p0, const QVector3D &p1, const QVector3D &p2)
+    {
+        return computeMatrixFromFace((p0+p1+p2)*(1.0/3.0), p0,p1);
+    }
+
+    MyPolyhedron*MyPolyhedron::make(const Polyhedron *ph, double edgeLength)
+    {
+        MyPolyhedron *myph = new MyPolyhedron();
+        const Polyhedron::Edge &e = ph->getEdge(0);
+        double L = (ph->getVertex(e.m_a).m_pos - ph->getVertex(e.m_b).m_pos).length();
+        double sc = edgeLength / L;
+        ph->computeFaceVertices();
+        for(int i=0;i<ph->getFaceCount();i++)
+        {
+            const Polyhedron::Face &face = ph->getFace(i);
+            QVector3D fc = sc*getFaceCenter(ph,i);
+            QVector3D p0 = sc*ph->getVertex(face.m_vertices[0]).m_pos;
+            QVector3D p1 = sc*ph->getVertex(face.m_vertices[1]).m_pos;
+            int m = (int)face.m_edges.size();
+            assert(m==3 || m==4 || m==5 || m==10);
+            TypeId typeId = m<=4 ? (m==3 ? T_TRIANGLE : T_SQUARE) : (m==5 ? T_PENTAGON : T_DECAGON);
+            QMatrix4x4 matrix = computeMatrixFromFace(fc,p0,p1);
+
+            myph->faces.append(qMakePair(typeId, matrix));
+        }
+        myph->radius = (ph->getVertex(0).m_pos * sc).length();
+        return myph;
+    }
+
+    MyPolyhedron*MyPolyhedron::makeDeltahedron(double edgeLength, int m)
+    {
+        if(m<1)m=1; else if(m>5)m=5;
+        double d = edgeLength*0.5;
+        QVector3D p0(0,d,0), p1(0,-d,0);
+        double r = edgeLength*sqrt(3.0)*0.5;
+        QList<QVector3D> pts;
+        double dphi = acos(1.0/3.0);
+        QVector3D center(0,0,0);
+        for(int i=0;i<=m;i++)
+        {
+            double phi = dphi*i;
+            QVector3D p(r*cos(phi),0,r*sin(phi));
+            center += p;
+            pts.append(QVector3D(r*cos(phi),0,r*sin(phi)));
+        }
+        center *= 1.0/(m+3);
+        p0 -= center;
+        p1 -= center;
+        for(int i=0;i<=m;i++) pts[i] -= center;
+        
+        MyPolyhedron *ph = new MyPolyhedron();
+        ph->radius = d;
+        for(int i=0;i<=m;i++) {
+            double r = pts[i].length();
+            if(r>ph->radius) ph->radius = r;
+        }
+        TypeId typeId = (m%2)==0 ? T_TRIANGLE2 : T_TRIANGLE;
+        ph->faces.append(qMakePair(typeId, computeMatrixFromTriangle(p0,p1,pts[0])));
+        ph->faces.append(qMakePair(typeId, computeMatrixFromTriangle(p1,p0,pts.back())));
+        for(int i=0;i<m;i++) 
+        {
+            ph->faces.append(qMakePair(typeId, computeMatrixFromTriangle(p0,pts[i],pts[i+1])));
+            ph->faces.append(qMakePair(typeId, computeMatrixFromTriangle(p1,pts[i+1],pts[i])));
+        }
+        return ph;
+    }
+
+    MyPolyhedron*MyPolyhedron::makeImpossible(double edgeLength, double parameter)
+    {
+        MyPolyhedron *ph = new MyPolyhedron();
+        ph->radius = 4 * edgeLength;
+        const double decagonPos = 1.879*edgeLength;
+        const double trianglePos = 1.768 * edgeLength;
+        const double squarePos = 3.032 * edgeLength;
+
+        // decagoni
+        for(int i=0;i<12;i++)
+        {
+            QMatrix4x4 mat; mat.setToIdentity();
+            int k = i/4;
+            if(k==1) mat.rotate(90,0,0,1);
+            else if(k==2) mat.rotate(90,1,0,0); 
+            mat.rotate(90*(i%4),0,1,0);
+            mat.translate(decagonPos,0,decagonPos);
+            mat.rotate(45,0,1,0);
+            ph->faces.append(qMakePair(T_DECAGON, mat));
+        }
+
+        // triangoli sui vertici del cubo
+        QVector3D e2 = QVector3D(1,1,1).normalized();
+        QVector3D e0 = QVector3D(0,1,0);
+        e0 = (e0 - e2*QVector3D::dotProduct(e0,e2)).normalized();
+        QVector3D e1 = QVector3D::crossProduct(e2,e0);
+        QMatrix4x4 vertexMat(
+            e0.x(),e1.x(),e2.x(), 0,
+            e0.y(),e1.y(),e2.y(), 0,
+            e0.z(),e1.z(),e2.z(), 0,
+            0,0,0,1);
+
+        for(int i=0;i<8;i++)
+        {
+            QMatrix4x4 mat; mat.setToIdentity();
+            if(i>=4) mat.rotate(180,1,0,0);
+            mat.rotate(90*i,0,1,0);
+            double d = trianglePos;
+            mat.translate(d,d,d);
+            mat = mat * vertexMat;
+            ph->faces.append(qMakePair(T_TRIANGLE, mat));
+        }
+
+        // quadrati (e triangoli) sulle facce del cubo
+        QMatrix4x4 foldedTriangle;
+        foldedTriangle.setToIdentity();
+        foldedTriangle.translate(edgeLength*0.5,0,0);
+        foldedTriangle.rotate(14,0,1,0);
+        foldedTriangle.translate(edgeLength*sqrt(3.0)/6,0,0);
+            
+        for(int i=0;i<6;i++)
+        {
+            QMatrix4x4 mat; mat.setToIdentity();
+            if(1<=i && i<=4)
+            {
+                mat.rotate(90*i,0,0,1);
+                mat.rotate(90,1,0,0);
+            }
+            else if(i==5) mat.rotate(180,1,0,0);
+            mat.translate(0,0,squarePos);
+            ph->faces.append(qMakePair(T_SQUARE, mat));
+
+            for(int j=0; j<4; j++) 
+            {
+                QMatrix4x4 triMat;
+                triMat.setToIdentity();
+                triMat.rotate(45+90*j,0,0,1);
+                ph->faces.append(qMakePair(T_TRIANGLE2, mat * triMat * foldedTriangle));
+            }
+        }
+    
+
+        return ph;
+    }
+
+
+    //-------------------------------------------------------------------------
 
     class Piece;
     
@@ -40,12 +223,13 @@ namespace polydron {
 
     class PieceType {
     public:
+        TypeId typeId;
         const int index;
         Mesh mesh;
         Color color;
         double radius;
         QList<Piece*> pieces;
-        PieceType(int i) : index(i), color(1,1,1), radius(0) {}
+        PieceType(int i) : index(i), color(1,1,1), radius(0), typeId(T_NONE) {}
     };
 
     class Piece {
@@ -89,11 +273,11 @@ namespace polydron {
         QMatrix4x4 m_faceMatrix;
         QMatrix4x4 *m_phMatrix;
     public:
-        PolyhedronBehavior(Piece *p, const Polyhedron *ph, int faceIndex, QMatrix4x4 *phMatrix) 
+        PolyhedronBehavior(Piece *p, const MyPolyhedron *ph, int faceIndex, QMatrix4x4 *phMatrix) 
         : Behavior(p)
         , m_phMatrix(phMatrix)
         {
-            m_faceMatrix = getFaceMatrix(ph, faceIndex);
+            m_faceMatrix = ph->faces[faceIndex].second;
         }
 
         void compute(double time) {
@@ -239,12 +423,13 @@ using namespace polydron;
 
 class Polydron {
 public:
+
     const double edgeLength;
 
     QList<PieceType*> m_types;
     QList<Piece*> m_pieces;
-    QList<Polyhedron*> m_polyhedra;
-    QMap<int,int> m_edgeCountTable;
+    QList<MyPolyhedron*> m_polyhedra;
+    QMap<TypeId,int> m_typeIdTable;
 
     struct {
         QMatrix4x4 worldMatrix;
@@ -261,7 +446,7 @@ public:
     
     void buildPolyhedra();
     void buildPieces();
-    void buildPieces(int edgeCount, int count, const Color color, double radius);
+    void buildPieces(TypeId typeId, int edgeCount, int count, const Color color, double radius);
     void animate(double time);
     void draw();
 
@@ -290,53 +475,69 @@ Polydron::~Polydron()
     foreach(PieceType*type, m_types) delete type;
     m_types.clear();
     
-    foreach(Polyhedron*ph, m_polyhedra) delete ph;
+    foreach(MyPolyhedron*ph, m_polyhedra) delete ph;
     m_polyhedra.clear();    
     
 }
 
 void Polydron::buildPolyhedra()
 {
-    m_polyhedra.append(makeTetrahedron());
-    m_polyhedra.append(makeCube());
-    m_polyhedra.append(makeOctahedron());
-    m_polyhedra.append(makeDodecahedron());
-    m_polyhedra.append(makeIcosahedron());
+    Polyhedron *ph;
 
-    m_polyhedra.append(makeCuboctahedron());
-    m_polyhedra.append(makeTruncatedDodecahedron());
+    m_polyhedra.append(MyPolyhedron::makeImpossible(edgeLength, 1.0));
 
-    foreach(Polyhedron *ph, m_polyhedra) 
-    {
-        const Polyhedron::Edge &e = ph->getEdge(0);
-        double L = (ph->getVertex(e.m_a).m_pos - ph->getVertex(e.m_b).m_pos).length();
-        ph->computeFaceVertices();
-        ph->scale(edgeLength / L);
-    }
+    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,2));
+    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,3));
+    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,4));
+
+    ph = makeTetrahedron(); 
+    m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
+
+    ph = makeCube(); 
+    m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
+    
+    ph = makeOctahedron();
+    m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
+
+    ph = makeDodecahedron();
+    m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
+
+    ph = makeIcosahedron();
+    m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
+
+    ph = makeCuboctahedron();
+    m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
+
+    ph = makeTruncatedDodecahedron();
+    m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
+
 }
 
 
 void Polydron::buildPieces()
 {
-    const Color colors[4] = {
+    const Color colors[5] = {
         Color(0.8,0.2,0.2),
         Color(0.8,0.6,0.1),
         Color(0.2,0.4,0.8),
-        Color(0.8,0.2,0.9)
+        Color(0.1,0.2,0.9),
+        Color(0.8,0.5,0.1)
     };
-    buildPieces(3, 20, colors[0], 3.7);
-    buildPieces(4, 6, colors[1], 1);
-    buildPieces(5, 12, colors[2], 2.3);
-    buildPieces(10, 12, colors[3], 5);
+    buildPieces(T_TRIANGLE, 3, 20, colors[0], 3.7);
+    buildPieces(T_SQUARE, 4, 6, colors[1], 1);
+    buildPieces(T_PENTAGON, 5, 12, colors[2], 2.3);
+    buildPieces(T_DECAGON, 10, 12, colors[3], 5);
+    buildPieces(T_TRIANGLE2, 3, 24, colors[4], 5);
 }
 
-void Polydron::buildPieces(int edgeCount, int count, Color color, double radius)
+void Polydron::buildPieces(TypeId typeId, int edgeCount, int count, Color color, double radius)
 {
     int index = m_types.count();
-    m_edgeCountTable[edgeCount] = index;
+    m_typeIdTable[typeId] = index;
     PieceType *type = new PieceType(index);
     type->color = color;
     type->radius = radius;
+    type->typeId = typeId;
     double r = edgeLength*0.5/sin(M_PI/edgeCount);
     type->mesh.makePrism(r,0.03,edgeCount);
     m_types.append(type);
@@ -369,6 +570,7 @@ void Polydron::animate(double time)
 
 void Polydron::draw()
 {
+
     foreach(PieceType*type, m_types)
     {
         type->mesh.bind();
@@ -381,6 +583,7 @@ void Polydron::draw()
         }
         type->mesh.release();
     }
+    
 }
 
 
@@ -396,20 +599,19 @@ void Polydron::makePolyhedron(double time, int phIndex)
 {
     QVector<int> used(m_types.count(), 0);
     if(phIndex<0 || phIndex>=m_polyhedra.count()) return;
-    const Polyhedron *ph = m_polyhedra[phIndex];
+    const MyPolyhedron *ph = m_polyhedra[phIndex];
 
-    double distance = ph->getVertex(0).m_pos.length() * 2;
+    double distance = ph->radius * 2;
     m_polyhedronPlacement.translation.setToIdentity();
     m_polyhedronPlacement.translation.translate(0,0,-distance);
     m_polyhedronPlacement.manualRotation.setToIdentity();
     m_polyhedronPlacement.worldMatrix = m_polyhedronPlacement.translation;
     
-    for(int i=0;i<ph->getFaceCount();i++) 
+    for(int i=0;i<ph->faces.count();i++) 
     {
-        const Polyhedron::Indices &ii = ph->getFace(i).m_vertices;
-        int m = (int)ii.size();
-        if(!m_edgeCountTable.contains(m)) continue;
-        int typeIndex = m_edgeCountTable[m];
+        TypeId typeId = ph->faces[i].first;
+        if(!m_typeIdTable.contains(typeId)) continue;
+        int typeIndex = m_typeIdTable[typeId];
         int j = used[typeIndex]++;
         const PieceType *type = m_types[typeIndex];
         assert(j<type->pieces.count());
@@ -438,6 +640,7 @@ PolydronPage::PolydronPage()
 , m_theta(0)
 , m_phi(0)
 , m_rotating(true)
+, m_parameter(1)
 {
     m_polydron = new Polydron();
 }
@@ -506,7 +709,10 @@ void PolydronPage::paintGL()
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 90.0);
 
     // draw();
+    glPushMatrix();
+    glMultMatrixd((m_polydron->m_polyhedronPlacement.translation * m_polydron->m_polyhedronPlacement.manualRotation).constData());
     drawAxes();
+    glPopMatrix();
 
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -514,7 +720,9 @@ void PolydronPage::paintGL()
 
     m_polydron->animate(m_clock.elapsed()*0.001);
 
+    // drawPolyhedron();
     m_polydron->draw();
+
     glDisable(GL_CULL_FACE);
     
     glDisableClientState(GL_NORMAL_ARRAY);
@@ -522,6 +730,36 @@ void PolydronPage::paintGL()
 
     glPopMatrix();
 }
+
+void PolydronPage::drawPolyhedron()
+{
+    QMatrix4x4 phMatrix = 
+        m_polydron->m_polyhedronPlacement.translation * 
+        m_polydron->m_polyhedronPlacement.manualRotation;
+    MyPolyhedron *ph = MyPolyhedron::makeImpossible(m_polydron->edgeLength, m_parameter);
+
+    for(int i=0; i<m_polydron->m_types.count(); i++)
+    {
+        PieceType *pieceType = m_polydron->m_types[i];
+        setColor(pieceType->color);
+        Mesh *mesh = &pieceType->mesh;
+        mesh->bind();        
+        for(int i=0;i<ph->faces.count();i++)
+        {
+            if(pieceType->typeId == ph->faces[i].first)
+            {
+                glPushMatrix();
+                glMultMatrixd((phMatrix * ph->faces[i].second).constData());
+                mesh->draw();
+                glPopMatrix();
+            }
+        }
+        mesh->release();
+    }
+    
+    delete ph;
+}
+
 
 void PolydronPage::draw()
 {
@@ -572,6 +810,8 @@ void PolydronPage::mouseMoveEvent(QMouseEvent *e)
   m_lastPos = e->pos();
   if(!m_rotating)
   {
+      m_parameter +=  0.001*delta.x();
+      qDebug() << m_parameter;
   }
   else
   {

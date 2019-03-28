@@ -281,13 +281,11 @@ void Viewer::showEvent(QShowEvent *)
 void Viewer::keyPressEvent(QKeyEvent *e)
 {
     if(e->key() == Qt::Key_PageDown 
-        || e->key() == Qt::Key_Right 
         || e->key() == Qt::Key_Down)
     {
         m_presentation->nextPage();
     }
     else if(e->key() == Qt::Key_PageUp
-        || e->key() == Qt::Key_Left 
         || e->key() == Qt::Key_Up)
     {
         m_presentation->prevPage();

@@ -105,6 +105,7 @@
     <ClCompile Include="HTransform.cpp" />
     <ClCompile Include="HyperbolicPolyhedronPage.cpp" />
     <ClCompile Include="ImpossiblePolyhedronPage.cpp" />
+    <ClCompile Include="JohnsonSolidsPage.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="HTransform.h" />
     <ClInclude Include="HyperbolicPolyhedronPage.h" />
     <ClInclude Include="ImpossiblePolyhedronPage.h" />
+    <ClInclude Include="JohnsonSolidsPage.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Mesh2D.h" />
     <ClInclude Include="Net.h" />

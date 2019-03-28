@@ -24,15 +24,12 @@ CubeGridPage::CubeGridPage()
 , m_rotating(true)
 , m_gridSmallUnit(0)
 , m_gridBigUnit(1)
-, m_title(0)
-, m_escher(0)
+, m_status(-1)
 {
 }
 
 CubeGridPage::~CubeGridPage()
 {
-    delete m_title;
-    delete m_escher;
 }
 
 void CubeGridPage::buildMesh()
@@ -71,17 +68,7 @@ void CubeGridPage::initializeGL()
 {
     buildMesh();
     m_shaderProgram = loadProgram("cubeGrid");
-    m_title = new OverlayPanel(QImage("images/cubic-space-division.jpg"));
-
-    QImage img(600,600,QImage::Format_ARGB32);
-    img.fill(Qt::transparent);
-    QPainter pa;
-    pa.begin(&img);
-    pa.setFont(QFont("Calibri", 80, QFont::Bold));
-    pa.setPen(Qt::white);
-    pa.drawText(QRect(0,0,600,600), Qt::AlignCenter, "HELLO");
-    pa.end();
-    m_escher = new OverlayPanel(img);
+    
 }
 
 void CubeGridPage::start()
@@ -105,6 +92,13 @@ void CubeGridPage::start()
   glLightfv(GL_LIGHT1, GL_DIFFUSE, lcolor);
   glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
   glLightfv(GL_LIGHT1, GL_POSITION, lpos);
+  createTextures();
+  setStatus(0);
+}
+
+void CubeGridPage::stop()
+{
+    destroyTextures();
 }
 
 void CubeGridPage::resizeGL(int width, int height)
@@ -245,9 +239,10 @@ void CubeGridPage::keyPressEvent(QKeyEvent *e)
     //else if(e->key() == Qt::Key_4) m_offset -= QVector3D(m_gridBigUnit,0,0);
     else if(e->key() == Qt::Key_Z) {
         // getOverlay()->add(m_title);
-        getOverlay()->add(m_escher);
 
-    }
+    } 
+    else if(e->key() == Qt::Key_Right) setStatus(m_status+1);
+    else if(e->key() == Qt::Key_Left) setStatus(m_status-1);
     e->ignore();
     updateGL();
 }
@@ -284,3 +279,90 @@ void CubeGridPage::moveOffset(const QVector3D &delta)
         recenter(m_offset.z(), u));
 }
 
+void CubeGridPage::createTextures()
+{
+    QImage img;
+    QPainter pa;
+    OverlayPanel *panel;
+
+    // title
+    panel = &m_panels.title;
+    img = QImage(1200,300,QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    pa.begin(&img);
+    pa.setFont(QFont("Calibri", 80, QFont::Bold));
+    pa.setPen(Qt::white);
+    pa.drawText(QRect(0,0,1200,100), Qt::AlignCenter, "Hyperbolic Honeycomb");
+    pa.setFont(QFont("Calibri", 40, QFont::Bold));
+    pa.drawText(QRect(0,100,1200,100), Qt::AlignCenter, "Gian Marco Todesco");
+    pa.end();
+    panel->createTexture(img);
+    panel->setSize(40);
+    panel->setPosition(0.5,0.8);
+
+    // title2
+    panel = &m_panels.title2;
+    img = QImage(1200,650,QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    pa.begin(&img);
+    pa.setFont(QFont("Calibri", 80, QFont::Bold));
+    pa.setPen(Qt::white);
+    pa.drawText(QRect(0,0,1200,200), Qt::AlignCenter, "Tale of two errors");
+    pa.setFont(QFont("Calibri", 40, QFont::Bold));
+    pa.drawText(QRect(0,200,1200,100), Qt::AlignCenter, "How I lost my way and discovered\n the Hyperbolic Space");
+    pa.end();
+    panel->createTexture(img);
+    panel->setSize(40 * 650.0 / 300.0);
+    panel->setPosition(0.5,0.65);
+
+    // escher
+    panel = &m_panels.escher;
+    panel->createTexture(QImage("images/cubic-space-division.jpg"));
+    panel->setSize(60);
+    panel->setPosition(0.3,0.4);
+
+
+    // escher caption
+    panel = &m_panels.escherCaption;
+    img = QImage(600,160,QImage::Format_ARGB32);
+    img.fill(Qt::transparent);
+    pa.begin(&img);
+    pa.setFont(QFont("Calibri", 40, QFont::Bold));
+    pa.setPen(Qt::white);
+    pa.drawText(QRect(0,0,600,80), Qt::AlignLeft, "Cubic space division");
+    pa.drawText(QRect(0,80,600,80), Qt::AlignLeft, "1953 M. C. Escher");
+    pa.end();
+    panel->createTexture(img);
+    panel->setSize(40);
+    panel->setPosition(0.75,0.7);
+
+}
+
+void CubeGridPage::destroyTextures()
+{
+    OverlayPanel *panels[] = {
+        &m_panels.title,
+        &m_panels.title2,
+        &m_panels.escher,
+        &m_panels.escherCaption,
+        &m_panels.grids
+    };
+    for(int i=0;i<sizeof(panels)/sizeof(panels[0]);i++) panels[i]->deleteTexture();
+}
+
+void CubeGridPage::setStatus(int status)
+{
+    m_status = status;
+    Overlay *ov = getOverlay();
+
+    getOverlay()->removeAll();
+    if(status < 5) 
+        ov->add(&m_panels.title);
+    else
+        ov->add(&m_panels.title2);
+    if(status == 2) {
+        ov->add(&m_panels.escher);
+        ov->add(&m_panels.escherCaption);
+    }
+
+}

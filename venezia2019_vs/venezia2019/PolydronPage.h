@@ -18,7 +18,7 @@ class PolydronPage : public Page
   bool m_rotating;
   Polydron *m_polydron;
   QTime m_clock;
-
+  double m_parameter; // debug only
 
 public:
   PolydronPage();
@@ -32,6 +32,7 @@ protected:
 
     void createPieces();
     void draw();
+    void drawPolyhedron(); // debug only
 
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);

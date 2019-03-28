@@ -18,8 +18,8 @@ class OverlayPanel {
     bool m_hasAlpha;
 
 public:
-    // nota: il pannello va creato dentro la initializeGL()
-    OverlayPanel(const QImage &image);
+    OverlayPanel();
+    ~OverlayPanel();
 
     void setSize(double sz) { m_size = sz; }
     void setPosition(double x, double y) { m_pos = QPointF(x,y); }
@@ -31,7 +31,6 @@ public:
 
     void createTexture(const QImage &img);
     void deleteTexture();
-
    
 };
 
@@ -50,6 +49,7 @@ public:
 
     void add(OverlayPanel *panel);
     void remove(OverlayPanel *panel);
+    void removeAll();
 
     void draw(const QSize &winSize);
 };

@@ -11,6 +11,7 @@
 #include "H3GridPage.h"
 #include "ImpossiblePolyhedronPage.h"
 #include "HyperbolicPolyhedronPage.h"
+#include "JohnsonSolidsPage.h"
 #include "TestPage.h"
 
 
@@ -19,14 +20,16 @@
 
 void Presentation::buildPages()
 {
+    addPage(new PolydronPage());
+
+    addPage(new JohnsonSolidsPage());
+    addPage(new CubeGridPage());
     addPage(new TestPage());
 
     addPage(new HyperbolicPolyhedronPage());
     addPage(new ImpossiblePolyhedronPage());
     
 
-    addPage(new CubeGridPage());
-    addPage(new PolydronPage());
 
     addPage(new H3GridPage());
     // 
