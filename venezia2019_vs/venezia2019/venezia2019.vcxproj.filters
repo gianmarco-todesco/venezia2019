@@ -149,6 +149,9 @@
     <ClCompile Include="JohnsonSolidsPage.cpp">
       <Filter>Source Files\pages</Filter>
     </ClCompile>
+    <ClCompile Include="H3GridBuildPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="venezia2019.qrc">
@@ -249,6 +252,9 @@
     <ClInclude Include="JohnsonSolidsPage.h">
       <Filter>Header Files\pages</Filter>
     </ClInclude>
+    <ClInclude Include="H3GridBuildPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\basic.fsh">
@@ -273,6 +279,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Resources\h3basic.vsh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resources\h3grid2.fsh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resources\h3grid2.vsh">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

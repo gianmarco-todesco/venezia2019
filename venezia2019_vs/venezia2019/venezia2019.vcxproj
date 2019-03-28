@@ -99,6 +99,7 @@
     <ClCompile Include="GUtil.cpp" />
     <ClCompile Include="H3.cpp" />
     <ClCompile Include="H3Grid.cpp" />
+    <ClCompile Include="H3GridBuildPage.cpp" />
     <ClCompile Include="H3GridPage.cpp" />
     <ClCompile Include="HTessellation.cpp" />
     <ClCompile Include="HTessellationViewer.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="Gutil.h" />
     <ClInclude Include="H3.h" />
     <ClInclude Include="H3Grid.h" />
+    <ClInclude Include="H3GridBuildPage.h" />
     <ClInclude Include="H3GridPage.h" />
     <ClInclude Include="HTessellation.h" />
     <ClInclude Include="HTessellationViewer.h" />
@@ -188,6 +190,8 @@
     <None Include="Resources\h3basic.vsh" />
     <None Include="Resources\h3grid.fsh" />
     <None Include="Resources\h3grid.vsh" />
+    <None Include="Resources\h3grid2.fsh" />
+    <None Include="Resources\h3grid2.vsh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
