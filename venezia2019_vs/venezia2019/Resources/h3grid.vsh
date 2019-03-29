@@ -5,7 +5,7 @@ uniform mat4 hMatrix;
 vec4 toBall(vec4 p) {
   vec4 p2 = p * (1.0/p.w);
   float s2 = min(1.0, p2.x*p2.x + p2.y*p2.y + p2.z*p2.z);
-  float k = 5.0 / (1.0 + sqrt(1.0 - s2));        
+  float k = 10.0 / (1.0 + sqrt(1.0 - s2));        
   return vec4(p2.xyz*k,1.0);
 }
 

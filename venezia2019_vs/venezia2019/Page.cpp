@@ -21,26 +21,22 @@
 
 void Presentation::buildPages()
 {
-
-    addPage(new H3GridPage());
-
-
+    //addPage(new CubeGridPage());
+    addPage(new HyperbolicPolyhedronPage());
 
     /*
-    addPage(new H3GridBuildPage());
-    addPage(new HyperbolicPolyhedronPage());
-    addPage(new CubeGridPage());
     addPage(new PolydronPage());
     addPage(new JohnsonSolidsPage());
     addPage(new ImpossiblePolyhedronPage());
     addPage(new CircleLimit3Page());
+   
     addPage(new PDiskPage());
     addPage(new FoldingFacesPage());
-
     addPage(new HyperbolicPolyhedronPage());
-    */
+    addPage(new H3GridBuildPage());
+    addPage(new H3GridPage());
 
-
+   */
     // addPage(new TestPage());
     
 
@@ -165,6 +161,7 @@ void Presentation::start(Page *page)
 
 void Presentation::stop(Page *page)
 {
+    m_viewer->getOverlay()->removeAll();
     page->stop();
 }
 

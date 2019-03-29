@@ -29,6 +29,7 @@ void CircleLimit3Page::start()
 {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     glClearColor(1,1,1,1);
 }
 

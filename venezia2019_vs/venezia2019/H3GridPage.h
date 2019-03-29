@@ -33,7 +33,7 @@ class H3GridPage : public Page
   QVector3D m_hOffset;
   H3Grid534 *m_grid;
   H3Grid *m_grid2;
-  Mesh m_sphere, m_vertexCube, m_edgeBox;
+  Mesh m_sphere, m_vertexCube, m_edgeBox, m_edgeBoxLow;
   QTime m_clock;
 
   QList<QMatrix4x4> m_edgeMatrices, m_vertexMatrices;
@@ -52,7 +52,7 @@ protected:
   void paintGL();
   void resizeGL(int width, int height);
 
-  void makeEdgeBox();
+  void makeEdgeBox(Mesh &mesh, int n);
   
   void draw1();
   void draw2();

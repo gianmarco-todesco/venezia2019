@@ -33,14 +33,14 @@
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
-    <Filter Include="Source Files\pages">
-      <UniqueIdentifier>{a8614bc8-3084-4347-a6f4-2efab570713a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\pages">
       <UniqueIdentifier>{55e350eb-a702-40dc-a72b-ef078fdfd0a3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{de0e4bc1-297d-4bce-a1ea-dac6cc47188d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pages">
+      <UniqueIdentifier>{a8614bc8-3084-4347-a6f4-2efab570713a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
