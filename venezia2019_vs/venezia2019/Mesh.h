@@ -37,6 +37,7 @@ public:
     void makeBox(double rx, double ry, double rz, int nx, int ny, int nz);
 
     void makePrism(double r, double h, int n);
+    void makePolydronPiece(double r, double h, int n);
 
 };
 

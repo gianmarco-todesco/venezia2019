@@ -24,6 +24,9 @@ class CubeGridPage : public Page
     double m_gridSmallUnit;
     double m_gridBigUnit;
     int m_status;
+    bool m_translating;
+    double m_translatingSpeed;
+
     struct {
         OverlayPanel title, title2, escher, escherCaption, grids;
     } m_panels;

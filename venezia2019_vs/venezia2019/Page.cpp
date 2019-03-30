@@ -21,11 +21,11 @@
 
 void Presentation::buildPages()
 {
-    //addPage(new CubeGridPage());
-    addPage(new HyperbolicPolyhedronPage());
+    // addPage(new CubeGridPage());
+    // addPage(new HyperbolicPolyhedronPage());
 
-    /*
     addPage(new PolydronPage());
+    /*
     addPage(new JohnsonSolidsPage());
     addPage(new ImpossiblePolyhedronPage());
     addPage(new CircleLimit3Page());

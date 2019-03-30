@@ -11,6 +11,7 @@ Overlay::Overlay(Viewer *viewer)
 
 Overlay::~Overlay()
 {
+    foreach(OverlayAnimation*a, m_animations) delete a;
 }
 
 void Overlay::initializeGL()
@@ -33,6 +34,7 @@ void Overlay::remove(OverlayPanel *panel)
 void Overlay::removeAll()
 {
     m_panels.clear();
+    foreach(OverlayAnimation*a, m_animations) delete a;
 }
 
 
@@ -43,6 +45,7 @@ void Overlay::draw(const QSize &winSize)
     int height = winSize.height();
 
     double time = m_clock.elapsed() * 0.001;
+    animate();
 
     // set window coords
     glMatrixMode(GL_PROJECTION);
@@ -92,6 +95,93 @@ void Overlay::draw(const QSize &winSize)
     
 
 }
+
+
+void Overlay::animate()
+{
+    double time = m_clock.elapsed()*0.001;
+    QVector<OverlayAnimation*> tokill;
+    foreach(OverlayAnimation*a, m_animations)
+    {
+        bool ret = a->tick(this, time);
+        if(ret) 
+        {
+            
+            tokill.append(a);
+        }
+    }
+    foreach(OverlayAnimation*a, tokill)
+    {
+        m_animations.removeAll(a);
+        delete a;
+    }
+}
+
+void Overlay::addAnimation(OverlayAnimation *a)
+{
+    if(m_animations.contains(a)) return; // this should never happen
+    a->m_startTime = m_clock.elapsed()*0.001;
+    m_animations.append(a);
+}
+
+
+
+
+//=============================================================================
+
+bool OverlayMovement::tick(Overlay *overlay, double time) 
+{
+    double t = (time - (m_startTime+m_delay))/m_duration;
+    if(t>=1.0)
+    {
+        m_panel->setPosition(m_p1.x(), m_p1.y());
+        if(m_deleteOnFinish)
+        {
+            overlay->remove(m_panel);
+        }
+        return true;
+    }
+    if(t<=0.0) t=0.0;
+    t = 0.5*(1-cos(t*M_PI));
+    QPointF p = (1-t)*m_p0 + t*m_p1;
+    m_panel->setPosition(p.x(),p.y());
+    return false;
+}
+
+void Overlay::move(OverlayPanel *panel, 
+    const QPointF &p0, const QPointF &p1, 
+    double duration,
+    double delay)
+{
+    OverlayMovement *a = new OverlayMovement(panel, p0, p1, duration);
+    a->m_delay = delay;
+    addAnimation(a);
+}
+
+void Overlay::addAndMove(OverlayPanel *panel, 
+    const QPointF &p0, const QPointF &p1, 
+    double duration,
+    double delay)
+{
+    add(panel);
+    OverlayMovement *a = new OverlayMovement(panel, p0, p1, duration);
+    a->m_delay = delay;
+    addAnimation(a);
+}
+
+
+void Overlay::moveAndRemove(OverlayPanel *panel, 
+    const QPointF &p0, const QPointF &p1, 
+    double duration,
+    double delay)
+{
+    OverlayMovement *a = new OverlayMovement(panel, p0, p1, duration);
+    a->m_delay = delay;
+    a->m_deleteOnFinish = true;
+    addAnimation(a);
+}
+
+
 
 //=============================================================================
 
@@ -156,3 +246,5 @@ void OverlayPanel::draw(const QSize &winSize)
     glEnd();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+

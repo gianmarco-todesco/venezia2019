@@ -27,6 +27,7 @@ GLuint texid;
 Viewer::Viewer()
 : QGLWidget()
 , m_fps(0)
+, m_showFps(true)
 {  
     setFocusPolicy(Qt::ClickFocus);
     m_presentation = new Presentation(this);
@@ -74,8 +75,8 @@ void Viewer::initializeGL()
   m_presentation->initializeGL();
 
 
-  texid = bindTexture("images/cubic-space-division.jpg");
-  glBindTexture(GL_TEXTURE_2D, 0);
+ // texid = bindTexture("images/cubic-space-division.jpg");
+ // glBindTexture(GL_TEXTURE_2D, 0);
 
 
   /*
@@ -158,12 +159,12 @@ void Viewer::paintGL()
     err = glGetError() ;
     assert(err == GL_NO_ERROR);
 
-    qglColor(Qt::cyan);
-    renderText(50,50,QString::number((int)m_fps), QFont("Calibri", 24));
-
+    if(m_showFps)
+    {
+        qglColor(Qt::magenta);
+        renderText(10,40,QString::number((int)m_fps), QFont("Calibri", 24));        
+    }    
     m_overlay->draw(size());
-    
-
 
     
 
@@ -302,8 +303,12 @@ void Viewer::keyPressEvent(QKeyEvent *e)
             setWindowState(windowState() | Qt::WindowFullScreen);
         setFocus();
     }
-  else
-    m_presentation->p()->keyPressEvent(e);
+    else if(e->key() == Qt::Key_Comma)
+    {
+        m_showFps = !m_showFps;
+    }
+    else
+        m_presentation->p()->keyPressEvent(e);
 }
 
 void Viewer::wheelEvent(QWheelEvent*e)

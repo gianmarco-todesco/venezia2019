@@ -6,8 +6,6 @@
 
 #include "Mesh.h"
 
-#define _USE_MATH_DEFINES
-#include <math.h>
 #include <assert.h>
 #include <QKeyEvent>
 #include <QWheelEvent>
@@ -349,9 +347,23 @@ namespace polydron {
         void blend(const QMatrix4x4 oldMatrix, const QMatrix4x4 newMatrix, double t);
     };
 
+    namespace {
+        inline double step(double x, double a, double b) { 
+            if(x<=a) return 0; 
+            else if(x>=b) return 1;
+            else return (x-a)/(b-a);
+        }
+        inline double smooth(double x) { return x<0 ? 0 : x>1 ? 1 : 0.5*(1-cos(x*M_PI)); }
+    }
     void TransitionBehavior::blend(const QMatrix4x4 oldMatrix, const QMatrix4x4 newMatrix, double t) 
     {
-        QMatrix4x4 mat = slerp(oldMatrix, newMatrix, t);
+        double t0 = smooth(step(t, 0,0.8));
+        double t1 = smooth(step(t, 0.75,1.0));
+
+        QMatrix4x4 newMatrix2; newMatrix2.setToIdentity();
+        newMatrix2.translate(0,0,(1-t1)*4);
+        newMatrix2 = newMatrix * newMatrix2;
+        QMatrix4x4 mat = slerp(oldMatrix, newMatrix2, t0);
         piece->worldMatrix = mat;
     }
 
@@ -435,6 +447,7 @@ public:
         QMatrix4x4 worldMatrix;
         QMatrix4x4 manualRotation;
         QMatrix4x4 translation;
+        double distance;
     } m_polyhedronPlacement;
 
 
@@ -460,11 +473,13 @@ Polydron::Polydron()
     : edgeLength(3)
     , m_automaticRotation(true)
     , m_oldTime(0)
+
 {
     buildPolyhedra();
     m_polyhedronPlacement.manualRotation.setToIdentity();
     m_polyhedronPlacement.worldMatrix.setToIdentity();
     m_polyhedronPlacement.translation.setToIdentity();
+    m_polyhedronPlacement.distance = 0;
 }
 
 Polydron::~Polydron()
@@ -483,12 +498,6 @@ Polydron::~Polydron()
 void Polydron::buildPolyhedra()
 {
     Polyhedron *ph;
-
-    m_polyhedra.append(MyPolyhedron::makeImpossible(edgeLength, 1.0));
-
-    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,2));
-    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,3));
-    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,4));
 
     ph = makeTetrahedron(); 
     m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
@@ -511,6 +520,11 @@ void Polydron::buildPolyhedra()
     ph = makeTruncatedDodecahedron();
     m_polyhedra.append(MyPolyhedron::make(ph, edgeLength)); delete ph;
 
+    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,2));
+    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,3));
+    m_polyhedra.append(MyPolyhedron::makeDeltahedron(edgeLength,4));
+    m_polyhedra.append(MyPolyhedron::makeImpossible(edgeLength, 1.0));
+
 }
 
 
@@ -523,11 +537,11 @@ void Polydron::buildPieces()
         Color(0.1,0.2,0.9),
         Color(0.8,0.5,0.1)
     };
-    buildPieces(T_TRIANGLE, 3, 20, colors[0], 3.7);
+    buildPieces(T_TRIANGLE, 3, 20, colors[0], 3.1);
     buildPieces(T_SQUARE, 4, 6, colors[1], 1);
-    buildPieces(T_PENTAGON, 5, 12, colors[2], 2.3);
-    buildPieces(T_DECAGON, 10, 12, colors[3], 5);
-    buildPieces(T_TRIANGLE2, 3, 24, colors[4], 5);
+    buildPieces(T_PENTAGON, 5, 12, colors[2], 2.2);
+    buildPieces(T_DECAGON, 10, 12, colors[3], 5.5);
+    buildPieces(T_TRIANGLE2, 3, 24, colors[4], 3.8);
 }
 
 void Polydron::buildPieces(TypeId typeId, int edgeCount, int count, Color color, double radius)
@@ -539,7 +553,9 @@ void Polydron::buildPieces(TypeId typeId, int edgeCount, int count, Color color,
     type->radius = radius;
     type->typeId = typeId;
     double r = edgeLength*0.5/sin(M_PI/edgeCount);
-    type->mesh.makePrism(r,0.03,edgeCount);
+    if(typeId == T_TRIANGLE2) r *= 1.03;
+    
+    type->mesh.makePolydronPiece(r,0.03,edgeCount);
     m_types.append(type);
     for(int i=0;i<count; i++)
     {
@@ -602,6 +618,7 @@ void Polydron::makePolyhedron(double time, int phIndex)
     const MyPolyhedron *ph = m_polyhedra[phIndex];
 
     double distance = ph->radius * 2;
+    m_polyhedronPlacement.distance = distance;
     m_polyhedronPlacement.translation.setToIdentity();
     m_polyhedronPlacement.translation.translate(0,0,-distance);
     m_polyhedronPlacement.manualRotation.setToIdentity();
@@ -616,7 +633,10 @@ void Polydron::makePolyhedron(double time, int phIndex)
         const PieceType *type = m_types[typeIndex];
         assert(j<type->pieces.count());
         Piece *piece = type->pieces[j];
-        piece->addBehaviour(new PolyhedronBehavior(piece, ph, i, &m_polyhedronPlacement.worldMatrix), time, time + j * 0.5);
+        piece->addBehaviour(
+            new PolyhedronBehavior(
+                piece, ph, i, &m_polyhedronPlacement.worldMatrix), 
+                time, time + j * 0.1);
     }
     foreach(Piece*piece, m_pieces)
     {
@@ -652,7 +672,29 @@ PolydronPage::~PolydronPage()
 
 void PolydronPage::initializeGL()
 {
+    QImage img(256,256, QImage::Format_ARGB32_Premultiplied);
+    img.fill(Qt::white);
+    QPainter pa;
+    pa.begin(&img);
+    int d = 4;
+    pa.fillRect(0,128,256,64, QColor(127,127,127));
+    pa.fillRect(0,0,256,d, Qt::black);
+    pa.fillRect(0,64-d,256,d*2, Qt::black);
+    pa.fillRect(0,128-d,256,d*2, Qt::black);
+    pa.fillRect(0,192-d,256,d*2, Qt::black);
+    pa.fillRect(0,255-d,256,d, Qt::black);
+    /*
+    pa.setFont(QFont("Arial", 30));
+    pa.drawText(QRect(0,0,256,64),Qt::AlignCenter, "Uno");
+    pa.drawText(QRect(0,64,256,64),Qt::AlignCenter, "Due");
+    pa.drawText(QRect(0,128,256,64),Qt::AlignCenter, "Tre");
+    */
+    pa.end();   
+    m_texture1.createTexture(img);
+
+
     m_polydron->buildPieces();
+
 }
 
 void PolydronPage::start()
@@ -665,16 +707,17 @@ void PolydronPage::start()
     glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,1.0);
 
     GLfloat lcolor[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
+    GLfloat spec[] =  { 0.2f, 0.2f, 0.2f, 1.0f};
     GLfloat lpos[]   = { 5, 7, 10, 1.0f};
     glLightfv(GL_LIGHT0, GL_AMBIENT, lcolor);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lcolor);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lcolor);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
     glLightfv(GL_LIGHT0, GL_POSITION, lpos);
 
     lpos[0] = -5;
     glLightfv(GL_LIGHT1, GL_AMBIENT, lcolor);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, lcolor);
-    glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, spec);
     glLightfv(GL_LIGHT1, GL_POSITION, lpos);
 
   
@@ -704,29 +747,49 @@ void PolydronPage::paintGL()
     glTranslated(0,0,-m_cameraDistance);
     
 
-    GLfloat specular[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
+    GLfloat specular[] =  { 0.2f, 0.2f, 0.2f, 1.0f};
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 90.0);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 120.0);
 
     // draw();
     glPushMatrix();
     glMultMatrixd((m_polydron->m_polyhedronPlacement.translation * m_polydron->m_polyhedronPlacement.manualRotation).constData());
-    drawAxes();
+    // drawAxes();
     glPopMatrix();
 
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_CULL_FACE);
 
     m_polydron->animate(m_clock.elapsed()*0.001);
 
     // drawPolyhedron();
+    m_texture1.bind();  
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    /*
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); glVertex2d(0,0);
+    glTexCoord2f(1.0f, 1.0f); glVertex2d(10,0);
+    glTexCoord2f(1.0f, 0.0f); glVertex2d(10,10);
+    glTexCoord2f(0.0f, 0.0f); glVertex2d(0,10);
+    glEnd();
+    */
+    
     m_polydron->draw();
+    glDisable(GL_TEXTURE_2D);
+    
+
+
+    m_texture1.release();
 
     glDisable(GL_CULL_FACE);
     
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
     glPopMatrix();
 }
@@ -838,8 +901,16 @@ void PolydronPage::keyPressEvent(QKeyEvent *e)
     else if(e->key() == Qt::Key_3) m_polydron->makePolyhedron(time,2);
     else if(e->key() == Qt::Key_4) m_polydron->makePolyhedron(time,3);
     else if(e->key() == Qt::Key_5) m_polydron->makePolyhedron(time,4);
+
     else if(e->key() == Qt::Key_6) m_polydron->makePolyhedron(time,5);
     else if(e->key() == Qt::Key_7) m_polydron->makePolyhedron(time,6);
+
+    else if(e->key() == Qt::Key_8) m_polydron->makePolyhedron(time,7);
+
+    else if(e->key() == Qt::Key_Q) m_polydron->makePolyhedron(time,8);
+    else if(e->key() == Qt::Key_W) m_polydron->makePolyhedron(time,9);
+    else if(e->key() == Qt::Key_E) m_polydron->makePolyhedron(time,10);
+    // else if(e->key() == Qt::Key_R) m_polydron->makePolyhedron(time,11);
     else {
       e->ignore();
     }
@@ -848,6 +919,10 @@ void PolydronPage::keyPressEvent(QKeyEvent *e)
 
 void PolydronPage::wheelEvent(QWheelEvent*e)
 {
-    m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,50);
+    double distance = m_polydron->m_polyhedronPlacement.distance - e->delta() * 0.01;
+    // distance = clamp(distance, 1,150);
+    m_polydron->m_polyhedronPlacement.distance = distance;
+    m_polydron->m_polyhedronPlacement.translation.setToIdentity();
+    m_polydron->m_polyhedronPlacement.translation.translate(0,0,-distance);
     updateGL();
 }

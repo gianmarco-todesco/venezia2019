@@ -5,6 +5,7 @@
 #include "Mesh.h"
 #include <QPointF>
 #include <QTime>
+#include "Texture.h"
 
 class QGLShaderProgram;
 class Texture;
@@ -19,6 +20,7 @@ class PolydronPage : public Page
   Polydron *m_polydron;
   QTime m_clock;
   double m_parameter; // debug only
+  MyTexture m_texture1, m_texture2;
 
 public:
   PolydronPage();

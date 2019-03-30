@@ -20,6 +20,7 @@ class Viewer  : public QGLWidget
     QTime m_clock;
     double m_fps;
     GLuint m_textTextureId;
+    bool m_showFps;
 
 public:
     Viewer();

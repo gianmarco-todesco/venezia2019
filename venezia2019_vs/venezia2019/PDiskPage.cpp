@@ -589,7 +589,7 @@ void PDiskPage::paintGL()
   else if(4<=m_status && m_status<=6 || m_status==10)
   {
     // tre pattern diversi
-    int nn[][2] = {{8,3},{6,4},{5,4}};
+    int nn[][2] = {{8,3},{6,4},{4,6}}; // 5,4
     int k = m_status-4;
     if(m_status>6) k = 0;
     int n = nn[k][0], m = nn[k][1];
