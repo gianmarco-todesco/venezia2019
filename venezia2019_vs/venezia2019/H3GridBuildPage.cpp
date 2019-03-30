@@ -26,6 +26,19 @@
 
 #include "Viewer.h"
 
+namespace {
+    QMatrix4x4 htr(double kx, double ky, double kz)
+    {
+        return H3::KModel::translation(QVector3D(0,0,0), QVector3D(kx,ky,kz));
+    }
+
+} // namespace
+
+
+
+
+
+
 H3GridBuildPage::H3GridBuildPage()
 : m_theta(30)
 , m_phi(-20)
@@ -34,7 +47,10 @@ H3GridBuildPage::H3GridBuildPage()
 , m_shaderProgram(0)
 , m_grid(0)
 , m_status(0)
-
+, m_panMode(0)
+, m_panParameter(0)
+, m_uffa(0)
+, m_uffa2(0)
 {
     m_grid = new H3Grid534();
     
@@ -165,7 +181,10 @@ void H3GridBuildPage::paintGL()
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 90.0);
     // glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[0]);
 
-    draw2();
+    if(m_uffa > 0)
+        draw4();
+    else
+        draw2();
 
 
     glPopMatrix();
@@ -199,9 +218,18 @@ void H3GridBuildPage::mouseMoveEvent(QMouseEvent *e)
   m_lastPos = e->pos();
   if(!m_rotating)
   {
-      m_hOffset += QVector3D(delta.x()*0.01, delta.y()*0.01, 0.0);
-      m_hMatrix = H3::KModel::translation(m_hOffset, QVector3D(0,0,0));
+      if(m_panMode == 0 && m_uffa==0)
+      {
+          m_hOffset += 0.001 * QVector3D(-delta.x(), delta.y(), 0.0);
+          m_hMatrix = htr(m_hOffset.x(), m_hOffset.y(), m_hOffset.z());
+      }
+      else
+      {
+          m_panParameter = qMax(0., qMin(1., m_panParameter + 0.01*delta.x()));
 
+          QVector3D p = m_grid->getCornerMatrix().map(QVector3D(0,0,0));
+          m_hMatrix = H3::KModel::translation(p * m_panParameter, QVector3D(0,0,0));
+      }
   }
   else
   {
@@ -221,29 +249,19 @@ void H3GridBuildPage::wheelEvent(QWheelEvent*e)
 
 void H3GridBuildPage::keyPressEvent(QKeyEvent *e)
 {
-    /*
-    if(e->key() == Qt::Key_Plus) { 
-        m_level++; 
-        m_gridMatrices.clear();
-        QMatrix4x4 identity; identity.setToIdentity();
-        m_grid->flower(m_gridMatrices, identity, m_level);
-        qDebug() << m_gridMatrices.m_edgeMatrices.count() << " edges" << m_gridMatrices.m_vertexMatrices.count() << " vertices";
-        updateGL(); 
-    }
-    else if(e->key() == Qt::Key_Minus) { 
-        if(m_level>0) m_level--; 
-        m_gridMatrices.clear();
-        QMatrix4x4 identity; identity.setToIdentity();
-        m_grid->flower(m_gridMatrices, identity, m_level);
-        qDebug() << m_gridMatrices.m_edgeMatrices.count() << " edges" << m_gridMatrices.m_vertexMatrices.count() << " vertices";
-        updateGL(); 
-    }
-    */
+    
     if(e->key() == Qt::Key_Right) { m_status++;  m_statusStartTime = m_clock.elapsed(); }
     else if(e->key() == Qt::Key_Left) m_status--;
-    else if(e->key() == Qt::Key_Plus) { 
-        // test3();
-    }
+    else if(e->key() == Qt::Key_P) { m_panMode = 1-m_panMode; }
+    else if(e->key() == Qt::Key_1) { m_uffa = 0; }
+    else if(e->key() == Qt::Key_2) { m_uffa = 1; }
+    else if(e->key() == Qt::Key_3) { m_uffa = 3; }
+
+
+    else if(e->key() == Qt::Key_7) { m_uffa2 = 0; }
+    else if(e->key() == Qt::Key_8) { m_uffa2 = 1; }
+    else if(e->key() == Qt::Key_9) { m_uffa2 = 2; }
+    else if(e->key() == Qt::Key_0) { m_hOffset = QVector3D(0,0,0); m_hMatrix.setToIdentity(); }
     else
       e->ignore();
 }
@@ -344,14 +362,6 @@ void H3GridBuildPage::draw3()
 }
 */
 
-
-namespace {
-    QMatrix4x4 htr(double kx, double ky, double kz)
-    {
-        return H3::KModel::translation(QVector3D(0,0,0), QVector3D(kx,ky,kz));
-    }
-
-} // namespace
 
 
 void H3GridBuildPage::draw2()
@@ -653,5 +663,324 @@ void H3GridBuildPage::draw2()
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisable(GL_CULL_FACE);
     m_shaderProgram->release();
+
+}
+
+
+QMatrix4x4 rotation(double degree, int x, int y, int z) 
+{
+    QMatrix4x4 rot;rot.setToIdentity();
+    rot.rotate(degree,x,y,z);
+    return rot;
+}
+
+void H3GridBuildPage::draw3()
+{
+    drawAxes();
+    glDisable(GL_LIGHTING);
+
+    Polyhedron *ph = makeDodecahedron();
+    ph->computeFaceVertices();
+    ph->scale(m_grid->radius / ph->getVertex(0).m_pos.length());
+    
+    QMatrix4x4 cornerMatrix = m_grid->getCornerMatrix();
+
+    QMatrix4x4 faceRotation;
+    faceRotation = 
+        rotation(180*0.5*atan(2.0)/M_PI, 1,0,0) *
+        // rotation(36, 0,0,1) *
+        rotation(-180*0.5*atan(2.0)/M_PI, 1,0,0);
+    
+    QMatrix4x4 matrices[8];
+    QMatrix4x4 rot;     
+    for(int i=0;i<4;i++) 
+    {
+        rot.setToIdentity(); 
+        rot.rotate(90*i,1,0,0);
+        matrices[i] = rot * cornerMatrix;
+        rot.setToIdentity(); 
+        rot.rotate(180,0,1,0);
+        rot.rotate(90*i,1,0,0);
+        matrices[4+i] = rot * cornerMatrix;
+    }
+
+    for(int i=0;i<8;i++)
+    {
+        matrices[i] = cornerMatrix.inverted() * matrices[i];
+    }
+
+    m_hMatrix.setToIdentity();
+    m_hMatrix = cornerMatrix;
+
+    glColor3d(1,0,1);
+    for(int i=0;i<8;i++)
+    {
+        drawHPolyhedron(ph, matrices[i]);
+    }
+
+    for(int i=0;i<ph->getVertexCount();i++)
+    {
+        QVector3D p = H3::KModel::toBall(m_hMatrix.map(QVector4D(ph->getVertex(i).m_pos,1)));
+        v()->drawText(p, QString::number(i), 0.2);
+    }
+    int edges[][2] = {
+        {0,17}, {17,14}, {14,9}, {9,0}, 
+
+        {0,13}, {17,10}, {14, 7}, {9,18},
+        {13,18}, {18,7},  {7,10}, {10,13}, 
+    };
+    glColor3d(0,1,1);
+    for(int i=0;i<9;i++) 
+        drawHLine(ph->getVertex(edges[i][0]).m_pos, ph->getVertex(edges[i][1]).m_pos);
+
+    QMatrix4x4 base = m_hMatrix;
+    /*
+    
+    m_hMatrix = rotation(180,0,1,0) * base;
+    for(int i=0;i<12;i++) 
+        drawHLine(ph->getVertex(edges[i][0]).m_pos, ph->getVertex(edges[i][1]).m_pos);
+    */
+
+    QMatrix4x4 uff(-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,1);
+    m_hMatrix = uff * base;
+    for(int i=0;i<12;i++) 
+        drawHLine(ph->getVertex(edges[i][0]).m_pos, ph->getVertex(edges[i][1]).m_pos);
+
+    delete(ph);
+    glEnable(GL_LIGHTING);
+}
+
+
+void H3GridBuildPage::drawHPolyhedron(Polyhedron *ph, const QMatrix4x4 &matrix)
+{
+    QMatrix4x4 old = m_hMatrix; m_hMatrix = m_hMatrix * matrix;
+    for(int i=0;i<ph->getEdgeCount();i++)
+    {
+        const Polyhedron::Edge &edge = ph->getEdge(i);
+        QVector3D p0 = ph->getVertex(edge.m_a).m_pos;
+        QVector3D p1 = ph->getVertex(edge.m_b).m_pos;
+        drawHLine(p0,p1);
+    }
+    m_hMatrix = old;
+}
+
+
+void H3GridBuildPage::drawHLine(const QVector3D &p0, const QVector3D &p1)
+{
+    glBegin(GL_LINE_STRIP);
+    int n = 30;
+    for(int i=0;i<n;i++)
+    {
+        double t = (double)i/(n-1);
+        QVector3D p = (1-t)*p0 + t*p1;
+        QVector3D q = H3::KModel::toBall(this->m_hMatrix.map(QVector4D(p,1.0)));
+        glVertex(q);
+    }
+    glEnd();
+}
+
+
+
+
+
+
+void H3GridBuildPage::draw4()
+{
+    drawAxes();
+
+    QMatrix4x4 cornerMatrix = m_grid->getCornerMatrix();
+
+    m_shaderProgram->bind();
+    setViewUniforms(m_shaderProgram);    
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_CULL_FACE);
+    
+    QMatrix4x4 identity; identity.setToIdentity();
+
+    m_vertexCube.bind();
+    
+    double hEdgeLength = m_grid->edgeLength;
+    double kEdgeLength = H3::KModel::getRadius(hEdgeLength);
+
+    //QMatrix4x4 baseMats[] = {
+    //};
+
+    int m = 16; 
+    QList<double> qs; 
+    for(int i=0;i<m; i++) qs.append(H3::KModel::getRadius(hEdgeLength * i / (m-1)));
+
+
+    QVector<QMatrix4x4> Sx,Sy,Sz,S_x,S_y,S_z;
+    for(int i=0;i<m;i++)
+    {
+        Sx.append(htr(qs[i],0,0));
+        Sy.append(htr(0,qs[i],0));
+        Sz.append(htr(0,0,qs[i]));
+        S_x.append(htr(-qs[i],0,0));
+        S_y.append(htr(0,-qs[i],0));
+        S_z.append(htr(0,0,-qs[i]));
+    }
+
+    const QMatrix4x4 
+        Mx = htr(kEdgeLength,0,0),
+        My = htr(0,kEdgeLength,0),
+        Mz = htr(0,0,kEdgeLength),
+        M_x = htr(-kEdgeLength,0,0),
+        M_y = htr(0,-kEdgeLength,0),
+        M_z = htr(0,0,-kEdgeLength),
+        Mxy = Mx*My,
+        Mxz = Mx*Mz,
+        Myx = My*Mx,
+        Myz = My*Mz,
+        Mzx = Mz*Mx,
+        Mzy = Mz*My,
+        Mxyz = Mxy*Mz,
+        Myxz = Myx*Mz,
+        Mxzy = Mxz*My,
+        Mxyzx = Mxyz*Mx;
+    
+
+    QMatrix4x4 matrices[8];
+    QMatrix4x4 rot;     
+    for(int i=0;i<4;i++) 
+    {
+        rot.setToIdentity(); 
+        rot.rotate(90*i,1,0,0);
+        matrices[i] = rot;
+        rot.setToIdentity(); 
+        rot.rotate(180,0,1,0);
+        rot.rotate(90*i,1,0,0);
+        matrices[4+i] = rot;
+    }
+
+    for(int ii=0;ii<(m_uffa==1 ? 1 : 8);ii++)
+    {
+        QMatrix4x4 oldMatrix = m_hMatrix; m_hMatrix = m_hMatrix * matrices[ii];
+
+
+        //--------------
+
+
+        draw(identity, m_vertexCube);
+        for(int i = 1; i<m; i++) draw(Sy[i], m_vertexCube);
+        for(int i = 1; i<m; i++) draw(Sx[i], m_vertexCube);
+        for(int i = 1; i<m; i++) 
+        {
+            draw(Mx*Sy[i], m_vertexCube);
+            draw(My*Sx[i], m_vertexCube);
+        }
+        for(int i = 1; i<m; i++) draw(Mx*My*S_x[i], m_vertexCube);
+        for(int i = 1; i<m; i++) draw(My*Mx*S_y[i], m_vertexCube);
+        for(int i=1;i<m; i++) 
+        {
+            draw(Sz[i], m_vertexCube); 
+            draw(Mx*Sz[i], m_vertexCube); 
+            draw(My*Sz[i], m_vertexCube); 
+            draw(Mxy*Sz[i], m_vertexCube); 
+            draw(Myx*Sz[i], m_vertexCube); 
+        }
+
+        for(int i=1;i<m; i++) 
+        {
+            draw(Mz * Sx[i], m_vertexCube); 
+            draw(Mz * Sy[i], m_vertexCube); 
+            draw(Mxz * S_x[i], m_vertexCube); 
+            draw(Mxz * Sy[i], m_vertexCube); 
+            draw(Myz * Sx[i], m_vertexCube); 
+            draw(Myz * S_y[i], m_vertexCube); 
+            draw(Mxyz * S_x[i], m_vertexCube); 
+            draw(Mxyz * S_y[i], m_vertexCube); 
+            draw(Myxz * S_x[i], m_vertexCube); 
+            draw(Myxz * S_y[i], m_vertexCube); 
+        }
+
+        for(int i=1;i<m; i++) 
+        {
+            draw(Mxzy * S_x[i], m_vertexCube); 
+            draw(Mzx * Sy[i], m_vertexCube); 
+            draw(Mzy * Sx[i], m_vertexCube); 
+            draw(Myz * Mx * S_y[i], m_vertexCube); 
+            draw(Mxyz * M_x * S_y[i], m_vertexCube); 
+        }
+
+        for(int i=1;i<m; i++) 
+        {
+            draw(Mzx * My * S_x[i], m_vertexCube); 
+            draw(Mzy * Mx * S_z[i], m_vertexCube); 
+            draw(Myxz * M_y * M_x * S_z[i], m_vertexCube); 
+            draw(Mxz * My * M_x * S_y[i], m_vertexCube); 
+
+            draw(Myz * Mx * M_y * S_z[i], m_vertexCube); 
+        }
+
+        //--------------
+
+        m_hMatrix = oldMatrix;
+
+    }
+
+
+
+
+
+    m_vertexCube.release();
+
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisable(GL_CULL_FACE);
+    m_shaderProgram->release();
+
+    if(m_uffa2>=1)
+    {
+        glDisable(GL_LIGHTING);
+        Polyhedron *ph = makeDodecahedron();
+        ph->computeFaceVertices();
+        ph->scale(m_grid->radius / ph->getVertex(0).m_pos.length());
+    
+        // QMatrix4x4 cornerMatrix = m_grid->getCornerMatrix();
+
+        int edges[][2] = {
+            {0,17}, {17,14}, {14,9}, {9,0}, 
+
+            {0,13}, {17,10}, {14, 7}, {9,18},
+            {13,18}, {18,7},  {7,10}, {10,13}, 
+        };
+        glColor3d(1,0,1);
+        
+        glLineWidth(3.0);
+        
+        QMatrix4x4 old;
+        
+        
+        old = m_hMatrix;
+        m_hMatrix = m_hMatrix * cornerMatrix;
+        for(int i=0;i<12;i++) {
+            QVector3D p0 = ph->getVertex(edges[i][0]).m_pos;
+            QVector3D p1 = ph->getVertex(edges[i][1]).m_pos;
+            drawHLine(p0,p1);
+        }
+        m_hMatrix = old;
+
+        if(m_uffa2>=2)
+        {
+            glColor3d(0,0,1.0);
+            old = m_hMatrix;
+            m_hMatrix = m_hMatrix * QMatrix4x4(-1,0,0,0, 0,-1,0,0, 0,0,-1,0, 0,0,0,1) * cornerMatrix;
+            for(int i=0;i<12;i++) {
+                QVector3D p0 = ph->getVertex(edges[i][0]).m_pos;
+                QVector3D p1 = ph->getVertex(edges[i][1]).m_pos;
+                drawHLine(p0,p1);
+            }
+            m_hMatrix = old;
+        }
+
+
+        glLineWidth(1.0);
+
+        glEnable(GL_LIGHTING);
+        delete ph;
+    }
 
 }

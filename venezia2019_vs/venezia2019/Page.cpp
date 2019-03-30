@@ -22,27 +22,25 @@
 void Presentation::buildPages()
 {
     // addPage(new HyperbolicPolyhedronPage());
+    //addPage(new H3GridBuildPage());
 
-    addPage(new ImpossiblePolyhedronPage());
 
-    /*
+
 
     addPage(new CubeGridPage());
     addPage(new PolydronPage());
     addPage(new JohnsonSolidsPage());
     addPage(new ImpossiblePolyhedronPage());
-    */
-
-    /*
-    addPage(new CircleLimit3Page());
-   
+    addPage(new CircleLimit3Page());   
     addPage(new PDiskPage());
     addPage(new FoldingFacesPage());
+  
+
     addPage(new HyperbolicPolyhedronPage());
     addPage(new H3GridBuildPage());
     addPage(new H3GridPage());
 
-   */
+
     // addPage(new TestPage());
     
 

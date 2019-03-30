@@ -323,7 +323,7 @@ void CubeGridPage::createTextures()
     pa.begin(&img);
     pa.setBrush(QColor(100,100,100,127));
     pa.setPen(Qt::NoPen);
-    pa.drawRoundedRect(50,0,1100,600,20,20);
+    pa.drawRoundedRect(100,0,1000,600,20,20);
     pa.setFont(QFont("Calibri", 80, QFont::Bold));
     pa.setPen(Qt::white);
     pa.drawText(QRect(0,20,1200,100), Qt::AlignCenter, "Tale of two errors");
@@ -394,8 +394,8 @@ void CubeGridPage::setStatus(int status)
     else if(status == 1)
     {
         // escher
-        QPointF escherPos(0.3, 0.4);
-        QPointF captionPos(0.94, 0.5);
+        QPointF escherPos(0.28, 0.4);
+        QPointF captionPos(0.96, 0.5);
         if(oldStatus != 0) 
         {
             ov->removeAll();

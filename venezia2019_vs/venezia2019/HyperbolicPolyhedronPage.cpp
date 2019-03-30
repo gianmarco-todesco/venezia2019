@@ -57,7 +57,7 @@ void HyperbolicPolyhedronPage::initializeGL()
 
 
     QImage img(256,256, QImage::Format_ARGB32_Premultiplied);
-    img.fill(QColor(50,50,100));
+    img.fill(QColor(255,255,255));
     QPainter pa;
     pa.begin(&img);
     pa.setFont(QFont("Arial",80,QFont::Bold));
@@ -75,6 +75,16 @@ void HyperbolicPolyhedronPage::initializeGL()
     pa.drawRect(0,0,255,255);
     pa.end();   
     m_texture2.createTexture(img);
+
+    /*
+    img = QImage(32,32, QImage::Format_ARGB32_Premultiplied);
+    img.fill(QColor(200,120,20));
+    pa.begin(&img);
+    pa.setPen(QPen(Qt::black,2));
+    pa.drawRect(0,0,255,255);
+    pa.end();   
+    m_texture2.createTexture(img);
+    */
 }
 
 void HyperbolicPolyhedronPage::start()
@@ -87,16 +97,17 @@ void HyperbolicPolyhedronPage::start()
     glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,1.0);
 
     GLfloat lcolor[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
+    GLfloat spec[] =  { 0.2f, 0.2f, 0.2f, 1.0f};
     GLfloat lpos[]   = { 5, 7, 10, 1.0f};
     glLightfv(GL_LIGHT0, GL_AMBIENT, lcolor);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lcolor);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lcolor);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
     glLightfv(GL_LIGHT0, GL_POSITION, lpos);
 
     lpos[0] = -5;
     glLightfv(GL_LIGHT1, GL_AMBIENT, lcolor);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, lcolor);
-    glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, spec);
     glLightfv(GL_LIGHT1, GL_POSITION, lpos);
 
     m_hMatrix.setToIdentity();  
@@ -181,14 +192,21 @@ QVector3D rainbow(double t)
     return colors[k] * (1-t) + colors[k1] * t;
 }
 
+QMatrix4x4 makeTranslation(double x, double y, double z)
+{
+    double kx =  x / sqrt(1.0 + x*x);
+    double ky =  y / sqrt(1.0 + y*y);
+    double kz =  z / sqrt(1.0 + z*z);
+    return H3::KModel::translation(QVector3D(0,0,0), QVector3D(kx,ky,kz));
+}
+
 void HyperbolicPolyhedronPage::draw()
 {
     QGLShaderProgram *prog;
 
     if(m_status < 4)
     {
-        double z0 = m_parameter / sqrt(1.0 + m_parameter*m_parameter);
-        m_hMatrix = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,z0));
+        m_hMatrix = makeTranslation(0,0,m_parameter);
     }
     else
     {
@@ -199,7 +217,7 @@ void HyperbolicPolyhedronPage::draw()
     //QMatrix4x4 globalMat = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,z0));
     if(m_status == 0)
     {
-        // un solo punto
+        // solo punti
         setColor(0,0.5,0.9);
         double r = 0.5;
         drawHPoint(QVector3D(r,r,-r));
@@ -216,6 +234,10 @@ void HyperbolicPolyhedronPage::draw()
     }
     else if(m_status == 2) {
         // diversi punti e diverse rette
+
+        m_hMatrix = makeTranslation(m_hPan.x(),0,m_hPan.y());
+        
+
         QVector3D p0(-0.5,0,0), p1(0.5,0,0);
         QVector3D p(0.2,0.4,0.1);
         setColor(0,0.5,0.9);
@@ -409,6 +431,7 @@ void HyperbolicPolyhedronPage::draw()
     */
 }
 
+
 void HyperbolicPolyhedronPage::drawHPoint(const QVector3D &pos)
 {
     drawSphere(H3::KModel::toBall(m_hMatrix.map(QVector4D(pos,1.0))), 0.1);
@@ -437,7 +460,7 @@ void HyperbolicPolyhedronPage::drawHLines(const QList<QMatrix4x4> &matrices)
     // setViewUniforms(prog);
     prog->setUniformValue("u_texture", 0);
     prog->setUniformValue("u_texScale", QPointF(20,20));
-    prog->setUniformValue("u_color", QVector3D(1,1,1));
+    prog->setUniformValue("u_color", QVector3D(0.05,0.3,0.8));
     setColor(1,1,1);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -465,6 +488,17 @@ void HyperbolicPolyhedronPage::drawHLines(const QList<QPair<QVector3D, QVector3D
     {
         QVector3D p0 = pointPairs[i].first;
         QVector3D p1 = pointPairs[i].second;
+        if((p0-p1).length()<0.00001) continue;
+
+        QVector3D e = (p1-p0).normalized();
+        QVector3D center = p0 + e* QVector3D::dotProduct(e,-p0);
+        p0 = center;
+
+        double c2 = center.lengthSquared();
+        if(c2>=1.0) continue;
+        double s = sqrt(0.999 - c2);
+        p1 = center + s * e;
+        
 
         QMatrix4x4 mat;
         mat = H3::KModel::translation(QVector3D(0,0,0), p0);
@@ -626,10 +660,20 @@ namespace  {
     {
         buffer << p.x() << p.y() << p.z() << normal.x() << normal.y() << normal.z();    
     }
+    inline void addVertex(QVector<GLfloat> &buffer, 
+        const QVector3D &p, 
+        const QVector3D &normal,
+        const QPointF &uv)
+    {
+        buffer << p.x() << p.y() << p.z() << normal.x() << normal.y() << normal.z() << uv.x() << uv.y();    
+    }
 }
 
 void HyperbolicPolyhedronPage::drawHPolygon(const QList<QVector3D> &pts)
 {
+    setColor(0.8,0.5,0.1);
+    m_h3ShaderProgram->setUniformValue("u_color", QVector3D(0.8,0.5,0.05));
+    
     const int n = pts.count();
     QVector3D center;
     foreach(QVector3D p, pts) center+=p;
@@ -727,8 +771,8 @@ void HyperbolicPolyhedronPage::mouseMoveEvent(QMouseEvent *e)
 
   if(!m_rotating)
   {
-      m_parameter += 0.001*delta.x();
-
+      m_parameter += 0.005*delta.x();
+      m_hPan += 0.005*QPointF(delta);
 
   }
   else
@@ -755,6 +799,9 @@ void HyperbolicPolyhedronPage::wheelEvent(QWheelEvent*e)
 
 void HyperbolicPolyhedronPage::setStatus(int status)
 {
+    m_hPan = QPointF();
+    m_parameter = 0;
+    m_hMatrix.setToIdentity();
     m_status = qMax(0, status);
 }
 

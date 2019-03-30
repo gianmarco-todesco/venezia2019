@@ -85,7 +85,7 @@ public:
     QMatrix4x4 getCellVertexMatrix(int index);
 
     QMatrix4x4 getCornerMatrix();
-
+    
     QMatrix4x4 getEdgeMatrix();
 
 

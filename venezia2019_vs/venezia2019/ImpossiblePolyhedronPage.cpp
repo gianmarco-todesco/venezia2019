@@ -105,6 +105,7 @@ ImpossiblePolyhedronPage::ImpossiblePolyhedronPage()
 , m_parameter(0)
 , m_status(0)
 , m_showCube(false)
+, m_showAllFaces(true)
 {
 }
 

@@ -20,7 +20,7 @@ class HyperbolicPolyhedronPage : public Page
   bool m_rotating;
   QTime m_clock;
 
-  MyTexture m_texture1, m_texture2;
+  MyTexture m_texture1, m_texture2, m_texture3;
   Mesh m_mesh, m_hlineMesh;
   Mesh m_outSphereMesh;
   QGLShaderProgram *m_h3ShaderProgram;
@@ -29,6 +29,7 @@ class HyperbolicPolyhedronPage : public Page
 
   int m_status;
   double m_parameter;
+  QPointF m_hPan;
 
 public:
   HyperbolicPolyhedronPage();
@@ -43,6 +44,7 @@ protected:
     void createHLineMesh();
 
     void draw();
+    void draw2();
     void drawOutSphere();
 
     void drawHPolygon(const QList<QVector3D> &pts);

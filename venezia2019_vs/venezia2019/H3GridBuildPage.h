@@ -14,6 +14,7 @@ class QGLShaderProgram;
 class Texture;
 class H3Grid534;
 class H3Grid;
+class Polyhedron;
 
 
 
@@ -32,6 +33,10 @@ class H3GridBuildPage : public Page
   QTime m_clock;
   int m_status;
   int m_statusStartTime;
+  int m_panMode;
+  double m_panParameter;
+  int m_uffa;
+  int m_uffa2;
 
   // QList<QMatrix4x4> m_edgeMatrices, m_vertexMatrices;
   // int m_level;
@@ -51,7 +56,9 @@ protected:
   void makeEdgeBox();
   
   void draw2();
-  // void draw3();
+  void draw3();
+  void draw4();
+  void draw4bis();
 
   // void drawVertices();
 
@@ -77,6 +84,10 @@ protected:
   void wheelEvent(QWheelEvent*);
 
   //void uffauffa();
+
+  void drawHLine(const QVector3D &p0, const QVector3D &p1);
+  void drawHPolyhedron(Polyhedron *ph, const QMatrix4x4 &matrix);
+
 };
 
 #endif
