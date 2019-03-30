@@ -20,7 +20,7 @@
 #include <qlist.h>
 #include <qmap.h>
 
-
+const double magicRadius = 3.752;
 
 void drawPolygon(int n, double r0, const Color &color) {
     double border = 0.3;
@@ -98,11 +98,13 @@ double squareAngle = 14.986;
 double squareScale = 1.029;
 
 ImpossiblePolyhedronPage::ImpossiblePolyhedronPage()
-: m_cameraDistance(15)
+: m_cameraDistance(20)
 , m_theta(0)
 , m_phi(0)
 , m_rotating(true)
-, m_parameter(3.752)
+, m_parameter(0)
+, m_status(0)
+, m_showCube(false)
 {
 }
 
@@ -216,8 +218,238 @@ QVector3D getPos(double r, double unit, int vertexIndex, double xAngle)
 }
 */
 
-
 void ImpossiblePolyhedronPage::draw()
+{
+    if(m_status == 0) draw1();
+    else draw2();
+    
+}
+
+void ImpossiblePolyhedronPage::draw1()
+{
+    if(m_showCube) drawCube();
+
+    
+
+    double position = magicRadius + m_parameter;
+    double unit = 3;
+
+    double edgeLength = 2.0;
+    double decagonRadius = edgeLength*0.5/sin(M_PI/10);
+    double squareRadius = edgeLength / sqrt(2.0);
+    double triangleRadius = edgeLength*0.5/sin(M_PI/3);
+
+    
+    // edges (decagons)
+    for(int i=0; i<12; i++)
+    {
+        glPushMatrix();
+
+        // edge matrix
+        int k = i/4;
+        if(k==1) glRotated(90,0,0,1);
+        else if(k==2) glRotated(90,1,0,0);        
+        glRotated(90*(i%4),0,1,0);
+
+        // move 
+        glTranslated(position,0,position);
+        glRotated(45,0,1,0);
+
+        drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+
+        glPopMatrix();
+    }
+
+    if(m_showAllFaces)
+    {
+        // triangoli rossi
+
+        QVector3D e2 = QVector3D(1,1,1).normalized();
+        QVector3D e0 = QVector3D(0,1,0);
+        e0 = (e0 - e2*QVector3D::dotProduct(e0,e2)).normalized();
+        QVector3D e1 = QVector3D::crossProduct(e2,e0);
+
+        QMatrix4x4 mat(
+            e0.x(),e0.y(),e0.z(), 0,
+            e1.x(),e1.y(),e1.z(), 0,
+            e2.x(),e2.y(),e2.z(), 0,
+            0,0,0,1);
+
+        for(int i=0;i<8;i++)
+        {
+        
+
+            glPushMatrix();
+            if(i>=4) glRotated(180,1,0,0);
+            glRotated(90*i,0,1,0);
+            double d = trianglePos;
+            glTranslated(d,d,d);
+            glMultMatrixd(mat.transposed().constData());
+            drawPolygon(3, triangleRadius, Color(0.8,0.1,0.1));
+            glPopMatrix();
+
+
+        }
+        // facce cubo
+        for(int i=0;i<6;i++)
+        {
+            glPushMatrix();
+            if(1<=i && i<=4)
+            {
+                glRotated(90*i,0,0,1);
+                glRotated(90,1,0,0);
+            }
+    
+
+            glTranslated(0,0,squarePos);
+        
+            // quadrato
+            drawPolygon(4, squareRadius * squareScale, Color(0.8,0.8,0.1));
+
+            // triangoli attorno al quadrato
+            for(int j=0; j<4; j++)
+            {
+                glPushMatrix();
+                glRotated(45+90*j,0,0,1);
+                glTranslated(edgeLength*0.5* squareScale,0,0);
+        
+                glRotated(squareAngle,0,1,0);
+                glTranslated(triangleRadius*0.5* squareScale,0,0);
+                drawPolygon(3, triangleRadius* squareScale, Color(0.8,0.8,0.1));
+                glPopMatrix();
+            }
+    
+            glPopMatrix();
+        }
+    }
+}
+
+
+void ImpossiblePolyhedronPage::drawCube()
+{
+    Polyhedron *ph = makeCube();
+    ph->computeFaceVertices();
+
+    double position = magicRadius + m_parameter;
+    
+    double thickness = 0.05;
+
+    double sc = position*sqrt(3.0) / ph->getVertex(0).m_pos.length();
+    ph->scale(sc);
+
+    double unit = fabs(ph->getVertex(0).m_pos.x());
+
+    for(int i=0;i<ph->getVertexCount();i++)
+    {
+        setColor(0.4,0.2,0.4);
+        drawSphere(ph->getVertex(i).m_pos, thickness*1.5);
+    }
+
+    for(int i=0;i<ph->getEdgeCount();i++)
+    {
+        const Polyhedron::Edge &edge = ph->getEdge(i);
+        QVector3D p0 = ph->getVertex(edge.m_a).m_pos;
+        QVector3D p1 = ph->getVertex(edge.m_b).m_pos;
+        setColor(0.8,0.2,0.8);
+        drawCylinder(p0,p1,thickness);
+    }
+}
+
+
+void ImpossiblePolyhedronPage::draw2()
+{
+    double unit = 3;
+    double edgeLength = 2.0;
+    double decagonRadius = edgeLength*0.5/sin(M_PI/10);
+    
+    double h = decagonRadius*cos(M_PI/10);
+    
+    double angle = m_parameter*100;
+
+    glPushMatrix();
+    glRotated(angle, 1,0,0);
+    glTranslated(0,-h,0);
+    drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+    glPopMatrix();
+
+    glPushMatrix();
+    glRotated(-angle, 1,0,0);
+    glTranslated(0,h,0);
+    drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+    glPopMatrix();
+
+
+    if(m_status == 2)
+    {
+        QMatrix4x4 mat;
+        mat.setToIdentity();
+
+        /*
+        mat.translate(0,h,0);
+        mat.rotate(angle,1,0,0);
+        mat.translate(0,h,0);
+
+        */
+        mat.rotate(-36*2, 0,0,1);        
+        mat.translate(0,h,0);
+        mat.rotate(-angle*2,1,0,0);
+        mat.translate(0,h,0);
+
+        glPushMatrix();
+        glRotated(-angle, 1,0,0);
+        glTranslated(0,h,0);
+        
+        glMultMatrixd(mat.constData());        
+        drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+        glMultMatrixd(mat.constData());        
+        drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+        glPopMatrix();
+
+    }
+
+    double phi;
+    phi = 2*M_PI/10;
+    QVector3D p(cos(phi)*decagonRadius, sin(phi)*decagonRadius, 0);
+    QMatrix4x4 mat; 
+    mat.setToIdentity();
+    mat.rotate(angle, 1,0,0);
+    mat.translate(0,-h,0);
+    QVector3D p0 = mat.map(p);
+    QVector3D p1 = p0; p1.setY(-p1.y());
+    QVector3D p2 = p0, p3 = p1;
+    p2.setX(-p2.x());
+    p3.setX(-p3.x());
+
+    // glColor3d(0,0.5,0.9);
+    setColor(0.1,0.1,0.1);
+    drawSphere(p0, 0.1);
+    drawSphere(p1, 0.1);
+    drawSphere(p2, 0.1);
+    drawSphere(p3, 0.1);
+
+    double length = (p1-p0).length();
+    double err = length - edgeLength;
+    if(err > 0.0) 
+    {
+        double v = qMax(0., 1.-err*50.0);
+        setColor(1,v,v);
+    } else if(err < 0.0)
+    {
+        double v = qMax(0., 1.+err*50.0);
+        setColor(v,v,1);
+    }
+    else
+    {
+        setColor(1,1,1);
+    }
+
+    drawCylinder(p0,p1,0.04);
+    drawCylinder(p2,p3,0.04);
+
+
+}
+
+void ImpossiblePolyhedronPage::draw_old()
 {
     //glEnable(GL_CULL_FACE);
     
@@ -384,8 +616,6 @@ void ImpossiblePolyhedronPage::draw()
 
 }
 
-
-
 void ImpossiblePolyhedronPage::mousePressEvent(QMouseEvent *e)
 {
       m_lastPos = e->pos();
@@ -404,6 +634,8 @@ void ImpossiblePolyhedronPage::mouseMoveEvent(QMouseEvent *e)
   m_lastPos = e->pos();
   if(!m_rotating)
   {
+      m_parameter += 0.001*delta.x();
+      /*
       if(mode==1) {
         m_parameter += 0.001*delta.x();
       } else if(mode == 2) {
@@ -415,6 +647,8 @@ void ImpossiblePolyhedronPage::mouseMoveEvent(QMouseEvent *e)
       } else if(mode == 5) {
           squareScale += 0.001*delta.x();
       }
+      */
+
   }
   else
   {
@@ -427,12 +661,11 @@ void ImpossiblePolyhedronPage::mouseMoveEvent(QMouseEvent *e)
 
 void ImpossiblePolyhedronPage::keyPressEvent(QKeyEvent *e)
 {
-    if(e->key() == Qt::Key_1) mode = 1;
-    else if(e->key() == Qt::Key_2) mode = 2;
-    else if(e->key() == Qt::Key_3) mode = 3;
-    else if(e->key() == Qt::Key_4) mode = 4;
-    else if(e->key() == Qt::Key_5) mode = 5;
-    else if(e->key() == Qt::Key_6) mode = 6;
+    if(e->key() == Qt::Key_1) { m_status = 0; m_parameter = 0; }
+    else if(e->key() == Qt::Key_2) { m_status = 1; m_parameter = 0; }
+    else if(e->key() == Qt::Key_3) m_status = 2;
+    else if(e->key() == Qt::Key_C) m_showCube = !m_showCube;
+    else if(e->key() == Qt::Key_F) m_showAllFaces = !m_showAllFaces;
     else    e->ignore();
 }
 
