@@ -62,14 +62,6 @@ void Overlay::draw(const QSize &winSize)
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-    /*
-
-    m_viewer->qglColor(Qt::magenta);
-    m_viewer->renderText(50,100,"Hyperbolic honeycomb", QFont("Calibri", 60, QFont::Bold));
-    m_viewer->renderText(50,200,"Gian Marco Todesco", QFont("Calibri", 30));
-    */
-
    
 
     glEnable(GL_TEXTURE_2D);

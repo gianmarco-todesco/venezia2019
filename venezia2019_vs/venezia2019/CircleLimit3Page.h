@@ -17,7 +17,7 @@ class CircleLimit3Page : public Page
     int m_transfType;
 
 public:
-    CircleLimit3Page();
+    CircleLimit3Page(bool figureMode = false);
     ~CircleLimit3Page();
 
 protected:

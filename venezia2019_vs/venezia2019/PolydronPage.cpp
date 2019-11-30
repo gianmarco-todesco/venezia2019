@@ -768,21 +768,9 @@ void PolydronPage::paintGL()
     m_texture1.bind();  
     glEnable(GL_TEXTURE_2D);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    /*
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f); glVertex2d(0,0);
-    glTexCoord2f(1.0f, 1.0f); glVertex2d(10,0);
-    glTexCoord2f(1.0f, 0.0f); glVertex2d(10,10);
-    glTexCoord2f(0.0f, 0.0f); glVertex2d(0,10);
-    glEnd();
-    */
     
     m_polydron->draw();
     glDisable(GL_TEXTURE_2D);
-    
-
-
     m_texture1.release();
 
     glDisable(GL_CULL_FACE);

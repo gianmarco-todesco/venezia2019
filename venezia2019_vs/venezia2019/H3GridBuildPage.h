@@ -28,7 +28,6 @@ class H3GridBuildPage : public Page
   QMatrix4x4 m_hMatrix;
   QVector3D m_hOffset;
   H3Grid534 *m_grid;
-  // H3Grid *m_grid2;
   Mesh m_sphere, m_vertexCube, m_edgeBox;
   QTime m_clock;
   int m_status;
@@ -37,11 +36,6 @@ class H3GridBuildPage : public Page
   double m_panParameter;
   int m_uffa;
   int m_uffa2;
-
-  // QList<QMatrix4x4> m_edgeMatrices, m_vertexMatrices;
-  // int m_level;
-
-  // GridMatrices m_gridMatrices;
   
 public:
   H3GridBuildPage();
@@ -60,21 +54,8 @@ protected:
   void draw4();
   void draw4bis();
 
-  // void drawVertices();
-
-  //void drawDodWf(const QMatrix4x4 &mat);
-  //void drawBoxWf(const QMatrix4x4 &mat, double dx, double dy, double dz);
-
-  //void drawEdgeWf(const QMatrix4x4 &mat, double d = 0.05);
 
   void draw(const QMatrix4x4 &mat, const Mesh &mesh);
-
-  //void drawChannels();
-
-  //void test();
-  //void test3();
-  // void buildGrid();
-
 
   void mousePressEvent(QMouseEvent *e);
   void mouseReleaseEvent(QMouseEvent *e);
@@ -83,11 +64,8 @@ protected:
   void keyPressEvent(QKeyEvent *e);
   void wheelEvent(QWheelEvent*);
 
-  //void uffauffa();
-
   void drawHLine(const QVector3D &p0, const QVector3D &p1);
   void drawHPolyhedron(Polyhedron *ph, const QMatrix4x4 &matrix);
-
 };
 
 #endif

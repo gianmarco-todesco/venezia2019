@@ -47,6 +47,9 @@ public:
 
     // forse non serve più 
     void updateGL();
+
+    virtual void savePictures() {}
+    void savePicture(const QString &path);
 };
 
 class Presentation {

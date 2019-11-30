@@ -266,103 +266,12 @@ void H3GridBuildPage::keyPressEvent(QKeyEvent *e)
       e->ignore();
 }
 
-/*
-
-void H3GridBuildPage::buildGrid()
-{
-    QTime clock;
-    clock.start();
-    m_grid2->createFirstVertex();
-
-    // 7
-    for(int step=0; step<5; step++)
-    {
-        QList<QPair<int, int> > todo;
-        for(int i=0;i<m_grid2->m_vertices.count();i++)
-        {
-            for(int j=0;j<6;j++)
-            {
-                if(m_grid2->m_vertices[i].links[j]== -1) todo.append(qMakePair(i,j));
-            }
-        }
-        qDebug() << "todo size = " << todo.count();
-        for(int i=0;i<todo.count();i++)
-        {
-            int vIndex = todo[i].first;
-            int dir = todo[i].second;
-            m_grid2->closeIfNeeded(vIndex, dir);
-            if(m_grid2->m_vertices[vIndex].links[dir]>=0) continue;
-            m_grid2->addVertex(vIndex, dir);
-        }
-        qDebug() << "Step finished. vertex count = " << m_grid2->m_vertices.count();
-    }
-
-    // chiudo tutto
-    for(int i=0;i<m_grid2->m_vertices.count();i++)
-    {
-        for(int j=0;j<6;j++)
-        {
-            m_grid2->closeIfNeeded(i, j);
-        }
-    }
-    qDebug() << "GRID BUILD: "<< clock.elapsed();
-    
-}
-*/
-
 
 //------------------------
 //
 // draw
 //
 //------------------------
-
-/*
-void H3GridBuildPage::draw3()
-{
-    drawAxes();
-
-    GLdouble viewArr[16];
-    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
-    QMatrix4x4 view(viewArr);
-
-
-    m_shaderProgram->bind();
-    setViewUniforms(m_shaderProgram);    
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_CULL_FACE);
-    
-    QMatrix4x4 globalMatrix; globalMatrix.setToIdentity();
-
-
-    
-    m_vertexCube.bind();
-    for(int i=0;i<m_grid2->m_vertices.count();i++) {
-        const QMatrix4x4 &mat = m_grid2->m_vertices.at(i).matrix;
-        
-        draw(globalMatrix * mat, m_vertexCube);
-        if(i>=7) break;
-    }
-    m_vertexCube.release();
-        
-    m_edgeBox.bind();    
-    for(int i=0;i<m_grid2->m_edgeMatrices.count();i++) {
-        const QMatrix4x4 &mat = m_grid2->m_edgeMatrices.at(i);
-        draw(globalMatrix * mat, m_edgeBox);
-        if(i>=24) break;
-    }
-    m_edgeBox.release();    
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisable(GL_CULL_FACE);
-    m_shaderProgram->release();
-
-}
-*/
-
-
 
 void H3GridBuildPage::draw2()
 {
@@ -381,9 +290,6 @@ void H3GridBuildPage::draw2()
     
     double hEdgeLength = m_grid->edgeLength;
     double kEdgeLength = H3::KModel::getRadius(hEdgeLength);
-
-    //QMatrix4x4 baseMats[] = {
-    //};
 
     int m = 14; 
     QList<double> qs; 
@@ -520,144 +426,7 @@ void H3GridBuildPage::draw2()
         }
     }
 
-
-   
-
-
-    /*
-    if(m_status == 1)
-    {
-
-        for(int i=1;i<m;i++)
-          draw(steps[1][i], m_vertexCube);
-    }
-    else if(m_status == 2)
-    {
-        for(int i=1;i<m;i++) 
-        {
-          draw(steps[1][i], m_vertexCube);
-          draw(steps[0][i], m_vertexCube);
-        }
-    }
-    else if(m_status == 3)
-    {
-        for(int i=1;i<m;i++) 
-        {
-          draw(steps[1][i], m_vertexCube);
-          draw(steps[0][i], m_vertexCube);
-        }
-        for(int i=1;i<m;i++)
-          draw(bases[0] * steps[1][i], m_vertexCube);
-    }
-    else if(m_status == 4)
-    {
-
-
-    }
-
-    
-
-    if(m_status == 5)
-    {
-
-
-    for(int i=1;i<m;i++)
-    {
-        draw(steps[0][i], m_vertexCube);
-        draw(steps[1][i], m_vertexCube);
-        draw(steps[2][i], m_vertexCube);
-
-        draw(bases[0] * steps[1][i], m_vertexCube);
-        draw(bases[0] * steps[2][i], m_vertexCube);
-        draw(bases[1] * steps[0][i], m_vertexCube);
-        draw(bases[1] * steps[2][i], m_vertexCube);
-        draw(bases[2] * steps[0][i], m_vertexCube);
-        draw(bases[2] * steps[1][i], m_vertexCube);
-
-    }
-
-    for(int i=1;i+1<m;i++)
-    {
-        draw(bases[0] * bases[1] * steps[3][i], m_vertexCube);
-        draw(bases[0] * bases[2] * steps[3][i], m_vertexCube);
-        draw(bases[1] * bases[2] * steps[4][i], m_vertexCube);
-    }
-
-
-    for(int i=1;i<m;i++)
-    {
-        draw(bases[0] * bases[1] * steps[2][i], m_vertexCube);
-        draw(bases[1] * bases[0] * steps[2][i], m_vertexCube);
-
-        draw(bases[0] * bases[2] * steps[1][i], m_vertexCube);
-        draw(bases[2] * bases[0] * steps[1][i], m_vertexCube);
-
-        draw(bases[1] * bases[2] * steps[0][i], m_vertexCube);
-        draw(bases[2] * bases[1] * steps[0][i], m_vertexCube);
-    }
-
-
-    for(int i=1;i+1<m;i++)
-    {
-        draw(bases[0] * bases[1] * bases[2] * steps[4][i], m_vertexCube);
-        draw(bases[1] * bases[2] * bases[0] * steps[5][i], m_vertexCube);
-        draw(bases[2] * bases[0] * bases[1] * steps[3][i], m_vertexCube);
-
- //       draw(bases[0] * bases[1] * bases[2] * steps[4][i], m_vertexCube);
-    }
-
-    for(int i=1;i<m;i++)
-    {
-
-        / *
-        draw(bases[0] * bases[1] * bases[2] * bases[4] * steps[3][i], m_vertexCube);
-
-        draw(bases[1] * bases[2] * bases[0] * bases[5] * steps[4][i], m_vertexCube);
-
-        draw(bases[2] * bases[0] * bases[1] * bases[3] * steps[5][i], m_vertexCube);
-        * /
-
-
-        draw(bases[0] * bases[2] * bases[1] * steps[3][i], m_vertexCube);
-        draw(bases[0] * bases[1] * bases[2] * steps[3][i], m_vertexCube);
-
-        draw(bases[1] * bases[0] * bases[2] * steps[4][i], m_vertexCube);
-        draw(bases[1] * bases[2] * bases[0] * steps[4][i], m_vertexCube);
-
-        draw(bases[2] * bases[1] * bases[0] * steps[5][i], m_vertexCube);
-        draw(bases[2] * bases[0] * bases[1] * steps[5][i], m_vertexCube);
-    }
-
-     for(int i=1;i<m;i++)
-     {
-        draw(bases[0] * bases[2] * bases[1] * bases[3] * steps[5][i], m_vertexCube);
-        draw(bases[1] * bases[0] * bases[2] * bases[4] * steps[3][i], m_vertexCube);
-        draw(bases[2] * bases[1] * bases[0] * bases[5] * steps[4][i], m_vertexCube);
-     }
-    }
-    */
-
-
     m_vertexCube.release();
-
-    /*
-    m_vertexCube.bind();
-    for(int i=0;i<m_grid2->m_vertices.count();i++) {
-        const QMatrix4x4 &mat = m_grid2->m_vertices.at(i).matrix;
-        
-        draw(globalMatrix * mat, m_vertexCube);
-        if(i>=7) break;
-    }
-    m_vertexCube.release();
-        
-    m_edgeBox.bind();    
-    for(int i=0;i<m_grid2->m_edgeMatrices.count();i++) {
-        const QMatrix4x4 &mat = m_grid2->m_edgeMatrices.at(i);
-        draw(globalMatrix * mat, m_edgeBox);
-        if(i>=24) break;
-    }
-    m_edgeBox.release();    
-    */
 
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
@@ -734,12 +503,6 @@ void H3GridBuildPage::draw3()
         drawHLine(ph->getVertex(edges[i][0]).m_pos, ph->getVertex(edges[i][1]).m_pos);
 
     QMatrix4x4 base = m_hMatrix;
-    /*
-    
-    m_hMatrix = rotation(180,0,1,0) * base;
-    for(int i=0;i<12;i++) 
-        drawHLine(ph->getVertex(edges[i][0]).m_pos, ph->getVertex(edges[i][1]).m_pos);
-    */
 
     QMatrix4x4 uff(-1,0,0,0,0,-1,0,0,0,0,-1,0,0,0,0,1);
     m_hMatrix = uff * base;

@@ -452,7 +452,7 @@ void H3GridPage::draw3()
     double r = H3::KModel::getRadius(fabs(zz));
 
     
-    m_hMatrix = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,zz > 0 ? r : -r));
+ // ggg   m_hMatrix = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,zz > 0 ? r : -r));
 
 }
 

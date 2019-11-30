@@ -1,0 +1,13 @@
+fig.1 A computer rendering inspired by the Escher's lithography "Cubic Space Division (Cubic Space Filling)"
+fig.2 A regular tessellation of the Hyperbolic plane represented on the Poincaré disk model. The tessellation is named {5,4}: four pentagons meet at each vertex.
+fig.3 The "never happening" Denis' polyhedron. Photo courtesy of Maria Dedò and Luisa Colosio.
+fig.4 A computer rendering of the Denis' polyhedron and a cube. The twelve decagons are placed in correspondence with the cube edges.
+fig.5 Four decagons kept in position by six equilateral triangles. The chain does not close nicely.
+fig.6 A regular Hyperbolic tessellation: {8,4}
+fig.7 (a) A regular Hyperbolic tessellation: {8,3} (b) the structure of Escher's "Circle Limit III"
+fig.8 Two groups of Hyperbolic octagons: (a) small size: the octagons overlap as in the Euclidean geometry (b) larger size: the octagons fit nicely
+fig.9 Geometric objects of the Hyperbolic space represented in the Poincaré ball: (a) points and lines (b) many squares perpendicular to the same line (c) a Hyperbolic regular dodecahedron
+fig.10 Two Hyperbolic regular dodecahedra with different size and different dihedral angle
+fig.11 A Hyperbolic honeycomb in the Poincaré ball. Four regular dodecahedra meet around each edge. The honeycomb is named {5,3,4}.
+fig.12 Inside the Hyperbolic honeycomb.
+  

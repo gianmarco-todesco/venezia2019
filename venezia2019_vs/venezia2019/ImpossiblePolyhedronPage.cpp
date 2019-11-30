@@ -187,37 +187,6 @@ void ImpossiblePolyhedronPage::paintGL()
 
     glPopMatrix();
 }
-/*
-void drawPolygon(int n, double r)
-{
-    QVector<QVector3D> pts;
-    for(int i=0;i<n; i++)
-    {
-        double phi = 2*M_PI*i/n;
-        pts.append(QVector3D(r*cos(phi), r*sin(phi), 0));
-    }
-    
-    for(int i=0;i<n; i++)
-    {
-        setColor(0.2,0.3,0.9);
-        drawSphere(pts[i], 0.03);
-        setColor(0.2,0.5,0.9);
-        drawCylinder(pts[i], pts[(i+1)%n], 0.02);
-    }
-}
-
-QVector3D getPos(double r, double unit, int vertexIndex, double xAngle)
-{
-    QMatrix4x4 mat;
-    mat.setToIdentity();
-    // 
-    mat.rotate(xAngle,1,0,0);
-    mat.translate(unit,0,unit);
-    mat.rotate(45,0,1,0);
-    mat.rotate(vertexIndex * 36, 0,0,1);
-    return mat.map(QVector3D(r,0,0));
-}
-*/
 
 void ImpossiblePolyhedronPage::draw()
 {
@@ -545,75 +514,6 @@ void ImpossiblePolyhedronPage::draw_old()
     
         glPopMatrix();
     }
-    /*
-    Polyhedron *ph = makeCube();
-    ph->computeFaceVertices();
-
-
-    double sc = 3.0 / ph->getVertex(0).m_pos.length();
-    ph->scale(sc);
-
-    double unit = fabs(ph->getVertex(0).m_pos.x());
-
-    for(int i=0;i<ph->getVertexCount();i++)
-    {
-        setColor(0.5,0.8,0.1);
-        drawSphere(ph->getVertex(i).m_pos, 0.01);
-    }
-
-    for(int i=0;i<ph->getEdgeCount();i++)
-    {
-        const Polyhedron::Edge &edge = ph->getEdge(i);
-        QVector3D p0 = ph->getVertex(edge.m_a).m_pos;
-        QVector3D p1 = ph->getVertex(edge.m_b).m_pos;
-        setColor(0.2,0.2,0.1);
-        drawCylinder(p0,p1,0.008);
-    }
-
-    double r = unit*0.9*m_parameter;
-
-    
-    for(int i=0; i<12; i++)
-    {
-        glPushMatrix();
-        int k = i/4;
-        if(k==1) glRotated(90,0,0,1);
-        else if(k==2) glRotated(90,1,0,0);
-        
-        glRotated(90*(i%4),0,1,0);
-        glTranslated(unit,0,unit);
-        glRotated(45,0,1,0);
-
-        drawPolygon(10,r);
-
-        glPopMatrix();
-    }
-
-    QVector<QVector3D> quadPts;
-    for(int i=0; i<4; i++) quadPts.append(getPos(r,unit,1,90*i));
-    
-    for(int i=0; i<6; i++)
-    {
-        glPushMatrix();
-        if(1<=i && i<=4) { glRotated(90*i, 1,0,0); }
-        glPopMatrix();
-    }
-
-    setColor(0.8,0.2,0.1);
-    drawSphere(getPos(r,unit,0,0), 0.05);
-    setColor(0.2,0.8,0.1);
-
-    drawSphere(getPos(r,unit,1,0), 0.05);
-    drawSphere(getPos(r,unit,1,90), 0.05);
-    drawSphere(getPos(r,unit,1,180), 0.05);
-    drawSphere(getPos(r,unit,1,270), 0.05);
-
-
-
-
-    delete ph;
-  
-  */
 
 }
 
@@ -636,20 +536,6 @@ void ImpossiblePolyhedronPage::mouseMoveEvent(QMouseEvent *e)
   if(!m_rotating)
   {
       m_parameter += 0.001*delta.x();
-      /*
-      if(mode==1) {
-        m_parameter += 0.001*delta.x();
-      } else if(mode == 2) {
-          trianglePos += 0.001*delta.x();
-      } else if(mode == 3) {
-          squarePos += 0.001*delta.x();
-      } else if(mode == 4) {
-          squareAngle += 0.001*delta.x();
-      } else if(mode == 5) {
-          squareScale += 0.001*delta.x();
-      }
-      */
-
   }
   else
   {

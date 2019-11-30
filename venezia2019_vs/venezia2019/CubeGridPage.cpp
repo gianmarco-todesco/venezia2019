@@ -242,15 +242,6 @@ void CubeGridPage::mouseMoveEvent(QMouseEvent *e)
 
 void CubeGridPage::keyPressEvent(QKeyEvent *e)
 {
-    /*
-    if(e->key() == Qt::Key_1) m_offset += QVector3D(m_gridSmallUnit,0,0);
-    else if(e->key() == Qt::Key_2) m_offset -= QVector3D(m_gridSmallUnit,0,0);
-    else if(e->key() == Qt::Key_W) moveOffset(-getCurrentDirection());
-    else if(e->key() == Qt::Key_S) moveOffset(getCurrentDirection());
-    //else if(e->key() == Qt::Key_3) m_offset += QVector3D(m_gridBigUnit,0,0);
-    //else if(e->key() == Qt::Key_4) m_offset -= QVector3D(m_gridBigUnit,0,0);
-    else 
-    */
     if(e->key() == Qt::Key_P) {
         m_translating = !m_translating;
     } 
@@ -470,4 +461,11 @@ void CubeGridPage::setStatus(int status)
     }
 
 
+}
+
+
+void CubeGridPage::savePictures()
+{
+    setStatus(0);
+    // savePicture("fig1.png");
 }

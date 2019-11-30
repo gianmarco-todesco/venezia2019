@@ -1,7 +1,6 @@
 #ifndef PDISKPAGE_H
 #define PDISKPAGE_H
 
-#include "OpenGLPage.h"
 #include "Page.h"
 #include <QPointF>
 #include "HTransform.h"
@@ -41,7 +40,6 @@ protected:
   int m_status;
   int m_oldStatus;
 
-private:
   double m_scale;
   QPointF m_pan;
   std::vector<GmLib::HTransform> m_transformStack;

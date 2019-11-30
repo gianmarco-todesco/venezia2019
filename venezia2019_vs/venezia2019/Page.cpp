@@ -15,17 +15,55 @@
 #include "JohnsonSolidsPage.h"
 #include "TestPage.h"
 
+#include "Fig1Page.h"
+#include "Fig2Page.h"
+#include "Fig3Page.h"
+#include "Fig4Page.h"
+#include "Fig5Page.h"
+#include "Fig6Page.h"
+#include "Fig7aPage.h"
+#include "Fig7bPage.h"
+#include "Fig8aPage.h"
+#include "Fig8bPage.h"
+#include "Fig9Page.h"
+#include "Fig10Page.h"
+#include "Fig11Page.h"
+#include "Fig12Page.h"
 
 #include <qglshaderprogram.h>
+
+#include <assert.h>
 
 
 void Presentation::buildPages()
 {
-    // addPage(new HyperbolicPolyhedronPage());
-    //addPage(new H3GridBuildPage());
+    
+    addPage(new Fig9aPage());
+    addPage(new Fig9bPage());
+    addPage(new Fig9cPage());
+
+    // addPage(new H3GridBuildPage());
+    /*
+    addPage(new Fig1Page());
+    addPage(new Fig2Page());
+    addPage(new Fig3Page());
+    addPage(new Fig4Page());
+    addPage(new Fig5Page());
+    addPage(new Fig6Page());
+    addPage(new Fig7aPage());
+    addPage(new Fig7bPage());
+    addPage(new Fig8aPage());
+    addPage(new Fig8bPage());
+    addPage(new Fig9Page());
+    addPage(new Fig10Page());
+    addPage(new Fig11Page());
+    addPage(new Fig12Page());
+    */
 
 
-
+    /*
+    addPage(new H3GridPage());
+    
 
     addPage(new CubeGridPage());
     addPage(new PolydronPage());
@@ -34,22 +72,12 @@ void Presentation::buildPages()
     addPage(new CircleLimit3Page());   
     addPage(new PDiskPage());
     addPage(new FoldingFacesPage());
-  
-
     addPage(new HyperbolicPolyhedronPage());
     addPage(new H3GridBuildPage());
     addPage(new H3GridPage());
-
-
-    // addPage(new TestPage());
-    
-
-
-    // 
-    // 
-    /*
-    addPage(new DummyPage());
     */
+
+
 }
 
 //=============================================================================
@@ -109,6 +137,37 @@ void Page::setViewUniforms(QGLShaderProgram*program)
     program->setUniformValue("iview", view.inverted());
 
 }
+
+#define GL_MULTISAMPLE 0x809D
+
+
+void Page::savePicture(const QString &path)
+{
+    assert(glGetError() == GL_NO_ERROR);
+    QGLFormat fmt;
+    fmt.setDoubleBuffer(false);
+    fmt.setAlpha(false);
+    fmt.setSampleBuffers(true);
+    int width = 2048, height = 2048;
+    QGLPixelBuffer buffer(width,height,fmt);
+    buffer.makeCurrent();
+
+    setSize(width, height);
+    initializeGL();
+    resizeGL(width, height);
+   
+    paintGL();
+    
+    glFlush();
+    glFinish();
+    stop();
+
+    buffer.doneCurrent();
+    buffer.toImage().save(path);
+    assert(glGetError() == GL_NO_ERROR);
+}
+
+
 
 //=============================================================================
 
@@ -195,7 +254,4 @@ void Presentation::prevPage()
 {
     if(m_currentPageIndex>0) setPage(m_currentPageIndex-1);
 }
-
-
-//=============================================================================
 

@@ -39,7 +39,6 @@ HyperbolicPolyhedronPage::~HyperbolicPolyhedronPage()
 
 void HyperbolicPolyhedronPage::initializeGL()
 {
-    // m_mesh.makeSphere(1,20,20);
     double d = 0.7;
     int m = 40;
     double q = d / (m-1);
@@ -62,9 +61,6 @@ void HyperbolicPolyhedronPage::initializeGL()
     pa.begin(&img);
     pa.setFont(QFont("Arial",80,QFont::Bold));
     pa.setPen(Qt::black);
-    // pa.drawRect(0,0,255,255);
-    // pa.fillRect(0,0,128,256, QColor(100,100,0));
-    //pa.drawText(QRect(0,0,256,256), Qt::AlignCenter, "Hello!");
     pa.end();   
     m_texture1.createTexture(img);
 
@@ -191,6 +187,7 @@ QVector3D rainbow(double t)
     int k1 = (k+1)%6;
     return colors[k] * (1-t) + colors[k1] * t;
 }
+
 
 QMatrix4x4 makeTranslation(double x, double y, double z)
 {
@@ -369,66 +366,6 @@ void HyperbolicPolyhedronPage::draw()
         } else if(m_status == 6)
         delete ph;
     }
-    /*
-    else if(m_status==8) 
-    {
-        double z0 = m_parameter / sqrt(1.0 + m_parameter*m_parameter);
-        QMatrix4x4 globalMat = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,z0));
-
-        QVector<QVector3D> pts;
-        QVector3D p0(0.5,0.3,0.1);
-
-        for(int i=0;i<5;i++) 
-        {
-            const double phi = 2*M_PI*i/5;
-            pts.append(QVector3D(cos(phi)*0.2+0.3, 0, sin(phi)*0.2-0.1));
-        }
-        drawHPoint(p0);
-        for(int i=0;i<5;i++) 
-        {
-            drawHPoint(pts[i]);
-            drawHLine(p0,pts[i]);
-            drawHLine(pts[i], pts[(i+1)%5]);
-        }
-    }
-
-    else if(m_status == 8)
-    {
-        m_texture1.bind();    
-        prog = m_h3ShaderProgram;
-        prog->bind();
-        // setViewUniforms(prog);
-        prog->setUniformValue("u_texture", 0);
-        prog->setUniformValue("u_texScale", QPointF(20,20));   
-        prog->setUniformValue("hMatrix", m_hMatrix);
-        prog->setUniformValue("u_color", QVector3D(1,1,1));
-
-        
-        setColor(1,0,1);
-        Polyhedron *ph = makeDodecahedron();
-        ph->computeFaceVertices();
-        double radius = 0.8 + m_parameter;
-        ph->scale(radius / ph->getVertex(0).m_pos.length());
-        drawHPolyhedron(ph);
-
-        const Polyhedron::Face &face = ph->getFace(0);
-
-        QVector3D p0 = ph->getVertex(face.m_vertices[1]).m_pos;
-        QVector3D p1 = ph->getVertex(face.m_vertices[0]).m_pos;
-        QVector3D p2 = ph->getVertex(face.m_vertices[2]).m_pos;
-        drawHLine(p0,p1);
-        drawHLine(p0,p2);
-
-        drawHAngle(p0,p0-p1,p0-p2);
-        
-
-        delete ph;
-
-        m_texture1.release();
-        prog->release();
-
-    }
-    */
 }
 
 
@@ -805,45 +742,3 @@ void HyperbolicPolyhedronPage::setStatus(int status)
     m_status = qMax(0, status);
 }
 
-
-#ifdef DOPO
-
-
-    else if(m_status == 4) {
-
-        double z0 = m_parameter / sqrt(1.0 + m_parameter*m_parameter);
-        QMatrix4x4 globalMat = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,z0));
-        /*
-        // 
-        m_texture1.bind();    
-        prog = m_h3ShaderProgram;
-        prog->bind();
-        // setViewUniforms(prog);
-        prog->setUniformValue("u_texture", 0);
-        prog->setUniformValue("u_texScale", QPointF(20,20));
-        setColor(1,1,1);
-        glEnableClientState(GL_NORMAL_ARRAY);
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        m_hlineMesh.bind();
-
-        prog->setUniformValue("hMatrix", globalMat);
-        m_hlineMesh.draw();
-        prog->setUniformValue("hMatrix", H3::KModel::translation(QVector3D(0,0,0), QVector3D(0.1,0,0)));
-        m_hlineMesh.draw();
-        m_hlineMesh.release();
-    
-        glDisableClientState(GL_NORMAL_ARRAY);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        prog->release();
-        m_texture1.release();
-        */
-        QList<QMatrix4x4> matrices;
-        matrices << globalMat;
-        for(int i=0;i<10;i++) 
-            matrices << H3::KModel::translation(QVector3D(0,0,0), QVector3D(0.05*i,0,0));
-        drawHLines(matrices);
-    }
-
-#endif

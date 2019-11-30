@@ -6,13 +6,14 @@
 
 using namespace GmLib;
 
-CircleLimit3Viewer::CircleLimit3Viewer()
+CircleLimit3Viewer::CircleLimit3Viewer(bool figureMode)
 : HTessellationViewer()
 , m_tess(new CircleLimit3Tessellation())
 , m_status(1)
 , m_maxFaceCount(0)
+, m_figureMode(figureMode)
 {
-  m_tess->init(1000);
+  m_tess->init(figureMode ? 10000 : 1000);
   setTexture(Texture::get("images/cl3_fish_y.png"));
   m_fish[0] = Texture::get("images/cl3_fish_y.png");
   m_fish[1] = Texture::get("images/cl3_fish_r.png");
@@ -21,6 +22,7 @@ CircleLimit3Viewer::CircleLimit3Viewer()
 
   setMesh(Mesh2D::getMesh("images/cl3_fish.mesh"));
   setHTess(m_tess);
+  if(m_figureMode) { m_maxFaceCount= -1; m_status |= 2; }
 }
 
 CircleLimit3Viewer::~CircleLimit3Viewer()
@@ -58,43 +60,6 @@ void CircleLimit3Viewer::draw()
 {
   if(!m_texture || !m_mesh || !m_tess) return;
 
-#ifdef CICCIO
-
-  //double palette[][3] = {
-  //  {0,1,0},{1,1,0},{1,0,0},{0,1,1},{1,0,1}
-  //};
-
-  for(int i=0;i<m_tess->getFaceCount();i++)
-  {
-    CircleLimit3Tessellation::Face *face = m_tess->my(m_tess->getFace(i));
-    int c0 = face->c0, c1 = face->c1;
-    if(c0<0||c0>3)c0=3;
-    if(c1<0||c1>3)c1=3;
-
-    HTransform transform = m_gTransform * face->transform;
-
-    double phi = -2*3.1415296/8;
-    double cs = cos(phi), sn = sin(phi);
-    m_fish[c0]->bind();
-    // glColor3dv(palette[c0]);
-    glColor3d(1,1,1);
-    glBegin(GL_TRIANGLES);
-    facePartVertices(transform,   sn, cs);
-    facePartVertices(transform,  -sn,-cs);
-    glEnd();
-    m_fish[0]->unbind();
-
-    m_fish[c1]->bind();
-    // glColor3dv(palette[c1]);
-    glColor3d(1,1,1);
-    glBegin(GL_TRIANGLES);
-    facePartVertices(transform,  cs, -sn);
-    facePartVertices(transform, -cs,  sn);
-    glEnd();
-    m_fish[0]->unbind();
-  }
-
-#else
   const double phi = -2*3.14159265/8;
   const double cs = cos(phi), sn = sin(phi);
 
@@ -161,9 +126,6 @@ void CircleLimit3Viewer::draw()
           coordArray[2*k+1] = p.y();
         }
 
-        //if(color==1 && i==0 && sgn== -1) glColor3d(br,br,br);
-        //else {double fade=0.5; glColor3d(br*fade,br*fade,br*fade);}
-
         glVertexPointer(2, GL_FLOAT, sizeof(GL_FLOAT)*2, &coordArray[0]);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_BYTE, &indices[0]);
       }
@@ -172,52 +134,6 @@ void CircleLimit3Viewer::draw()
   }
   glDisableClientState(GL_TEXTURE_COORD_ARRAY);
   glDisableClientState(GL_VERTEX_ARRAY);
-
-
-#endif
-
-
-  /*
-  for(int i=0;i<m_tess->getFaceCount();i++)
-  {
-    CircleLimit3Tessellation::Face *face = m_tess->my(m_tess->getFace(i));
-    std::vector<QPointF> pts;
-    for(int j=0;j<8;j++)
-    {
-      Complex c = m_gTransform * face->transform * m_tess->border(j,0);
-      pts.push_back(QPointF(c.re,c.im)*m_scale + m_pan);
-      int m = 40;
-      glColor3d(1,1,1);
-      glBegin(GL_LINE_STRIP);
-      for(int k=0;k<m;k++)
-      {
-        c = m_gTransform * face->transform * m_tess->border(j,(double)k/(double)(m-1));
-        glVertex2d(c.re*m_scale+m_pan.x(), c.im*m_scale+m_pan.x());
-      }
-      glEnd();
-    }
-    int b= 4;
-    int db = 8-2;
-    int b0=b;
-    int b1=(b0+db)%8;
-    int b2=(b1+db)%8;
-    int b3=(b2+db)%8;
-    glColor3dv(palette[face->c0]);
-    glBegin(GL_LINES);
-    glVertex2d(pts[b0].x(),pts[b0].y());
-    glVertex2d(pts[b1].x(),pts[b1].y());
-    glVertex2d(pts[b2].x(),pts[b2].y());
-    glVertex2d(pts[b3].x(),pts[b3].y());
-    glEnd();
-    glColor3dv(palette[face->c1]);
-    glBegin(GL_LINES);
-    glVertex2d(pts[b1].x(),pts[b1].y());
-    glVertex2d(pts[b2].x(),pts[b2].y());
-    glVertex2d(pts[b3].x(),pts[b3].y());
-    glVertex2d(pts[b0].x(),pts[b0].y());
-    glEnd();
-  }
-  */
 
 
   glLineWidth(6.0);
@@ -233,7 +149,11 @@ void CircleLimit3Viewer::draw()
 
 void CircleLimit3Viewer::drawTess()
 {
-  glColor3d(1,0,1);
+    if(m_figureMode)
+        glColor3d(0,0,0);
+    else
+        glColor3d(1,0,1);
+
 
   for(int i=0;i<m_tess->getEdgeCount();i++)
   {

@@ -53,11 +53,6 @@ protected:
 
 
 private:
-    /*
-    static std::set<OpenGLPage*> m_sharedSet;
-    inline static OpenGLPage* getShared() { return m_sharedSet.empty() ? 0 : *m_sharedSet.begin(); }
-    */
-
 
 };
 

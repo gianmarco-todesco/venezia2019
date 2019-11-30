@@ -1,0 +1,12 @@
+Fig.1 Solid cube division
+Fig.2 {5,4}
+Fig.3 Denis.
+Fig.4 dodici decagoni e il cubo
+Fig.5 4 decagoni
+Fig.6 {8,4}
+Fig.7 (a) {8,3}, (b) circle limit
+Fig.8 tre ottagoni attorno ad un vertice
+Fig.9 hyperbolic balls with geometric entities
+Fig.10 dihedral angles measurement
+Fig.11 {5,3,4} visto da fuori
+Fig.12 {5,3,4} visto da dentro.

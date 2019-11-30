@@ -10,8 +10,6 @@ class Complex
 public:
   double re, im;
   Complex(double re=0.0, double im=0.0) : re(re), im(im) {}
-  // Complex(const Point2 &pos) : re(pos.x), im(pos.y) {}
-  // Point2 toPoint2() const {return Point2(re,im);}
 
   Complex conj() const {return Complex(re,-im);}
   Complex operator+(const Complex &c) const { return Complex(re+c.re,im+c.im); }

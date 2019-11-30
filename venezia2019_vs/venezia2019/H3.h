@@ -91,8 +91,6 @@ namespace H3 {
         return atanh( tanh(cathetusLength) / cos(alpha) );
     }
 
-
-
 } // namespace H3
 
 #endif

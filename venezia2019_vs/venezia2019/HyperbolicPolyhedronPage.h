@@ -14,6 +14,7 @@ class Polyhedron;
 
 class HyperbolicPolyhedronPage : public Page
 {
+protected:
   double m_cameraDistance;
   double m_theta, m_phi;
   QPoint m_lastPos;

@@ -1,0 +1,7 @@
+fig.3
+	foto a bassa risoluzione.
+	Bisogna rifarla.
+
+fig. 7b
+	c'è un problema con le texture quando si stampa
+	

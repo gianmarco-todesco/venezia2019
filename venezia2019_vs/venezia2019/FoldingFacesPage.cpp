@@ -436,57 +436,6 @@ void Mesh3D::process()
   for(int i=0;i<n;i++) getMeshVertex(i)->m_pos -= center;
 }
 
-/*
-
-void Mesh3D::process()
-{
-  int n = getVertexCount();
-  double energy = 0.0;
-  std::vector<Point3> grad(n);
-
-
-  for(int i=0;i<n;i++)
-  {
-    Vertex *v = getMeshVertex(i);
-    Point3 point = v->m_pos;
-    std::vector<Net::Vertex*> vv;
-    getAdjacentVertices(vv, i);
-    int m = (int)vv.size();
-    std::vector<Point3> adjPoints(m);
-    Point3 center;
-    for(int j=0;j<m;j++)
-    {
-      adjPoints[j] = getMeshVertex(vv[j]->getIndex())->m_pos;
-      center += adjPoints[j];
-    }
-    center *= 1.0/m;
-
-    double hh = 0.0001;
-    Point3 pp[] = {Point3(hh,0,0), Point3(0,hh,0), Point3(0,0,hh) };
-    double de[3];
-    for(int k=0;k<3;k++)
-    {
-      double e1 = 0;
-      Point3 point2 = point+pp[k];
-      for(int j=0;j<m;j++)
-        e1 += distEnergy(point2, adjPoints[j]);
-      e1 += faceEnergy(i,point2) ;
-      point2 = point-pp[k];
-      for(int j=0;j<m;j++)
-        e1 -= distEnergy(point2, adjPoints[j]);
-      e1 -= faceEnergy(i,point2) ;
-      de[k] = e1/(2*hh);
-    }
-    grad[i] = Point3(de[0],de[1],de[2]);
-  }
-  for(int i=0;i<n;i++)
-  {
-    Vertex *v = getMeshVertex(i);
-    v->m_pos -= grad[i] * 0.01;
-    v->m_pos += 0.01*Point3(0,0,rnd());
-  }
-}
-*/
 
 void Mesh3D::computeDistances()
 {
@@ -693,18 +642,6 @@ FoldingFacesPage::FoldingFacesPage()
 , m_cameraDistance(10)
 , m_bumpMapShader(0)
 {
-  qDebug("ok");
-  //m_mesh->setType(0);
-  //m_mesh->build();
-  /*
-  for(;;)
-  {
-    m_mesh->growVertex();
-    if(m_mesh->isComplete(4)) break;
-  }
-  m_mesh->resetPositions();
-  */
-  // setFocusPolicy(Qt::ClickFocus);
   memset(m_viewMatrix,0,sizeof(m_viewMatrix));
   for(int i=0;i<16;i+=5) m_viewMatrix[i] = 1.0;
 }
@@ -718,8 +655,6 @@ FoldingFacesPage::~FoldingFacesPage()
 
 void FoldingFacesPage::initializeGL()
 {
-  // texture = new GLTexture2D(":resources/normal.jpg", 256,256);
-  // m_bumpMapShader = loadProgram("bumpmap");
 }
 
 void FoldingFacesPage::start()
@@ -879,7 +814,6 @@ void FoldingFacesPage::paintGL()
       assert(hes[2]->getNext() == hes[0]);
       Point3 pc = fPts[i];
       setColor(eColor);
-      // if(soccerVisual>0.5) setColor(1,0,1);
       drawSphere(pc,0.01*soccerVisual,7,7);
       for(int j=0;j<3;j++)
       {
@@ -1107,24 +1041,6 @@ void FoldingFacesPage::paintGL2()
   texture->unbind();
   */
 
-  /*
-  setColor(1,1,1);
-  drawSphere(gog0,0.12);
-  setColor(1,0,0);
-  drawSphere(gog1,0.12);
-  setColor(0,1,0);
-  drawSphere(gog2,0.12);
-
-
-  setColor(1,0,0);
-  if(goge0.getNorm2()>0) drawCone(gog0,0.12,gog0+goge0,0);
-  setColor(0,1,0);
-  if(goge1.getNorm2()>0) drawCone(gog0,0.12,gog0+goge1,0);
-  setColor(0,0,1);
-  if(goge2.getNorm2()>0) drawCone(gog0,0.12,gog0+goge2,0);
-
-  */
-
   glPopMatrix();
 }
 
@@ -1204,19 +1120,3 @@ void FoldingFacesPage::wheelEvent(QWheelEvent*e)
   m_cameraDistance = clamp(m_cameraDistance - e->delta()*0.01, 1, 30);
 }
 
-/*
-void FoldingFacesPage::timerEvent(QTimerEvent*)
-{
-  updateGL();
-}
-
-void FoldingFacesPage::showEvent(QShowEvent*)
-{
-  if(m_timerId == 0) m_timerId = startTimer(40);
-}
-
-void FoldingFacesPage::hideEvent(QHideEvent*)
-{
-  if(m_timerId != 0) {killTimer(m_timerId); m_timerId=0;}
-}
-*/

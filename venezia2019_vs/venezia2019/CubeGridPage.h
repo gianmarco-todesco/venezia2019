@@ -57,6 +57,8 @@ protected:
 
     void setStatus(int status);
 
+    void savePictures();
+
 private:
     void buildMesh();
     QVector3D getCurrentDirection();

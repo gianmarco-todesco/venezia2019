@@ -2,8 +2,8 @@ varying vec3 normal;
 varying vec3 pos;
 
 const vec3 lightPos = vec3(1.0,1.0,1.0);
-const vec3 ambientColor = vec3(0.1, 0.3, 0.4);
-const vec3 diffuseColor = vec3(0.1, 0.3, 0.4);
+const vec3 ambientColor = vec3(0.2, 0.6, 0.8);
+const vec3 diffuseColor = vec3(0.2, 0.6, 0.8);
 const vec3 specColor = vec3(0.2, 0.2, 0.2);
 
 
@@ -26,6 +26,7 @@ void main() {
   
   // float att = exp(-130.0*max(0.0, gl_FragCoord.z-0.97));
   float att = max(0.0, min(1.0, (0.95 - gl_FragCoord.z)/0.1));
+  att = 0.3;
   gl_FragColor = vec4((ambientColor +
                       lambertian*diffuseColor +
                       specular*specColor)*att, 1.0);

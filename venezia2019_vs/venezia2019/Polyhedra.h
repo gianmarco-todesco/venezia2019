@@ -95,10 +95,6 @@ public:
 
 typedef std::vector<Polyhedron*> Polyhedra;
 
-
-
-// Plane getFacePlane(const Polyhedron*ph, int index);
-
 QVector3D getFaceNormal(const Polyhedron*ph, int index);
 QVector3D getFaceCenter(const Polyhedron*ph, int index);
 std::pair<QVector3D, QVector3D> 

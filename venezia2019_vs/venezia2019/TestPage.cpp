@@ -250,9 +250,6 @@ void TestPage::paintGL()
     GLfloat specular[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 90.0);
-    // glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, colors[0]);
-
-    // drawSphere(GmLib::Point3(0,0,0), 1);
 
 
     Polyhedron *ph = makeDodecahedron();
@@ -262,26 +259,6 @@ void TestPage::paintGL()
         ph->getVertex(i).m_pos *= sc;
 
 
-
-    /*
-
-    for(int i=0;i<ph->getEdgeCount();i++)
-    {
-        const Polyhedron::Edge &edge = ph->getEdge(i);
-        QVector3D p0 = ph->getVertex(edge.m_a).m_pos ;
-        QVector3D p1 = ph->getVertex(edge.m_b).m_pos ;
-        qDebug() << p0.length() << p1.length();
-        int m = 30;
-        for(int j=0;j<m;j++)
-        {
-            double t = (double)j/(double)(m-1);
-            QVector4D p = p0*(1-t) + p1*t;
-            p.setW(1.0);
-            QVector3D q = toBall(p);
-            drawSphere(GmLib::Point3(q.x(),q.y(),q.z()), 0.1);
-        }
-    }
-    */
 
     BallTransform transform;
 
@@ -332,26 +309,7 @@ void TestPage::paintGL()
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
 
-  
-
-
-    // glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    /*
-    glDisable(GL_LIGHTING);
-    glColor3d(1,0,0);
-    glBegin(GL_LINES);
-    for(int i=0;i<gb.vCount;i++)
-    {
-        int k = 6*i;
-        glVertex3d(gb.buffer[k],gb.buffer[k+1],gb.buffer[k+2]);
-        glVertex3d(gb.buffer[k]+gb.buffer[k+3],gb.buffer[k+1]+gb.buffer[k+4],gb.buffer[k+2]+gb.buffer[k+5]);
-
-    }
-    glEnd();
-    glEnable(GL_LIGHTING);
-    */
-
+ 
     drawBoundary();
 
 
@@ -402,10 +360,7 @@ void TestPage::mouseMoveEvent(QMouseEvent *e)
   m_lastPos = e->pos();
   if(!m_rotating)
   {
-    //m_parameter += 0.01 * delta.x();
-    //m_surface->computeMesh(SimpleSurface(m_parameter));
-   // m_pp += 0.01*QPointF(delta.x(), delta.y());
-
+ 
     m_scaleFactor = qMin(0.9999, m_scaleFactor + 0.001*delta.x());
   }
   else

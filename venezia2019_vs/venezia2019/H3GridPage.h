@@ -67,11 +67,8 @@ protected:
 
   void draw(const QMatrix4x4 &mat, const Mesh &mesh);
   
-  // void draw(const QMatrix4x4 &globalMatrix, const GridMatrices &matrices);
-
   void drawChannels();
 
-  //void test();
   void test3();
   void buildGrid();
 

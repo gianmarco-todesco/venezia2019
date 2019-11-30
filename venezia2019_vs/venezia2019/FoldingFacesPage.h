@@ -40,10 +40,6 @@ protected:
     void keyPressEvent(QKeyEvent *e);
     void wheelEvent(QWheelEvent*);
 
-    // void timerEvent(QTimerEvent*);
-    // void showEvent(QShowEvent*);
-    // void hideEvent(QHideEvent*);
-
 };
 
 #endif // FOLDINGFACESPAGE_H

@@ -2,8 +2,8 @@ varying vec3 normal;
 varying vec3 pos;
 
 const vec3 lightPos = vec3(1.0,1.0,1.0);
-const vec3 ambientColor = vec3(0.1, 0.3, 0.4);
-const vec3 diffuseColor = vec3(0.1, 0.3, 0.4);
+const vec3 ambientColor = vec3(0.2, 0.7, 0.9);
+const vec3 diffuseColor = vec3(0.2, 0.7, 0.1);
 const vec3 specColor = vec3(0.2, 0.2, 0.2);
 
 

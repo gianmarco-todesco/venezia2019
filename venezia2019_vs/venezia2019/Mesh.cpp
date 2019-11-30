@@ -337,19 +337,5 @@ void Mesh::makePolydronPiece(double r, double h, int n)
         addQuad(k,k+1,k+2,k+3);
     }
 
-    /*
-    
-    for(int i=0;i<n;i++) addVertex(pts[2*i+1], QVector3D(0,0,1));
-    for(int i=0;i+1<n;i++) addTriangle(k,k+1+i,k+2+i);
-    addTriangle(k,k+n,k+1);
-    // dn face
-    k = m_vCount;
-    addVertex(QVector3D(0,0,-h), QVector3D(0,0,-1));
-    for(int i=0;i<n;i++) addVertex(pts[2*i], QVector3D(0,0,-1));
-    for(int i=0;i+1<n;i++) addTriangle(k,k+2+i,k+1+i);
-    addTriangle(k,k+1,k+n);
-    
-    */
-
     createBuffers();
 }
