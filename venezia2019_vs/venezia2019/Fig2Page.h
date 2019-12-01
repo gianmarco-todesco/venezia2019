@@ -2,36 +2,22 @@
 
 
 #include "Page.h"
+#include "PDiskPage.h"
 
 #include <QString>
 #include <QMatrix4x4>
 
 
-class Fig2Page : public Page {
-    double m_theta, m_phi;
-    double m_cameraDistance;
-    // QGLShaderProgram *m_shaderProgram;
-    QMatrix4x4 m_hMatrix;
-    QPoint m_lastPos;
-    bool m_rotating;
+class Fig2Page : public PDiskPage {
   
 public:
     Fig2Page();
     ~Fig2Page();
-
-    void initializeGL();
-    void resizeGL(int width, int height);
-    void paintGL();
-
     
     void savePictures();
-    
-protected:
-    void mousePressEvent(QMouseEvent *e);
-    void mouseReleaseEvent(QMouseEvent *e);
-    void mouseMoveEvent(QMouseEvent *e);
 
-    void keyPressEvent(QKeyEvent *e);
-    void wheelEvent(QWheelEvent*);
+    void resizeGL(int width, int height);
+    
+    void paintGL();
 
 };

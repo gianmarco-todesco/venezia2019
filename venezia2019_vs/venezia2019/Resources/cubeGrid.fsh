@@ -31,10 +31,11 @@ void main() {
     specular = vec4(0.0, 0.0, 0.0, 0.0);
   }
 
+  // float att = exp(-130.0*max(0.0, gl_FragCoord.z-0.97));
   float att = exp(-130.0*max(0.0, gl_FragCoord.z-0.97));
   // float att = 1.0;
-
   // if(gl_FragCoord.z < 0.95) discard;
 
-  gl_FragColor = att*(0.1*gl_FrontMaterial.ambient + diffuse + specular);
+  vec3 outcolor = vec3(1.0,1.0,1.0)*(1.0-att) + (0.1*gl_FrontMaterial.ambient + diffuse + specular).xyz * att; 
+  gl_FragColor =  vec4(outcolor, 1.0);
 }

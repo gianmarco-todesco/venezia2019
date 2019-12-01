@@ -145,7 +145,7 @@ void Fig9cPage::draw()
 {
     QGLShaderProgram *prog;
 
-    m_hMatrix = makeTranslation(0,0,m_parameter);
+    m_hMatrix = makeTranslation(0,0,0);
 
     // hpolyhedron 
 
@@ -158,7 +158,7 @@ void Fig9cPage::draw()
     prog->setUniformValue("hMatrix", m_hMatrix);
     prog->setUniformValue("u_color", QVector3D(1,1,1));
 
-    double radius = qMax(0.1, qMin(0.99, 0.4 + m_parameter));
+    double radius = 0.99; // qMax(0.1, qMin(0.99, 0.4 + m_parameter));
     setColor(1,0,1);
     Polyhedron *ph = makeDodecahedron();
     ph->computeFaceVertices();
@@ -167,7 +167,7 @@ void Fig9cPage::draw()
 
     m_texture1.release();
     prog->release();
-
+    /*
     int m_status = 5;
     if(m_status == 5)
     {
@@ -233,6 +233,9 @@ void Fig9cPage::draw()
         }
 
     } else if(m_status == 6)
+    */
+
+
     delete ph;
 }
 

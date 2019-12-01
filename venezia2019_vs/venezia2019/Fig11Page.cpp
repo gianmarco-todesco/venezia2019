@@ -29,7 +29,7 @@
 Fig11Page::Fig11Page()
     : m_theta(23.5)
     , m_phi(-25.75)
-    , m_cameraDistance(24.2)
+    , m_cameraDistance(26.6)
     , m_gridData(new H3Grid534())
     , m_grid(new H3Grid(*m_gridData))
     , m_rotating(false)

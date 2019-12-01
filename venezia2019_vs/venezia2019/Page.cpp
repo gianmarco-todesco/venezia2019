@@ -38,9 +38,9 @@
 void Presentation::buildPages()
 {
     
-    addPage(new Fig9aPage());
-    addPage(new Fig9bPage());
-    addPage(new Fig9cPage());
+    // addPage(new Fig11Page());
+    addPage(new Fig12Page());
+
 
     // addPage(new H3GridBuildPage());
     /*
@@ -141,7 +141,7 @@ void Page::setViewUniforms(QGLShaderProgram*program)
 #define GL_MULTISAMPLE 0x809D
 
 
-void Page::savePicture(const QString &path)
+void Page::savePicture(const QString &path, int border)
 {
     assert(glGetError() == GL_NO_ERROR);
     QGLFormat fmt;
@@ -163,8 +163,22 @@ void Page::savePicture(const QString &path)
     stop();
 
     buffer.doneCurrent();
-    buffer.toImage().save(path);
+    QImage img = buffer.toImage();
+    
+    if(border>0)
+    {
+        QPainter pa;
+        pa.begin(&img);
+        QBrush color = Qt::black;
+        pa.fillRect(0,0,img.width(),border, color);
+        pa.fillRect(0,img.height()-border,img.width(),border, color);
+        pa.fillRect(0,0,border,img.height(), color);
+        pa.fillRect(img.width()-border,0,border,img.height(), color);
+        pa.end();
+    }
+    img.save(path);
     assert(glGetError() == GL_NO_ERROR);
+
 }
 
 

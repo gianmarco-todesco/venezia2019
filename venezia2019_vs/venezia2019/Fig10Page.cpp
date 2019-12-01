@@ -1,7 +1,7 @@
 #include "Fig10Page.h"
 
-#define _USE_MATH_DEFINES
-#include <math.h>
+// #define _USE_MATH_DEFINES
+// #include <math.h>
 #include <vector>
 
 #include <assert.h>
@@ -25,144 +25,128 @@
 
 #include "Viewer.h"
 
-// fig.10 dihedral angles measurement
-Fig10Page::Fig10Page()
-    : m_theta(23.5)
-    , m_phi(-25.75)
-    , m_cameraDistance(24.2)
-    , m_rotating(false)
+extern QVector3D rainbow(double t);
+extern QMatrix4x4 makeTranslation(double x, double y, double z);
+
+
+Fig10Page::Fig10Page(double radius)
+    : m_radius(radius)
+    , m_edgeIndex(8)
 {
-    m_hMatrix.setToIdentity();
 }
     
 Fig10Page::~Fig10Page()
 {
 }
 
-  
-void Fig10Page::initializeGL() 
-{
-    glEnable(GL_LIGHTING);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHT0);
-    // glEnable(GL_LIGHT1);
-    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE,1.0);
-    glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,1.0);
-
-    GLfloat lcolor[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
-    GLfloat lpos[]   = { 5, 7, 10, 1.0f};
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lcolor);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lcolor);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lcolor);
-    glLightfv(GL_LIGHT0, GL_POSITION, lpos);
-
-    lpos[0] = -5;
-    glLightfv(GL_LIGHT1, GL_AMBIENT, lcolor);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, lcolor);
-    glLightfv(GL_LIGHT1, GL_SPECULAR, lcolor);
-    glLightfv(GL_LIGHT1, GL_POSITION, lpos);
-
-    // m_shaderProgram = loadProgram("h3grid");
-    
-}
-
-void Fig10Page::resizeGL(int width, int height) 
-{
-    double aspect = (float)width/height;
-    glViewport(0,0,width,height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, aspect, 1.0, 70.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-
 void Fig10Page::paintGL() 
 {        
     glClearColor(1,1,1,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // drawBackground();
     
     glPushMatrix();
     glTranslated(0,0,-m_cameraDistance);
-    glRotated(m_theta,1,0,0);
-    glRotated(m_phi,0,1,0);
+    glRotated(m_theta, 1,0,0);
+    glRotated(m_phi, 0,1,0);
 
+    GLfloat specular[] =  { 0.7f, 0.7f, 0.7f, 1.0f};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 90.0);
 
-    qreal viewArr[16], projArr[16];
-    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
-    glGetDoublev(GL_PROJECTION_MATRIX, projArr);
-    QMatrix4x4 view(viewArr), proj(projArr);
-    QMatrix4x4 projView = proj.transposed() * view.transposed();
-    QMatrix4x4 identity; identity.setToIdentity();
+    draw();
+    drawOutSphere();
 
-    // m_shaderProgram->bind();
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_CULL_FACE);
-    
-    QMatrix4x4 globalMatrix; globalMatrix.setToIdentity();
-
-    
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisable(GL_CULL_FACE);
-    // m_shaderProgram->release();
- 
     glPopMatrix();
 }
 
-
-
-
-void Fig10Page::mousePressEvent(QMouseEvent *e)
+Fig10aPage::Fig10aPage()
+    : Fig10Page(0.5)
 {
-    m_lastPos = e->pos();
-    m_rotating = e->button() == Qt::RightButton;
 }
 
-void Fig10Page::mouseReleaseEvent(QMouseEvent *e)
+Fig10bPage::Fig10bPage()
+    : Fig10Page(0.99)
 {
-
 }
 
-void Fig10Page::mouseMoveEvent(QMouseEvent *e)
+void Fig10Page::draw()
 {
-  QPoint delta = m_lastPos - e->pos();
-  m_lastPos = e->pos();
-  if(!m_rotating)
-  {
+    QGLShaderProgram *prog;
 
-      // m_hOffset += QVector3D(0,0,delta.y()*0.01);
-      // m_hMatrix = H3::KModel::translation(m_hOffset, QVector3D(0,0,0));
-  }
-  else
-  {
-    m_phi -= 0.25*delta.x();
-    m_theta -= 0.25*delta.y();
-  }
-  updateGL();
-}
+    m_hMatrix = makeTranslation(0,0,0);
+
+    // hpolyhedron 
+    m_texture1.bind();    
+    prog = m_h3ShaderProgram;
+    prog->bind();
+    // setViewUniforms(prog);
+    prog->setUniformValue("u_texture", 0);
+    prog->setUniformValue("u_texScale", QPointF(20,20));   
+    prog->setUniformValue("hMatrix", m_hMatrix);
+    prog->setUniformValue("u_color", QVector3D(1,1,1));
+
+    double radius = m_radius;
+    
+    setColor(1,0,1);
+    Polyhedron *ph = makeDodecahedron();
+    ph->computeFaceVertices();
+    ph->scale(radius / ph->getVertex(0).m_pos.length());
+    drawHPolyhedron(ph);
+
+    m_texture1.release();
+    prog->release();
+
+    // dihedral angle
+    int edgeIndex = m_edgeIndex;
+    if(edgeIndex<0) edgeIndex=0;
+    else if(edgeIndex>ph->getEdgeCount()-1) edgeIndex = ph->getEdgeCount()-1;
+    const Polyhedron::Edge &edge = ph->getEdge(edgeIndex);
+    QVector3D midPoint = (
+        ph->getVertex(edge.m_a).m_pos + 
+        ph->getVertex(edge.m_b).m_pos)*0.5;
+    QList<int> fis;
+    for(int i=0;i<ph->getFaceCount();i++)
+    {
+        bool found = false;
+        const Polyhedron::Face &face = ph->getFace(i);
+        for(int j=0;j<face.m_edges.size();j++) 
+            if(face.m_edges[j]==edgeIndex)
+            {
+                found=true;
+                break;
+            }
+        if(found)
+            fis.append(i);
+    }
+    if(fis.count() == 2)
+    {
+        const QVector3D p0 = getFaceCenter(ph, fis[0]);
+        const QVector3D p1 = getFaceCenter(ph, fis[1]);
+        drawHLine(midPoint,p0);
+        drawHLine(midPoint,p1);
+        drawHAngle(midPoint,midPoint-p0,midPoint-p1);
+    }
 
 
-void Fig10Page::wheelEvent(QWheelEvent*e)
-{
-  m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,50);
-  updateGL();
-}
-
-
-void Fig10Page::keyPressEvent(QKeyEvent *e)
-{
-    e->ignore();
+    delete ph;
 }
 
 
 void Fig10Page::savePictures()
 {
-    Fig10Page page;
-    page.m_cameraDistance = m_cameraDistance;
-    page.m_theta = m_theta;
-    page.m_phi = m_phi;
-    page.savePicture("fig1.png");
+    Fig10Page *page = clone();
+    //page.m_cameraDistance = m_cameraDistance;
+    //page.m_theta = m_theta;
+    //page.m_phi = m_phi;
+    page->savePicture(getFigureName());
+    delete page;
 }
+
+
+void Fig10Page:: keyPressEvent(QKeyEvent *e)
+{
+    if(e->key() == Qt::Key_Plus) m_edgeIndex++;
+    else if(e->key() == Qt::Key_Minus) m_edgeIndex--;
+}
+

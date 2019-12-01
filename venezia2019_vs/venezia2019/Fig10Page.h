@@ -5,33 +5,41 @@
 
 #include <QString>
 #include <QMatrix4x4>
+#include "HyperbolicPolyhedronPage.h"
 
 
-class Fig10Page : public Page {
-    double m_theta, m_phi;
-    double m_cameraDistance;
-    // QGLShaderProgram *m_shaderProgram;
-    QMatrix4x4 m_hMatrix;
-    QPoint m_lastPos;
-    bool m_rotating;
-  
+
+class Fig10Page : public HyperbolicPolyhedronPage {
+protected:
+    double m_radius;  
+    int m_edgeIndex;
 public:
-    Fig10Page();
+    Fig10Page(double radius);
     ~Fig10Page();
 
-    void initializeGL();
-    void resizeGL(int width, int height);
-    void paintGL();
-
-    
+    void paintGL();    
     void savePictures();
-    
-protected:
-    void mousePressEvent(QMouseEvent *e);
-    void mouseReleaseEvent(QMouseEvent *e);
-    void mouseMoveEvent(QMouseEvent *e);
+    void draw();
 
+    virtual Fig10Page* clone() const = 0;
+    virtual QString getFigureName() const = 0;
+  
     void keyPressEvent(QKeyEvent *e);
-    void wheelEvent(QWheelEvent*);
-
 };
+
+
+class Fig10aPage : public Fig10Page {
+public:
+    Fig10aPage();
+    Fig10Page* clone() const { return new Fig10aPage(); }
+    QString getFigureName() const { return "Fig10a.png"; } 
+};
+
+class Fig10bPage : public Fig10Page {
+public:
+    Fig10bPage();
+    void draw();
+    Fig10Page* clone() const { return new Fig10bPage(); }
+    QString getFigureName() const { return "Fig10b.png"; } 
+};
+

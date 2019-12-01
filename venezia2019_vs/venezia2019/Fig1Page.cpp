@@ -111,7 +111,7 @@ void Fig1Page::resizeGL(int width, int height)
     glViewport(0,0,width,height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45, aspect, 1.0, 70.0);
+    gluPerspective(45, aspect, 1.0, 500.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
@@ -159,6 +159,8 @@ void Fig1Page::paintGL()
     */
 
     glPopMatrix();
+
+
 }
 
 
@@ -182,10 +184,10 @@ void Fig1Page::draw()
 
     QVector3D dir = mat.map(QVector3D(0,0,-1));
 
-    int m = 1;
-    for(int ix = -m; ix <= m; ix++) 
-    for(int iy = -m; iy <= m; iy++) 
-    for(int iz = -m; iz <= m; iz++) 
+    int m = 0;
+    for(int ix = -5; ix <= m; ix++) 
+    for(int iy = -5; iy <= m; iy++) 
+    for(int iz = -10; iz <= m; iz++) 
     {
         QVector3D v = m_offset + m_gridBigUnit * QVector3D(ix,iy,iz);
         //if(QVector3D::dotProduct(v,dir)>0) 
@@ -260,7 +262,7 @@ void Fig1Page::mouseMoveEvent(QMouseEvent *e)
 
 void Fig1Page::wheelEvent(QWheelEvent*e)
 {
-  m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,50);
+  m_cameraDistance = clamp(m_cameraDistance - e->delta() * 0.01, 1,150);
   updateGL();
 }
 
@@ -277,5 +279,5 @@ void Fig1Page::savePictures()
     page.m_cameraDistance = m_cameraDistance;
     page.m_theta = m_theta;
     page.m_phi = m_phi;
-    page.savePicture("fig1.png");
+    page.savePicture("fig1.png", 10);
 }
