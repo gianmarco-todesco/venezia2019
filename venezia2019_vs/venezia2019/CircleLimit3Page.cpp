@@ -11,8 +11,8 @@ using namespace GmLib;
 
 #define GL_MULTISAMPLE 0x809D
 
-CircleLimit3Page::CircleLimit3Page()
-: m_viewer(new CircleLimit3Viewer())
+CircleLimit3Page::CircleLimit3Page(bool figureMode)
+: m_viewer(new CircleLimit3Viewer(figureMode))
 , m_timerId(0)
 , m_status(0)
 , m_transfType(0)
@@ -29,6 +29,7 @@ void CircleLimit3Page::start()
 {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     glClearColor(1,1,1,1);
 }
 
@@ -55,49 +56,11 @@ void CircleLimit3Page::paintGL()
 
   glColor3d(1,1,1);
   m_viewer->draw();
-
-
-  //glColor3d(1,1,1);
-  //m_viewer->drawFaceBorder(0);
-
-  /*
-  glColor3d(1,1,1);
-  QPointF center = m_viewer->getFaceCenter(0);
-  for(int i=0;i<8;i++)
-  {
-    double t = 0.7;
-    QPointF p = (1-t)*center + t*m_viewer->getVertexPos(0,i);
-    renderText(p.x(),height()-p.y(),QString::number(i));
-  }
-  for(int h=1;h<=2;h++)
-  {
-    glColor3d(1,1,0);
-    center = m_viewer->getFaceCenter(h);
-    for(int i=0;i<8;i++)
-    {
-      double t = 0.7;
-      QPointF p = (1-t)*center + t*m_viewer->getVertexPos(h,i);
-      renderText(p.x(),height()-p.y(),QString::number(i));
-    }
-  }
-  */
-  /*
-  HTransform transf = m_viewer->getTransform();
-  double x=600;
-  double y=10;
-  renderText(x,y,QString::number(transf.m_a.re)+", "+QString::number(transf.m_a.im)); y+=20;
-  renderText(x,y,QString::number(transf.m_b.re)+", "+QString::number(transf.m_b.im)); y+=20;
-  renderText(x,y,QString::number(transf.m_c.re)+", "+QString::number(transf.m_c.im)); y+=20;
-  renderText(x,y,QString::number(transf.m_d.re)+", "+QString::number(transf.m_d.im)); y+=20;
-*/
-
 }
 
 void CircleLimit3Page::mousePressEvent(QMouseEvent *e)
 {
   m_lastPos = e->pos();
-  // grabMouse();
-
 }
 
 void CircleLimit3Page::mouseMoveEvent(QMouseEvent *e)
@@ -107,13 +70,11 @@ void CircleLimit3Page::mouseMoveEvent(QMouseEvent *e)
   Complex c(delta.x(), -delta.y());
   m_viewer->transform(HTransform::translation(0.01*c));
   m_viewer->foo();
-    // m_gTransform = HTransform::translation(c) * m_gTransform;
   updateGL();
 }
 
 void CircleLimit3Page::mouseReleaseEvent(QMouseEvent *)
 {
-  //releaseMouse();
 }
 
 void CircleLimit3Page::keyPressEvent(QKeyEvent*e)
@@ -123,19 +84,6 @@ void CircleLimit3Page::keyPressEvent(QKeyEvent*e)
     if(e->key()=='P') m_transfType = 0;
     else if(e->key()=='O') m_transfType = 1;
     else m_transfType = 2;
-
-    /*
-    if(m_timerId == 0)
-    {
-      m_timerId = startTimer(40);
-      m_time.start();
-    }
-    else
-    {
-      killTimer(m_timerId);
-      m_timerId = 0;
-    }
-    */
   }
   else if(e->key()==Qt::Key_F12)
   {
@@ -172,7 +120,6 @@ void CircleLimit3Page::timerEvent(QTimerEvent *)
 
   m_viewer->transform(transform);
   m_viewer->foo();
-    // m_gTransform = HTransform::translation(c) * m_gTransform;
   updateGL();
 }
 

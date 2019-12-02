@@ -245,29 +245,6 @@ void Polyhedron::computeFaceVertices() const
 
 //-------------------------------------------------------------------
 
-/*
-Plane  getFacePlane(const Polyhedron*ph, int index)
-{
-  std::pair<QVector3D, QVector3D> cn = getFaceCenterAndNormal(ph,index);
-  Plane plane(
-    cn.second.x,cn.second.y,cn.second.z,
-    -dot(cn.second, cn.first));
-  #ifndef NDEBUG
-  Indices vv;
-  getFaceVertices(vv, ph, index);
-  for(int i=0;i<(int)vv.size();i++)
-    {
-     QVector3D p = ph->getVertex(vv[i]).m_pos;
-     double pos = plane.getPos(p);
-     assert(fabs(pos)<epsilon);
-    }
-
-  #endif
-  return plane;
-}
-*/
-
-//-------------------------------------------------------------------
 
 QVector3D getNormal(const Polyhedron*ph, Polyhedron::Indices &vv)
 {

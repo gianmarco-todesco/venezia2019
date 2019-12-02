@@ -25,6 +25,8 @@ CubeGridPage::CubeGridPage()
 , m_gridSmallUnit(0)
 , m_gridBigUnit(1)
 , m_status(-1)
+, m_translating(true)
+, m_translatingSpeed(1)
 {
 }
 
@@ -198,7 +200,16 @@ void CubeGridPage::draw()
 
   
     // moveOffset(-getCurrentDirection()*0.1);
-    moveOffset(QVector3D(1,1,1)*0.05);
+    if(m_translating)
+    {
+        m_translatingSpeed = qMin(1.0, m_translatingSpeed + 0.02);
+    }
+    else
+    {
+        m_translatingSpeed = qMax(0.0, m_translatingSpeed - 0.02);
+    }
+    if(m_translatingSpeed>0.0)
+        moveOffset(QVector3D(1,1,1)*0.05*m_translatingSpeed);
 }
 
 
@@ -231,15 +242,8 @@ void CubeGridPage::mouseMoveEvent(QMouseEvent *e)
 
 void CubeGridPage::keyPressEvent(QKeyEvent *e)
 {
-    if(e->key() == Qt::Key_1) m_offset += QVector3D(m_gridSmallUnit,0,0);
-    else if(e->key() == Qt::Key_2) m_offset -= QVector3D(m_gridSmallUnit,0,0);
-    else if(e->key() == Qt::Key_W) moveOffset(-getCurrentDirection());
-    else if(e->key() == Qt::Key_S) moveOffset(getCurrentDirection());
-    //else if(e->key() == Qt::Key_3) m_offset += QVector3D(m_gridBigUnit,0,0);
-    //else if(e->key() == Qt::Key_4) m_offset -= QVector3D(m_gridBigUnit,0,0);
-    else if(e->key() == Qt::Key_Z) {
-        // getOverlay()->add(m_title);
-
+    if(e->key() == Qt::Key_P) {
+        m_translating = !m_translating;
     } 
     else if(e->key() == Qt::Key_Right) setStatus(m_status+1);
     else if(e->key() == Qt::Key_Left) setStatus(m_status-1);
@@ -288,8 +292,11 @@ void CubeGridPage::createTextures()
     // title
     panel = &m_panels.title;
     img = QImage(1200,300,QImage::Format_ARGB32);
-    img.fill(Qt::transparent);
+    img.fill( Qt::transparent);
     pa.begin(&img);
+    pa.setBrush(QColor(100,100,100,127));
+    pa.setPen(Qt::NoPen);
+    pa.drawRoundedRect(50,0,1100,200,20,20);
     pa.setFont(QFont("Calibri", 80, QFont::Bold));
     pa.setPen(Qt::white);
     pa.drawText(QRect(0,0,1200,100), Qt::AlignCenter, "Hyperbolic Honeycomb");
@@ -297,22 +304,25 @@ void CubeGridPage::createTextures()
     pa.drawText(QRect(0,100,1200,100), Qt::AlignCenter, "Gian Marco Todesco");
     pa.end();
     panel->createTexture(img);
-    panel->setSize(40);
+    panel->setSize(35);
     panel->setPosition(0.5,0.8);
 
     // title2
     panel = &m_panels.title2;
-    img = QImage(1200,650,QImage::Format_ARGB32);
+    img = QImage(1200,400,QImage::Format_ARGB32);
     img.fill(Qt::transparent);
     pa.begin(&img);
+    pa.setBrush(QColor(100,100,100,127));
+    pa.setPen(Qt::NoPen);
+    pa.drawRoundedRect(100,0,1000,600,20,20);
     pa.setFont(QFont("Calibri", 80, QFont::Bold));
     pa.setPen(Qt::white);
-    pa.drawText(QRect(0,0,1200,200), Qt::AlignCenter, "Tale of two errors");
+    pa.drawText(QRect(0,20,1200,100), Qt::AlignCenter, "Tale of two errors");
     pa.setFont(QFont("Calibri", 40, QFont::Bold));
-    pa.drawText(QRect(0,200,1200,100), Qt::AlignCenter, "How I lost my way and discovered\n the Hyperbolic Space");
+    pa.drawText(QRect(0,100,1200,300), Qt::AlignCenter, "How I lost my way and stumbled upon\nthe Hyperbolic Space");
     pa.end();
     panel->createTexture(img);
-    panel->setSize(40 * 650.0 / 300.0);
+    panel->setSize(51);
     panel->setPosition(0.5,0.65);
 
     // escher
@@ -327,14 +337,20 @@ void CubeGridPage::createTextures()
     img = QImage(600,160,QImage::Format_ARGB32);
     img.fill(Qt::transparent);
     pa.begin(&img);
-    pa.setFont(QFont("Calibri", 40, QFont::Bold));
+    pa.setFont(QFont("Calibri", 30,-1, true));
     pa.setPen(Qt::white);
-    pa.drawText(QRect(0,0,600,80), Qt::AlignLeft, "Cubic space division");
-    pa.drawText(QRect(0,80,600,80), Qt::AlignLeft, "1953 M. C. Escher");
+    pa.drawText(QRect(0,0,600,40), Qt::AlignLeft, "Cubic space division");
+    pa.drawText(QRect(0,40,600,40), Qt::AlignLeft, "1953 M. C. Escher");
     pa.end();
     panel->createTexture(img);
-    panel->setSize(40);
+    panel->setSize(30);
     panel->setPosition(0.75,0.7);
+
+    // grid
+    panel = &m_panels.grids;
+    panel->createTexture(QImage("images/h2grid.png"));
+    panel->setSize(60);
+    panel->setPosition(0.3,0.4);
 
 }
 
@@ -352,17 +368,104 @@ void CubeGridPage::destroyTextures()
 
 void CubeGridPage::setStatus(int status)
 {
+    if(status<0) status=0;
+    else if(status>5) status=5;
+    int oldStatus = m_status;
+    if(oldStatus==status) return;
     m_status = status;
     Overlay *ov = getOverlay();
+    QPointF titlePos(0.5,0.8);
 
-    getOverlay()->removeAll();
-    if(status < 5) 
-        ov->add(&m_panels.title);
-    else
-        ov->add(&m_panels.title2);
-    if(status == 2) {
-        ov->add(&m_panels.escher);
-        ov->add(&m_panels.escherCaption);
+    if(status == 0)
+    {
+        // Solo titolo1
+        ov->removeAll();
+        ov->add(&m_panels.title, titlePos);
+    } 
+    else if(status == 1)
+    {
+        // escher
+        QPointF escherPos(0.28, 0.4);
+        QPointF captionPos(0.96, 0.5);
+        if(oldStatus != 0) 
+        {
+            ov->removeAll();
+            ov->add(&m_panels.title, titlePos);
+        }
+
+        ov->addAndMove(&m_panels.escher, 
+            escherPos + QPointF(-1, 0), escherPos, 1,0);
+        ov->addAndMove(&m_panels.escherCaption, 
+            captionPos + QPointF(1, 0), captionPos, 1,0);        
+    }
+    else if(status == 2)
+    {
+        // tolgo escher
+        if(oldStatus == 1)
+        {
+            ov->moveAndRemove(&m_panels.escher, 
+                m_panels.escher.getPosition(), 
+                m_panels.escher.getPosition() + QPointF(-1, 0), 
+                1,0);
+            ov->moveAndRemove(&m_panels.escherCaption, 
+                m_panels.escherCaption.getPosition(), 
+                m_panels.escherCaption.getPosition() + QPointF(1, 0), 
+                1,0);
+        }
+        else 
+        {
+            ov->removeAll();
+            ov->add(&m_panels.title, titlePos);
+        }
+    }
+    else if(status == 3)
+    {
+        // hgrid
+        QPointF pos(0.5,0.4);
+        if(oldStatus != 2)
+        {
+            ov->removeAll();
+            ov->add(&m_panels.title, titlePos);
+
+        }
+        ov->addAndMove(&m_panels.grids, pos+QPointF(-1,0), pos, 1,0);
+    }
+    else if(status == 4)
+    {
+        // tolgo hgrid
+        if(oldStatus == 3)
+        {
+            ov->moveAndRemove(&m_panels.grids, 
+                m_panels.grids.getPosition(), 
+                m_panels.grids.getPosition() + QPointF(2,0),            
+                1,0);
+        }
+        else
+        {
+            ov->removeAll();
+            ov->add(&m_panels.title, titlePos);
+        }
+    }
+    else if(status == 5)
+    {
+        // scambio titoli
+        QPointF pos(0.5,0.7);
+
+        ov->moveAndRemove(&m_panels.title, 
+            m_panels.title.getPosition(), 
+            m_panels.title.getPosition() + QPointF(0, 1), 
+            1,0);
+        ov->addAndMove(&m_panels.title2, 
+            pos + QPointF(-1.0,0), pos, 
+            1,0.2);
     }
 
+
+}
+
+
+void CubeGridPage::savePictures()
+{
+    setStatus(0);
+    // savePicture("fig1.png");
 }

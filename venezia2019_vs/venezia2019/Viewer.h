@@ -20,6 +20,7 @@ class Viewer  : public QGLWidget
     QTime m_clock;
     double m_fps;
     GLuint m_textTextureId;
+    bool m_showFps;
 
 public:
     Viewer();
@@ -52,11 +53,6 @@ protected:
 
 
 private:
-    /*
-    static std::set<OpenGLPage*> m_sharedSet;
-    inline static OpenGLPage* getShared() { return m_sharedSet.empty() ? 0 : *m_sharedSet.begin(); }
-    */
-
 
 };
 

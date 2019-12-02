@@ -71,6 +71,10 @@ namespace H3 {
             double k = scaleFactor / (1.0 + sqrt(1.0 - s2));        
             return q*k;
         }
+        inline QVector3D toBall(const QVector3D &p, double scaleFactor = 5.0) 
+        {
+            return toBall(QVector4D(p,1.0), scaleFactor);
+        }
 
 
     } // namespace KModel
@@ -86,8 +90,6 @@ namespace H3 {
         // uso: cos(alpha) = tanh(adjacentCathetus)/tanh(hypotenuse)
         return atanh( tanh(cathetusLength) / cos(alpha) );
     }
-
-
 
 } // namespace H3
 

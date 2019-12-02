@@ -128,5 +128,5 @@ void JohnsonSolidsPage::setStatus(int status)
     ov->removeAll();
     if(status == 0) ov->add(&m_panels.wikipage);
     else if(status == 1) ov->add(&m_panels.polyhedra);
-    else if(status == 2) ov->add(&m_panels.xyz);
+    else if(status == 2) ov->add(&m_panels.xyz);  
 }

@@ -11,14 +11,12 @@ class CircleLimit3Viewer : public HTessellationViewer
   Texture *m_fish[4];
   int m_status;
   int m_maxFaceCount;
+  bool m_figureMode;
 
 public:
-  CircleLimit3Viewer();
+  CircleLimit3Viewer(bool figureMode = false);
   ~CircleLimit3Viewer();
 
-  // Complex m_hPan;
-
-  //void hPan(double dx, double dy);
   bool onKeyDown(int key);
 
   void foo();

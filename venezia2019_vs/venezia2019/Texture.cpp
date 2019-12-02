@@ -85,12 +85,17 @@ std::map<QString, Texture*> Texture::m_textures;
 
 Texture *Texture::get(QString fileName)
 {
+    Texture *texture = new Texture(fileName);
+    return texture;
+
+    /*
   std::map<QString, Texture*>::iterator it;
   it = m_textures.find(fileName);
   if(it != m_textures.end()) return it->second;
   Texture *texture = new Texture(fileName);
   m_textures[fileName] = texture;
   return texture;
+  */
 }
 
 void Texture::discard(Texture *texture)

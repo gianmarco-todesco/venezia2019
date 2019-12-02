@@ -27,6 +27,7 @@ GLuint texid;
 Viewer::Viewer()
 : QGLWidget()
 , m_fps(0)
+, m_showFps(true)
 {  
     setFocusPolicy(Qt::ClickFocus);
     m_presentation = new Presentation(this);
@@ -47,15 +48,10 @@ QSize Viewer::sizeHint() const
 
 void Viewer::initializeGL()
 {
-  // glEnable(GL_MULTISAMPLE);
-  //glClearColor(0.2,0.3,0.4,1);
   glClearColor(1,1,1,1);
-  // QPainter painter(this);
-  // painter.setRenderHints(QPainter::HighQualityAntialiasing);
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_LIGHT0);
-  // glEnable(GL_LIGHT1);
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE,1.0);
   glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER,1.0);
 
@@ -73,27 +69,6 @@ void Viewer::initializeGL()
   glLightfv(GL_LIGHT1, GL_POSITION, lpos);
   m_presentation->initializeGL();
 
-
-  texid = bindTexture("images/cubic-space-division.jpg");
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-
-  /*
-  QImage img("images/cubic-space-division.jpg");
-  int w = img.width();
-  int h = img.height();
-
-
-  //------------------------------
-   glGenTextures(1, &texid);
-
-   QImage img2 = img.convertToFormat(QImage::Format_ARGB32);
-   glBindTexture(GL_TEXTURE_2D, texid);
-   gluBuild2DMipmaps( GL_TEXTURE_2D, 4, img.width(), img.height(),
-                   GL_BGRA_EXT, GL_UNSIGNED_BYTE, img.bits() );
-  //glTexImage2D(GL_TEXTURE_2D, 0, 4, image.width(), image.height(), 0,
-  //  GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
-  */
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -112,25 +87,6 @@ void Viewer::initializeGL()
 void Viewer::resizeGL(int width, int height)
 {
     m_presentation->resizeGL(width, height);
-
-    /*
-  glViewport(0,0,width,height);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0,width,0,height,-1,1);
-  glMatrixMode(GL_MODELVIEW);
-  */
-
-    /*
-
- double aspect = (float)width/height;
-    glViewport(0,0,width,height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, aspect, 1.0, 70.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    */
 }
 
 void Viewer::paintGL()
@@ -139,35 +95,15 @@ void Viewer::paintGL()
     err = glGetError() ;
     assert(err == GL_NO_ERROR);
     m_presentation->paintGL();
-    /*
-    glClearColor(0,0,0,1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    drawBackground();
-
-    glPushMatrix();
-    glTranslated(0,0,-10);
-    glRotated(20,1,0,0);
-    glRotated(30,0,1,0);
-
-    drawAxes();
-
-    m_presentation->p()->paintGL();
-    glPopMatrix();
-    */
     err = glGetError() ;
     assert(err == GL_NO_ERROR);
 
-    qglColor(Qt::cyan);
-    renderText(50,50,QString::number((int)m_fps), QFont("Calibri", 24));
-
+    if(m_showFps)
+    {
+        qglColor(Qt::magenta);
+        renderText(10,40,QString::number((int)m_fps), QFont("Calibri", 24));        
+    }    
     m_overlay->draw(size());
-    
-
-
-    
-
-
 
     int ms = m_clock.restart();
     if(ms>0)
@@ -181,12 +117,6 @@ void Viewer::paintGL()
 
 QGLShaderProgram *Viewer::loadProgram(QString name)
 {
-    /*
-  QFile file(QString("resources/") + name + ".vsh");
-  QTextStream in(&file);
-  QString text = in.readAll();
-  */
-
   QGLShaderProgram *program = new QGLShaderProgram();
   bool ok = true;
   ok = program->addShaderFromSourceFile(QGLShader::Vertex, "resources/" + name + ".vsh") && ok;
@@ -270,14 +200,6 @@ void Viewer::mouseReleaseEvent(QMouseEvent *e)
     m_presentation->p()->mouseReleaseEvent(e);
 }
 
-/*
-void Viewer::showEvent(QShowEvent *)
-{
-    m_presentation->p()->showEvent(e);
-}
-*/
-
-
 void Viewer::keyPressEvent(QKeyEvent *e)
 {
     if(e->key() == Qt::Key_PageDown 
@@ -302,8 +224,16 @@ void Viewer::keyPressEvent(QKeyEvent *e)
             setWindowState(windowState() | Qt::WindowFullScreen);
         setFocus();
     }
-  else
-    m_presentation->p()->keyPressEvent(e);
+    else if(e->key() == Qt::Key_Comma)
+    {
+        m_showFps = !m_showFps;
+    }
+    else if(e->key() == Qt::Key_S)
+    {
+        m_presentation->getCurrentPage()->savePictures();
+    }
+    else
+        m_presentation->p()->keyPressEvent(e);
 }
 
 void Viewer::wheelEvent(QWheelEvent*e)

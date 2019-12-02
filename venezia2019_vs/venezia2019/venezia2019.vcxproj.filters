@@ -33,33 +33,18 @@
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
-    <Filter Include="Source Files\pages">
-      <UniqueIdentifier>{a8614bc8-3084-4347-a6f4-2efab570713a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\pages">
       <UniqueIdentifier>{55e350eb-a702-40dc-a72b-ef078fdfd0a3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{de0e4bc1-297d-4bce-a1ea-dac6cc47188d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\pages">
+      <UniqueIdentifier>{a8614bc8-3084-4347-a6f4-2efab570713a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GeneratedFiles\qrc_venezia2019.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MainWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_MainWindow.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_MainWindow.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Complex.cpp">
@@ -152,19 +137,50 @@
     <ClCompile Include="H3GridBuildPage.cpp">
       <Filter>Source Files\pages</Filter>
     </ClCompile>
+    <ClCompile Include="Fig11Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig1Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig2Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig3Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig4Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig5Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig6Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig9Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig10Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig12Page.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig7aPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig7bPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig8aPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Fig8bPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="venezia2019.qrc">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="MainWindow.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="OpenGLPage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Complex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -253,6 +269,48 @@
       <Filter>Header Files\pages</Filter>
     </ClInclude>
     <ClInclude Include="H3GridBuildPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig11Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig1Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig2Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig3Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig4Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig5Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig6Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig9Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig10Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig12Page.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig7aPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig7bPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig8aPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Fig8bPage.h">
       <Filter>Header Files\pages</Filter>
     </ClInclude>
   </ItemGroup>

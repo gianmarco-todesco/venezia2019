@@ -83,19 +83,21 @@
     <ClCompile Include="Complex.cpp" />
     <ClCompile Include="CubeGridPage.cpp" />
     <ClCompile Include="DummyPage.cpp" />
+    <ClCompile Include="Fig10Page.cpp" />
+    <ClCompile Include="Fig11Page.cpp" />
+    <ClCompile Include="Fig12Page.cpp" />
+    <ClCompile Include="Fig1Page.cpp" />
+    <ClCompile Include="Fig2Page.cpp" />
+    <ClCompile Include="Fig3Page.cpp" />
+    <ClCompile Include="Fig4Page.cpp" />
+    <ClCompile Include="Fig5Page.cpp" />
+    <ClCompile Include="Fig6Page.cpp" />
+    <ClCompile Include="Fig7aPage.cpp" />
+    <ClCompile Include="Fig7bPage.cpp" />
+    <ClCompile Include="Fig8aPage.cpp" />
+    <ClCompile Include="Fig8bPage.cpp" />
+    <ClCompile Include="Fig9Page.cpp" />
     <ClCompile Include="FoldingFacesPage.cpp" />
-    <ClCompile Include="GeneratedFiles\Debug\moc_MainWindow.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_venezia2019.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      </PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      </PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_MainWindow.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="GUtil.cpp" />
     <ClCompile Include="H3.cpp" />
     <ClCompile Include="H3Grid.cpp" />
@@ -108,11 +110,9 @@
     <ClCompile Include="ImpossiblePolyhedronPage.cpp" />
     <ClCompile Include="JohnsonSolidsPage.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Mesh2D.cpp" />
     <ClCompile Include="Net.cpp" />
-    <ClCompile Include="OpenGLPage.cpp" />
     <ClCompile Include="Overlay.cpp" />
     <ClCompile Include="Page.cpp" />
     <ClCompile Include="PDiskPage.cpp" />
@@ -124,37 +124,26 @@
     <ClCompile Include="Viewer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="venezia2019.qrc">
-      <FileType>Document</FileType>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(FullPath);%(AdditionalInputs)</AdditionalInputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Rcc%27ing %(Identity)...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles\qrc_%(Filename).cpp;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(QTDIR)\bin\rcc.exe" -name "%(Filename)" -no-compress "%(FullPath)" -o .\GeneratedFiles\qrc_%(Filename).cpp</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(FullPath);%(AdditionalInputs)</AdditionalInputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Rcc%27ing %(Identity)...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles\qrc_%(Filename).cpp;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(QTDIR)\bin\rcc.exe" -name "%(Filename)" -no-compress "%(FullPath)" -o .\GeneratedFiles\qrc_%(Filename).cpp</Command>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="MainWindow.h">
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Moc%27ing MainWindow.h...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DQT_DLL -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB  "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtOpenGL" "-IC:\Program Files (x86)\Visual Leak Detector\include"</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Moc%27ing MainWindow.h...</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DQT_DLL -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB  "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtOpenGL" "-IC:\Program Files (x86)\Visual Leak Detector\include"</Command>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="CircleLimit3Page.h" />
     <ClInclude Include="CircleLimit3Tessellation.h" />
     <ClInclude Include="CircleLimit3Viewer.h" />
     <ClInclude Include="Complex.h" />
     <ClInclude Include="CubeGridPage.h" />
     <ClInclude Include="DummyPage.h" />
+    <ClInclude Include="Fig10Page.h" />
+    <ClInclude Include="Fig11Page.h" />
+    <ClInclude Include="Fig12Page.h" />
+    <ClInclude Include="Fig1Page.h" />
+    <ClInclude Include="Fig2Page.h" />
+    <ClInclude Include="Fig3Page.h" />
+    <ClInclude Include="Fig4Page.h" />
+    <ClInclude Include="Fig5Page.h" />
+    <ClInclude Include="Fig6Page.h" />
+    <ClInclude Include="Fig7aPage.h" />
+    <ClInclude Include="Fig7bPage.h" />
+    <ClInclude Include="Fig8aPage.h" />
+    <ClInclude Include="Fig8bPage.h" />
+    <ClInclude Include="Fig9Page.h" />
     <ClInclude Include="FoldingFacesPage.h" />
     <ClInclude Include="Gutil.h" />
     <ClInclude Include="H3.h" />
@@ -170,7 +159,6 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Mesh2D.h" />
     <ClInclude Include="Net.h" />
-    <ClInclude Include="OpenGLPage.h" />
     <ClInclude Include="Overlay.h" />
     <ClInclude Include="Page.h" />
     <ClInclude Include="PDiskPage.h" />

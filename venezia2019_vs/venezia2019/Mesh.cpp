@@ -270,3 +270,72 @@ void Mesh::addTriangleGrid(int n, int m, int firstIndex)
         }
     }
 }
+
+
+
+void Mesh::makePolydronPiece(double r, double h, int n)
+{
+    m_hasTexCoords = true;
+    double d = 0.5;
+    double r1 = r - d/cos(M_PI/n);
+    QVector<QPointF> cssn;
+    for(int i=0;i<=n;i++) {
+        double phi = 2*M_PI*i/n;
+        double cs = cos(phi), sn = sin(phi);
+        cssn.append(QPointF(cs,sn));
+    }
+    QVector3D norm;
+    int k;
+    // up face
+    norm = QVector3D(0,0,1);
+    k = m_vCount;
+    for(int i=0;i<=n;i++) 
+    {
+        double v = (double)i/n;
+        addVertex(QVector3D(cssn[i].x()*r1, cssn[i].y()*r1, h), norm, QPointF(v,0));
+        addVertex(QVector3D(cssn[i].x()*r, cssn[i].y()*r, h), norm, QPointF(v,0.25));
+        if(i<n)
+            addQuad(k + i*2, k + i*2 + 1, k + i*2 + 3, k + i*2 + 2);
+    }
+
+    // dn page
+    norm = QVector3D(0,0,-1);
+    k = m_vCount;
+    for(int i=0;i<=n;i++) 
+    {
+        double v = (double)i/n;
+        addVertex(QVector3D(cssn[i].x()*r, cssn[i].y()*r, -h), norm, QPointF(v,0.25));
+        addVertex(QVector3D(cssn[i].x()*r1, cssn[i].y()*r1, -h), norm, QPointF(v,0.5));
+        
+        if(i<n)
+           addQuad(k + i*2, k + i*2 + 1, k + i*2 + 3, k + i*2 + 2);
+    }
+
+    // side faces
+    for(int i=0;i<n;i++)
+    {
+        int i1 = (i+1)%n;
+        k = m_vCount;
+        QPointF q = (cssn[i] + cssn[i1])*0.5;
+        QVector3D norm = QVector3D(q.x(),q.y(),0.0).normalized();
+        addVertex(QVector3D(cssn[i].x()*r, cssn[i].y()*r, -h), norm, QPointF(0,0.5));
+        addVertex(QVector3D(cssn[i1].x()*r, cssn[i1].y()*r, -h), norm, QPointF(1,0.5));
+        addVertex(QVector3D(cssn[i1].x()*r, cssn[i1].y()*r, h), norm, QPointF(1,0.75));
+        addVertex(QVector3D(cssn[i].x()*r, cssn[i].y()*r, h), norm, QPointF(0,0.75));        
+        addQuad(k,k+1,k+2,k+3);
+    }
+    for(int i=0;i<n;i++)
+    {
+        int i1 = (i+1)%n;
+        k = m_vCount;
+        QPointF q = (cssn[i] + cssn[i1])*0.5;
+        QVector3D norm = QVector3D(q.x(),q.y(),0.0).normalized();
+        addVertex(QVector3D(cssn[i].x()*r1, cssn[i].y()*r1, h), norm, QPointF(0,0.5));
+        addVertex(QVector3D(cssn[i1].x()*r1, cssn[i1].y()*r1, h), norm, QPointF(1,0.5));
+        addVertex(QVector3D(cssn[i1].x()*r1, cssn[i1].y()*r1, -h), norm, QPointF(1,0.75));
+        addVertex(QVector3D(cssn[i].x()*r1, cssn[i].y()*r1, -h), norm, QPointF(0,0.75));        
+        addQuad(k,k+1,k+2,k+3);
+    }
+
+    createBuffers();
+}

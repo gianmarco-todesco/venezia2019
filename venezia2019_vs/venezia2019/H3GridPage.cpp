@@ -75,7 +75,8 @@ void H3GridPage::initializeGL()
   
   m_vertexCube.makeCube(0.1,8);
 
-  makeEdgeBox();
+  makeEdgeBox(m_edgeBox, 10);
+  makeEdgeBox(m_edgeBoxLow, 1);
   
   m_clock.start();
 }
@@ -87,16 +88,15 @@ void H3GridPage::resizeGL(int width, int height)
   glViewport(0,0,width,height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45, aspect, 1.0, 70.0);
+  gluPerspective(50, aspect, 1.0, 60.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 }
 
-void H3GridPage::makeEdgeBox()
+void H3GridPage::makeEdgeBox(Mesh &mesh, int n)
 {
     double d = 0.05;
     double edgeLength = m_grid->edgeLength;    
-    int n = 10;
     QVector4D base[4] = {
         QVector4D(-d,0,-d,1.0),
         QVector4D( d,0,-d,1.0),
@@ -121,7 +121,6 @@ void H3GridPage::makeEdgeBox()
         QVector3D(0,0,1),
         QVector3D(-1,0,0)
     };
-    Mesh &mesh = m_edgeBox;
     for(int j=0; j<4; j++) {
         int j1 = (j+1)%4;
         int k = mesh.m_vCount;
@@ -323,7 +322,7 @@ void H3GridPage::buildGrid()
     m_grid2->createFirstVertex();
 
     // 7
-    for(int step=0; step<6; step++)
+    for(int step=0; step<7; step++)
     {
         QList<QPair<int, int> > todo;
         for(int i=0;i<m_grid2->m_vertices.count();i++)
@@ -367,13 +366,27 @@ void H3GridPage::buildGrid()
 inline bool check(const QMatrix4x4 &mpv, const QMatrix4x4 &hMatrix, const QMatrix4x4 &mat)
 {
     QVector4D p4 = (hMatrix * mat).map(QVector4D(0,0,0,1));
-    QVector3D p = H3::KModel::toBall(p4);
+    QVector3D p = H3::KModel::toBall(p4, 10);
     QVector4D q4 = mpv.map(QVector4D(p, 1.0));
     QVector3D q = q4.toVector3DAffine();
-    
-    return  -1.1<=q.x() && q.x()<=1.1 && 
-            -1.1<=q.y() && q.y()<=1.1 &&
-            -0.5 <= q.z() && q.z() <= 0.7;
+
+    /*
+    QVector3D p1 = H3::KModel::toBall((hMatrix * mat).map(QVector4D(0.1,0,0,1)), 10);
+    QVector3D p2 = H3::KModel::toBall((hMatrix * mat).map(QVector4D(-0.1,0,0,1)), 10);
+    if((p1-p2).length()<0.1)
+    */
+
+    if(p4.toVector3DAffine().length()>0.95)
+    {
+        return -1.4<=q.x() && q.x()<=1.4 && 
+               -1.4<=q.y() && q.y()<=1.4 && 
+               q.z() > 0.0;
+    }
+    else return true;
+
+    return  -4.0<=q.x() && q.x()<=4.0 && 
+            -4.0<=q.y() && q.y()<=4.0; //  &&
+            //-0.5 <= q.z() && q.z() <= 0.9;
     
 }
 
@@ -439,7 +452,7 @@ void H3GridPage::draw3()
     double r = H3::KModel::getRadius(fabs(zz));
 
     
-    m_hMatrix = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,zz > 0 ? r : -r));
+ // ggg   m_hMatrix = H3::KModel::translation(QVector3D(0,0,0), QVector3D(0,0,zz > 0 ? r : -r));
 
 }
 

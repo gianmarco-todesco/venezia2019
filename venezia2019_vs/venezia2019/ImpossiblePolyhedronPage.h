@@ -19,6 +19,9 @@ class ImpossiblePolyhedronPage : public Page
   bool m_rotating;
   QTime m_clock;
   double m_parameter;
+  int m_status;
+  bool m_showCube;
+  bool m_showAllFaces;
 
 
 public:
@@ -32,6 +35,11 @@ protected:
     void resizeGL(int width, int height);
 
     void draw();
+    void draw_old();
+    void draw1();
+    void draw2();
+    void drawCube();
+
 
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
