@@ -41,9 +41,21 @@ H3Grid534::H3Grid534()
         }
     }
 
-    delete dod;
-}
 
+    // compute dodTranslation
+    dod->computeFaceVertices();
+    Polyhedron::Face face = dod->getFace(0);
+    QVector3D p;    
+    for(int i=0;i<5;i++) p += m_pts[face.m_vertices[i]].toVector3D();
+    p *= 1.0/5.0;
+
+    
+    dodTranslation = H3::KModel::translation(-p, p);
+
+    delete dod;
+
+
+}
 
 // trovo i parametri del dodecaedro con un angolo diedro di pi/2
 void H3Grid534::compute()

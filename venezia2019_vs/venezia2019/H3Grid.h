@@ -75,6 +75,7 @@ public:
     QVector<QPair<int, int> > m_edges;
     QVector<QVector<int> > m_adjVertTb;
 
+    QMatrix4x4 dodTranslation; // fcenter-fcenter 
 
     H3Grid534();
     
@@ -94,6 +95,8 @@ public:
 
     void flower(GridMatrices &matrices, const QMatrix4x4 &mat, int level);
 
+
+    
 };
 
 

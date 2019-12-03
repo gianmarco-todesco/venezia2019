@@ -145,9 +145,11 @@ void Page::savePicture(const QString &path, int border)
 {
     assert(glGetError() == GL_NO_ERROR);
     QGLFormat fmt;
+    /*
     fmt.setDoubleBuffer(false);
     fmt.setAlpha(false);
     fmt.setSampleBuffers(true);
+    */
     int width = 2048, height = 2048;
     QGLPixelBuffer buffer(width,height,fmt);
     buffer.makeCurrent();

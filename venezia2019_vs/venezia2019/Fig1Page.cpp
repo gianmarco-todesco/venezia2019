@@ -133,31 +133,6 @@ void Fig1Page::paintGL()
 
     setColor(1,1,1);
     draw();
-
-    /*
-
-    qreal viewArr[16], projArr[16];
-    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
-    glGetDoublev(GL_PROJECTION_MATRIX, projArr);
-    QMatrix4x4 view(viewArr), proj(projArr);
-    QMatrix4x4 projView = proj.transposed() * view.transposed();
-    QMatrix4x4 identity; identity.setToIdentity();
-
-    // m_shaderProgram->bind();
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_CULL_FACE);
-    
-    QMatrix4x4 globalMatrix; globalMatrix.setToIdentity();
-
-    
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisable(GL_CULL_FACE);
-    // m_shaderProgram->release();
-    */
-
     glPopMatrix();
 
 
@@ -209,19 +184,6 @@ void Fig1Page::draw()
     glDisableClientState(GL_VERTEX_ARRAY);
 
   
-    // moveOffset(-getCurrentDirection()*0.1);
-    /*
-    if(m_translating)
-    {
-        m_translatingSpeed = qMin(1.0, m_translatingSpeed + 0.02);
-    }
-    else
-    {
-        m_translatingSpeed = qMax(0.0, m_translatingSpeed - 0.02);
-    }
-    if(m_translatingSpeed>0.0)
-        moveOffset(QVector3D(1,1,1)*0.05*m_translatingSpeed);
-        */
 
 }
 
