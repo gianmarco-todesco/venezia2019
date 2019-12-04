@@ -39,7 +39,12 @@ public:
     void makePrism(double r, double h, int n);
     void makePolydronPiece(double r, double h, int n);
 
+
+    void hMerge(const Mesh &other, const QMatrix4x4 &hMatrix);
 };
+
+
+
 
 #endif
 

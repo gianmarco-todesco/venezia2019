@@ -34,6 +34,7 @@ Fig12Page::Fig12Page()
 , m_cameraDistance(5)
 , m_rotating(true)
 , m_shaderProgram(0)
+, m_foo(0)
 {
     m_hMatrix.setToIdentity();
     build();
@@ -71,9 +72,11 @@ void Fig12Page::initializeGL()
   m_sphere.makeSphere(0.3,10,10);  
   m_vertexCube.makeCube(0.1,8);
 
-  //makeEdgeBox(m_edgeBox, 10);
-  //makeEdgeBox(m_edgeBoxLow, 1);
+  makeEdgeBox(m_edgeBox, 10);
+  makeEdgeBox(m_edgeBoxLow, 1);
   
+  makeDodMesh();
+
   m_clock.start();
 }
 
@@ -89,11 +92,11 @@ void Fig12Page::resizeGL(int width, int height)
   glLoadIdentity();
 }
 
-/*
+
 void Fig12Page::makeEdgeBox(Mesh &mesh, int n)
 {
     double d = 0.05;
-    double edgeLength = m_grid->edgeLength;    
+    double edgeLength = m_edgeLength;    
     QVector4D base[4] = {
         QVector4D(-d,0,-d,1.0),
         QVector4D( d,0,-d,1.0),
@@ -131,7 +134,7 @@ void Fig12Page::makeEdgeBox(Mesh &mesh, int n)
     }
     mesh.createBuffers();
 }
-*/
+
 
 
 void Fig12Page::paintGL()
@@ -157,8 +160,25 @@ void Fig12Page::paintGL()
 
     drawAxes();
 
-    draw();
 
+    qreal viewArr[16], projArr[16];
+    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
+    glGetDoublev(GL_PROJECTION_MATRIX, projArr);
+    QMatrix4x4 view(viewArr), proj(projArr);
+    QMatrix4x4 projView = proj.transposed() * view.transposed();
+
+    m_shaderProgram->bind();
+    // setViewUniforms(m_shaderProgram);    
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_CULL_FACE);
+    
+    draw2();    
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisable(GL_CULL_FACE);
+    m_shaderProgram->release();
 
     glPopMatrix();
 }
@@ -212,8 +232,8 @@ void Fig12Page::wheelEvent(QWheelEvent*e)
 
 void Fig12Page::keyPressEvent(QKeyEvent *e)
 {
-    if(e->key() == Qt::Key_Z) { 
-    }
+    if(e->key() == Qt::Key_D) { m_foo = (m_foo+1)%12; }
+    else if(e->key() == Qt::Key_A) { m_foo = (m_foo+11)%12; }
     else 
       e->ignore();
 }
@@ -320,7 +340,7 @@ void Fig12Page::build()
     // edge length è il doppio del cateto con angolo opposto theta
     // uso la formula sin(A) = sinh(opposto) / sinh(ipotenusa)
     const double edgeLength = 2*asinh(sin(theta)*sinh(d2));
-
+    m_edgeLength = edgeLength;
     /*
 
     QVector3D dirs[6] = {
@@ -398,17 +418,22 @@ void Fig12Page::build()
         }
 
         // check!
-        for(int i=0;i<3;i++) 
+        for(int j=0;j<3;j++) 
         {
-            double pd = QVector3D::dotProduct(pp[i],pp[(i+1)%3]);
+            double pd = QVector3D::dotProduct(pp[j],pp[(j+1)%3]);
             assert(fabs(pd) < 1.0e-6);
         }
 
         // ortonormalizzo per maggior precisione
         pp[1] = (pp[1] - QVector3D::dotProduct(pp[0],pp[1])*pp[0]).normalized();
         QVector3D pp2 = QVector3D::crossProduct(pp[0],pp[1]).normalized(); 
-        qq = QVector3D::dotProduct(pp2, pp[2]);
-        // assert(QVector3D::dotProduct(pp2, pp[2])>0.99999);
+        if(QVector3D::dotProduct(pp2, pp[2])<0)
+        {
+            qSwap(adjVertTb[i][1], adjVertTb[i][2]);
+            qSwap(pp[1], pp[2]);
+            pp2 = QVector3D::crossProduct(pp[0],pp[1]).normalized(); 
+        }
+        assert(QVector3D::dotProduct(pp2, pp[2])>0.99999);
         pp[2] = pp2;
 
 
@@ -423,58 +448,329 @@ void Fig12Page::build()
         m_vertexMatrices.append((mat * mat1).inverted());
     }
 
+
+    /*
+
+    for(int i=0; i<dod->getEdgeCount(); i++)
+    {
+        const Polyhedron::Edge &edge = dod->getEdge(i);
+        int a = edge.m_a, b = edge.m_b;
+        int k = 0;
+        for(k=0;k<3 && adjVertTb[a][k] != b ;k++) {}
+        assert(k<3);
+        QMatrix4x4 mat = m_vertexMatrices[a];
+        if(k==0) { / * m_edgeMatrices.append(mat);  * / }
+        else if(k==1) { QMatrix4x4 rot; rot.rotate(-90,0,0,1); / * m_edgeMatrices.append(mat*rot); * / }
+        else  { QMatrix4x4 rot; rot.rotate(90,0,1,0); m_edgeMatrices.append(mat*rot);}
+
+        break;
+    }
+    */
+    QMatrix4x4 rots[3];
+    rots[0].rotate(-90,0,0,1);
+    rots[1].setToIdentity();
+    rots[2].rotate( 90,1,0,0);
+    QSet<QPair<int, int> > touchedEdges;
+    for(int a=0;a<vCount;a++)
+    {
+        QMatrix4x4 mat = m_vertexMatrices[a];
+        for(int j=0; j<3; j++)
+        {
+            int b = adjVertTb[a][j];
+            QPair<int,int> edge(a,b);
+            if(touchedEdges.contains(edge)) continue;
+            touchedEdges.insert(edge);
+            touchedEdges.insert(QPair<int,int>(b,a));
+            m_edgeMatrices.append(mat*rots[j]);
+        }
+    }
+
+
     Polyhedron::Face face = dod->getFace(0);
     QVector3D face0Center;    
     for(int i=0;i<5;i++) face0Center += 0.2 * pts[face.m_vertices[i]].toVector3D();
     m_dodTranslate = H3::KModel::translation(-face0Center, face0Center);
     m_dodTranslate.rotate(36, 0,1,0);
 
+    m_otherDodMatrices.append(m_dodTranslate);
+    for(int i=1; i<12; i++)
+    {
+        QMatrix4x4 rot = getFaceMatrix(dod, i) * getFaceMatrix(dod, 0).inverted();
+        m_otherDodMatrices.append(rot * m_dodTranslate);
+    }
+
+    for(int i=0;i<12;i++) m_faceCenters.append(sc * getFaceCenter(dod, i));
+
     delete dod;
 }
 
-
-void Fig12Page::draw()
+void Fig12Page::makeDodMesh()
 {
-    // drawAxes();
+    for(int i=0;i<m_edgeMatrices.count();i++)
+        m_dodMesh.hMerge(m_edgeBox, m_edgeMatrices[i]);
+    m_dodMesh.createBuffers();
+}
 
-    qreal viewArr[16], projArr[16];
-    glGetDoublev(GL_MODELVIEW_MATRIX, viewArr);
-    glGetDoublev(GL_PROJECTION_MATRIX, projArr);
-    QMatrix4x4 view(viewArr), proj(projArr);
 
-    QMatrix4x4 projView = proj.transposed() * view.transposed();
+
+void Fig12Page::draw1()
+{
+    
+    /*
+
+    for(int dodIndex = 0; dodIndex <= 13; dodIndex++)
+    {
+        QMatrix4x4 dodMatrix;
+        if(dodIndex == 0) dodMatrix.setToIdentity();
+        else if(dodIndex<=12) dodMatrix = m_otherDodMatrices[dodIndex - 1];  
+        else if(dodIndex == 13)
+        {
+            dodMatrix = m_otherDodMatrices[11] * m_otherDodMatrices[m_foo];  
+        }
+        else continue;
+
+        m_vertexCube.bind();
+
+        for(int i=0;i<m_vertexMatrices.count();i++)
+            draw(dodMatrix * m_vertexMatrices[i], m_vertexCube);    
+    
+        m_vertexCube.release();
+
+
+        m_edgeBox.bind();
+        // draw(identity, m_edgeBox);
+        for(int i=0;i<m_edgeMatrices.count();i++)
+            draw(dodMatrix * m_edgeMatrices[i], m_edgeBox);
+
+        m_edgeBox.release();
+    }
+    */
 
     QMatrix4x4 identity; identity.setToIdentity();
-
-
-    m_shaderProgram->bind();
-    // setViewUniforms(m_shaderProgram);    
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnable(GL_CULL_FACE);
-    
-    QMatrix4x4 globalMatrix; globalMatrix.setToIdentity();
-
+    m_dodMesh.bind();
+    draw(identity, m_dodMesh);
+    m_dodMesh.release();
     
 
-    
-    m_vertexCube.bind();
-
+    /*
     for(int i=0;i<m_vertexMatrices.count();i++)
-        draw(m_vertexMatrices[i], m_vertexCube);
-
-    for(int i=0;i<m_vertexMatrices.count();i++)
-        draw(m_dodTranslate * m_vertexMatrices[i], m_vertexCube);
-    
-
-    m_vertexCube.release();
-
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisable(GL_CULL_FACE);
-    m_shaderProgram->release();
+    {
+        QMatrix4x4 mat = m_vertexMatrices[i];
+        QVector4D pos4 = mat.map(QVector4D(0,0,0,1.0));
+        QVector3D pos = pos4.toVector3DAffine();
+        v()->drawText(pos*5, QString::number(i));
+    }
+    */
+    /*
+    for(int i=0;i<m_faceCenters.count();i++)
+    {
+        v()->drawText(m_faceCenters[i]*5, QString::number(i));
+    }
+    */
 }
+
+
+
+class PointList {
+
+    
+public:
+
+    struct Key {
+        double r;
+        int lat, lng;
+    };
+
+    class Shell {
+    public:
+        double r;
+        QMap<QPair<int, int>, QList<QVector3D> >  table;
+    };
+
+    PointList() {
+        m_shells.append(Shell());
+        m_shells[0].r = 0;
+    }
+    
+    bool add(const QVector3D &p);
+
+
+    Key getKey(const QVector3D &p)
+    {       
+        const qreal pi = 3.14159265359;
+        double r = p.length();
+        if(r<1e-5)
+        {
+            Key key;
+            key.r = 0;
+            key.lat = 0;
+            key.lng = 0;
+            return key;
+        }
+        Key key;
+        key.r = r;
+        double y = qMax(0.0, qMin(1.0, p.y()/r));
+        double lat = acos(y);
+        key.lat = (int)(10.0*lat/pi);
+        double phi = atan2(p.x(),p.z());
+        key.lng = (int)(5.0*phi/pi);
+        return key;
+    }
+
+    int findClosestShell(double r) const;
+    int touchShell(double r);
+    void dump();
+
+private:
+    QList<Shell> m_shells;
+};
+
+
+bool PointList::add(const QVector3D &p)
+{
+    Key key = getKey(p);
+    Shell &shell = m_shells[touchShell(key.r)];
+    const double infinite = 1e40;
+    double minDist = infinite;
+    for(int i=key.lat-1;i<=key.lat+1;i++)
+    {
+        for(int j=key.lng-1;j<=key.lng+1;j++)
+        {
+            QMap<QPair<int, int>, QList<QVector3D>>::iterator it = shell.table.find(qMakePair(i,j));
+            if(it == shell.table.end()) continue;
+            QList<QVector3D> &lst = it.value();
+            foreach(QVector3D p2, lst) 
+            {
+                double dist = (p-p2).length();
+                if(dist<minDist) minDist = dist;
+            }
+        }
+    }
+    if(minDist < 1e-5) return false;
+    QMap<QPair<int, int>, QList<QVector3D>>::iterator it = shell.table.find(qMakePair(key.lat,key.lng));
+    if(it == shell.table.end())
+    {
+        QList<QVector3D> lst;
+        lst.append(p);
+        shell.table[qMakePair(key.lat,key.lng)] = lst;
+    }
+    else
+    {
+        it.value().append(p);
+    }
+    return true;
+}
+
+
+int PointList::findClosestShell(double r) const
+{
+    if(m_shells.isEmpty()) return -1;
+    else
+    {
+        if(r>=m_shells.last().r) return m_shells.count()-1;
+        else if(r<=m_shells.first().r) return 0;
+        int a = 0, b = m_shells.count()-1;
+        assert(m_shells[a].r <= r && r < m_shells[b].r);
+        while(b-a>1)
+        {
+            int c = (a+b)/2;
+            if(m_shells[c].r <= r) a=c; else b=c;
+        }
+        assert(m_shells[a].r <= r && r < m_shells[b].r);
+        return (r-m_shells[a].r < m_shells[b].r - r) ? a : b;
+    }    
+}
+
+int PointList::touchShell(double r)
+{
+    if(r<1.e-3) return 0;
+    int k = findClosestShell(r);
+    if(fabs(r - m_shells[k].r) > 0.001)
+    {
+        Shell shell;
+        shell.r = r;
+        if(r>m_shells[k].r) { m_shells.insert(k+1, shell); return k+1; }
+        else { m_shells.insert(k,shell); return k; }
+    }
+    else return k;
+}
+
+
+
+void PointList::dump()
+{
+    qDebug() << "-------------------------------";
+    foreach(Shell shell, m_shells)
+    {
+        int m = 0;
+        QList<QVector3D> lst;
+        foreach(lst, shell.table.values()) m += lst.count();
+        qDebug() << " r=" << shell.r << " tb " << shell.table.count() << " total=" << m;
+    }
+}
+
+
+
+
+void Fig12Page::draw2()
+{
+    QMatrix4x4 identity; identity.setToIdentity();
+    m_dodMesh.bind();
+
+    QList<QMatrix4x4> stack;
+    stack.append(identity);
+
+    int count = 0;
+
+    qDebug() << "----------------------------------------";
+    PointList positions;
+    while(stack.count()>0)
+    {
+        QMatrix4x4 dodMatrix = stack.last();
+        stack.pop_back();
+        QVector3D q = dodMatrix.map(QVector4D(0,0,0,1)).toVector3DAffine();
+        qreal qq = q.length();
+        if(qq > 0.1 && q.x()/qq < 0.5) continue;
+        if(qq>0.99995) // 0.9993) 
+            continue;
+        if(!positions.add(q)) continue;
+        draw(dodMatrix, m_dodMesh);
+        count++;
+        if (count>2000) 
+            break;
+
+        for(int i=1;i<12;i++) stack.append(dodMatrix * m_otherDodMatrices[i]);
+    }
+
+    // positions.dump();
+
+    m_dodMesh.release();
+
+}
+
+void Fig12Page::draw3()
+{
+
+    QMatrix4x4 identity; identity.setToIdentity();
+    m_dodMesh.bind();
+
+    for(int dodIndex = 0; dodIndex <= 13; dodIndex++)
+    {
+        QMatrix4x4 dodMatrix;
+        if(dodIndex == 0) dodMatrix.setToIdentity();
+        else if(dodIndex<=12) dodMatrix = m_otherDodMatrices[dodIndex - 1];  
+        else if(dodIndex == 13)
+        {
+            dodMatrix = m_otherDodMatrices[11] * m_otherDodMatrices[m_foo];  
+        }
+        else continue;
+        draw(dodMatrix, m_dodMesh);
+    }
+
+    m_dodMesh.release();
+
+}
+
 
 
 void Fig12Page::savePictures()

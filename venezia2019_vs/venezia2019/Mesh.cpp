@@ -3,6 +3,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <assert.h>
+#include <QMatrix4x4>
 
 Mesh::Mesh()
     : m_vertexBuffer( QGLBuffer::VertexBuffer )
@@ -92,6 +93,32 @@ void Mesh::addQuad(int a, int b, int c, int d)
 
 }
 
+void Mesh::hMerge(const Mesh &other, const QMatrix4x4 &hMatrix)
+{
+    assert(m_hasTexCoords == other.m_hasTexCoords);
+    int oldVCount = m_vCount;
+    int vertexSize = other.m_hasTexCoords ? 8 : 6;
+    const QVector<GLfloat> &vv = other.m_vertexData;
+    int k = 0;
+    for(int i=0; i<other.m_vCount; i++)
+    {
+        QVector3D pos(vv[k],vv[k+1],vv[k+2]);
+        QVector3D normal(vv[k+3],vv[k+4],vv[k+5]);
+        QPointF uv;
+        if(m_hasTexCoords) uv = QPointF(vv[k+6], vv[k+7]);
+        k += vertexSize;
+        QVector3D pos2 = hMatrix.map(pos);
+        const double epsilon = 1.0e-5;
+        QVector3D normal2 = (hMatrix.map(pos + normal*epsilon) - pos2).normalized();
+        m_vertexData 
+            << pos2.x() << pos2.y() << pos2.z() 
+            << normal2.x() << normal2.y() << normal2.z();
+        if(m_hasTexCoords) 
+            m_vertexData << uv.x() << uv.y();
+        m_vCount++;
+    }
+    foreach(GLushort q, other.m_indexData) m_indexData.append(q + oldVCount);
+}
 
 
 void Mesh::makeSphere(double r, int n, int m)
