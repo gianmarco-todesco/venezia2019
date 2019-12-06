@@ -36,22 +36,39 @@ public:
 
     struct Cell {
         QMatrix4x4 m_hMatrix;
+        int m_edges[30];
     };
 
     struct Edge {
+        struct { int dod, face; } f1, f2;
     };
 
+    struct DodFace {
+        QVector4D center;
+        int vertices[5], edges[5];
+    };
+    struct DodEdge {
+        QVector4D center;
+        QVector4D side[2];
+        int va,vb,fa,fb;
+    };
+
+
     QList<Cell> m_cells;
+    QList<Edge> m_edges;
     double m_edgeLength;
     QList<QVector4D> m_pts; // dod vertices
-    QList<QVector4D> m_faceCenters;
+    QList<DodFace> m_dodFaces;
+    QList<DodEdge> m_dodEdges;
     QList<QVector<int>> m_adjVertTb; // table : vertex => adjacent vertices
 
     QList<QMatrix4x4> m_vertexMatrices;
     QList<QMatrix4x4> m_edgeMatrices;
     QMatrix4x4 m_dodTranslate;
     QList<QMatrix4x4> m_otherDodMatrices;
-    QList<QPair<int, int> > m_edges;
+    QList<QVector<int>> m_otherDodEdgeMap; 
+    // corrispondenza fra gli edge della faccia 0 del nuovo dod e quelli della faccia i-esima del vecchio
+
 
     void build();
     void drawGadgets();
@@ -63,13 +80,16 @@ public:
     void computeEdgeMatrices(Polyhedron *dod);
     void computeDodTranslateMatrix(Polyhedron *dod);
     void computeOtherDodMatrices(Polyhedron *dod);
-    void computeFaceCenters(Polyhedron *dod);
+    void computeDodFaces(Polyhedron *dod);
+    void computeDodEdges(Polyhedron *dod);
+    void computeOtherDodEdgeMap();
 
     int addCell(int srcCellIndex, int faceIndex);
     void buildGrid();
 
     void highlightEdge(int cellIndex, int edgeIndex, int type);
 
+    QVector3D toBall(const QVector4D &p) const { return H3::KModel::toBall(p,10); }
 };
 
 
@@ -87,10 +107,58 @@ void MyGrid::buildGrid()
     // create first cell
     m_cells.append(Cell());
     m_cells.last().m_hMatrix.setToIdentity();
+    Cell *cell = &m_cells.last();
+    for(int i=0;i<30;i++)
+    {
+        const DodEdge &dodEdge = m_dodEdges.at(i);
+        cell->m_edges[i] = m_edges.count();
+        Edge edge;
+        edge.f1.dod = edge.f2.dod = 0;
+        edge.f1.face = dodEdge.fa;
+        edge.f2.face = dodEdge.fb;
+        m_edges.append(edge);
+    }
 
+    for(int i=0;i<12;i++)
+    {
+        addCell(0,i);
+        continue;
+        cell = &m_cells[1+i];
+        for(int j=0;j<5;j++)
+        {
+            int j1 = m_dodFaces[0].edges[j]; // il j1-esimo edge del nuovo dod e il j-esimo edge della faccia 0
+            int j2 = m_otherDodEdgeMap[i][j1]; // e corrisponde al j2-esimo edge del vecchio dod
 
-    addCell(0,5);
-    addCell(1,6);
+            QVector3D uff1 = toBall(cell->m_hMatrix.map(m_dodEdges[j1].center));
+            QVector3D uff2 = toBall(m_cells[0].m_hMatrix.map(m_dodEdges[j2].center));
+            double ufflength = (uff1-uff2).length();
+            Q_ASSERT(ufflength < 1e-6);
+
+            int j3 = m_cells[0].m_edges[j2];
+            cell->m_edges[j1] = j3;
+            const DodEdge dodEdge = m_dodEdges[j1];
+            Q_ASSERT(dodEdge.fa == 0 ||  dodEdge.fb == 0);
+            int otherFace = m_dodEdges[j1].fa == 0 ? m_dodEdges[j1].fb : m_dodEdges[j1].fa;
+            Q_ASSERT(otherFace != 0);
+            Edge &edge = m_edges[j3];
+            if(edge.f1.dod == 0 && edge.f1.face == i)
+            {
+                edge.f1.dod = i+1;
+                edge.f1.face = otherFace;
+            }
+            else if(edge.f2.dod == 0 && edge.f2.face == i)
+            {
+                edge.f2.dod = i+1;
+                edge.f2.face = otherFace;
+            }
+            else
+            {
+                // Q_ASSERT(false);
+            }
+        }
+    }
+
+    //addCell(1,6);
     // addCell(0,0);
     //addCell(1,0);
 }
@@ -98,34 +166,63 @@ void MyGrid::buildGrid()
 
 void MyGrid::drawGadgets()
 {
+    Color colors[5] = {Color(1,0,0), Color(0,1,0), Color(0,0,1), Color(0,1,1), Color(1,0,1) };
 
+    int i = 4;
+
+    for(int j=0;j<5;j++)
+    {
+        QVector3D p = toBall(m_cells[i+1].m_hMatrix.map(m_dodEdges[m_dodFaces[0].edges[j]].center));
+        setColor(colors[j]);
+        drawSphere(p, 0.5);
+
+        int j1 = m_dodFaces[i].edges[m_otherDodEdgeMap[i][m_dodFaces[0].edges[j]]];
+
+        p = toBall(m_dodEdges[j1].side[0]);
+        
+        drawSphere(p, 0.4);
+    }
+
+    /*
+
+
+    QVector4D p = m_otherDodMatrices[0].map(m_dodEdges[m_dodFaces[0].edges[0]].center);
+    setColor(1,0,0);
+    drawSphere(toBall(p), 0.5);
+
+    p = m_dodEdges[m_dodFaces[0].edges[1]].center;
+    setColor(0,1,0);
+    drawSphere(toBall(p), 0.5);
+    */
+
+    /*
+    int cellIndex = 0;
+    int faceIndex = 5;
+    setColor(1,0,0);
+    highlightEdge(cellIndex, m_dodFaces[faceIndex].edges[0], 0);
+    setColor(0,1,0);
+    highlightEdge(cellIndex, m_dodFaces[faceIndex].edges[1], 0);
+    setColor(0,0,1);
+    highlightEdge(cellIndex, m_dodFaces[faceIndex].edges[2], 0);
+    */
 }
 
 void MyGrid::highlightEdge(int cellIndex, int edgeIndex, int type)
 {
-    QVector4D pa = m_pts[m_edges[edgeIndex].first];
-    QVector4D pb = m_pts[m_edges[edgeIndex].second];
-
-    QVector4D pm;
-    QVector3D p;
     if(type == 0)
     {
-        pm = 0.5*(pa+pb);    
-        p = H3::KModel::toBall(m_cells[cellIndex].m_hMatrix.map(pm),10.0);
-        setColor(1,1,0);
+        QVector4D pm = m_dodEdges[edgeIndex].center;    
+        QVector3D p = H3::KModel::toBall(m_cells[cellIndex].m_hMatrix.map(pm),10.0);
         drawSphere(p, 0.5);
     }
     else
     {
-        double t = 0.4;
-        pm = (1-t)*pa + t*pb;
-        p = H3::KModel::toBall(m_cells[cellIndex].m_hMatrix.map(pm),10.0);
-        setColor(1,0,0);
-        drawSphere(p, 0.5);
-        pm = (1-t)*pb + t*pa;
-        p = H3::KModel::toBall(m_cells[cellIndex].m_hMatrix.map(pm),10.0);
-        setColor(1,0,0);
-        drawSphere(p, 0.5);
+        for(int j=0;j<2;j++)
+        {
+            QVector4D pm = m_dodEdges[edgeIndex].side[j];    
+            QVector3D p = H3::KModel::toBall(m_cells[cellIndex].m_hMatrix.map(pm),10.0);
+            drawSphere(p, 0.5);
+        }
     }
 
 }
@@ -286,15 +383,14 @@ void MyGrid::computeDodTranslateMatrix(Polyhedron *dod)
 void MyGrid::computeOtherDodMatrices(Polyhedron *dod)
 {
     m_otherDodMatrices.clear();
-    m_otherDodMatrices.append(m_dodTranslate);
-    for(int i=1; i<12; i++)
+    for(int i=0; i<12; i++)
     {
         QMatrix4x4 rot = getFaceMatrix(dod, i) * getFaceMatrix(dod, 5).inverted();
         m_otherDodMatrices.append(rot * m_dodTranslate);
     }
 }
 
-void MyGrid::computeFaceCenters(Polyhedron *dod)
+void MyGrid::computeDodFaces(Polyhedron *dod)
 {
     for(int i=0; i<dod->getFaceCount(); i++)
     {
@@ -303,9 +399,97 @@ void MyGrid::computeFaceCenters(Polyhedron *dod)
         for(int j=0;j<(int)face.m_vertices.size(); j++) 
             c += m_pts[face.m_vertices[j]];
         c *= 1.0/face.m_vertices.size();
-        m_faceCenters.append(c);
+        DodFace dodFace;
+        dodFace.center = c;
+        for(int j=0;j<5;j++)
+        {
+            dodFace.edges[j] = face.m_edges[j];
+            dodFace.vertices[j] = face.m_vertices[j];
+        }
+        m_dodFaces.append(dodFace);
+
+        // check
+        //   vertici consecutivi e sempre nello stesso verso rispetto al vettore centrodod -> centrofaccia
+        //   l'edge i-esimo collega il vertice i-esimo con il (i+1)-esimo
+        for(int j=0;j<5;j++)
+        {
+            int v0 = dodFace.vertices[j];
+            int v1 = dodFace.vertices[(j+1)%5];
+
+            QVector3D p0 = m_pts[v0].toVector3D();
+            QVector3D p1 = m_pts[v1].toVector3D();
+            QVector3D w = QVector3D::crossProduct(p0, p0 - c.toVector3D());
+            double pd = QVector3D::dotProduct(w, p1-p0);
+            assert(pd>0.0);
+            const Polyhedron::Edge &edge = dod->getEdge(dodFace.edges[j]);
+            assert(edge.m_a == v0 && edge.m_b == v1 || edge.m_a == v1 && edge.m_b == v0);
+        }
     }
 }
+
+void MyGrid::computeDodEdges(Polyhedron *dod)
+{
+    double t = 0.4;
+    for(int i=0;i<dod->getEdgeCount();i++)
+    {
+        const Polyhedron::Edge &edge = dod->getEdge(i);
+        DodEdge dodEdge;
+        dodEdge.va = edge.m_a;
+        dodEdge.vb = edge.m_b;
+        dodEdge.fa = dodEdge.fb = -1;
+        QVector4D pa = m_pts[dodEdge.va];
+        QVector4D pb = m_pts[dodEdge.vb];
+
+        dodEdge.center = 0.5*(pa+pb);
+        dodEdge.side[0] = (1-t)*pa+t*pb;
+        dodEdge.side[1] = (1-t)*pb+t*pa;
+        m_dodEdges.append(dodEdge);
+    }
+    for(int i=0; i<dod->getFaceCount(); i++)
+    {
+        const Polyhedron::Face &face = dod->getFace(i);
+        for(int j=0;j<5;j++)
+        {
+            DodEdge &dodEdge = m_dodEdges[face.m_edges[j]];
+            if(dodEdge.fa == -1) dodEdge.fa = i;
+            else dodEdge.fb = i;
+        }
+    }
+    for(int i=0;i<dod->getEdgeCount();i++)
+    {
+        const Polyhedron::Edge &edge = dod->getEdge(i);
+        Q_ASSERT(edge.m_a>=0);
+        Q_ASSERT(edge.m_b>=0);
+
+    }
+
+}
+
+void MyGrid::computeOtherDodEdgeMap()
+{
+    for(int i=0;i<m_otherDodMatrices.count();i++)
+    {
+        QMatrix4x4 matrix = m_otherDodMatrices[i];
+        QVector<int> ee;
+        for(int j=0;j<5;j++)
+        {
+            QVector4D p = matrix.map(m_dodEdges[m_dodFaces[0].edges[j]].center);
+            double minDist = 0;
+            int foundj = -1;
+            for(int j2=0;j2<5;j2++)
+            {
+               QVector4D p2 = m_dodEdges[m_dodFaces[i].edges[j2]].center;
+               double dist = (p2-p).length();
+               if(foundj<0 || dist < minDist) { foundj = j2; minDist = dist;}
+            }
+            assert(foundj>=0 && minDist < 1e-6);
+            assert(!ee.contains(foundj));
+            ee.append(foundj);
+        }
+        m_otherDodEdgeMap.append(ee);
+    }
+}
+
 
 
 void MyGrid::build()
@@ -341,13 +525,9 @@ void MyGrid::build()
     computeEdgeMatrices(dod);
     computeDodTranslateMatrix(dod);
     computeOtherDodMatrices(dod);
-    computeFaceCenters(dod);
-
-    for(int i=0;i<dod->getEdgeCount();i++)
-    {
-        const Polyhedron::Edge &edge = dod->getEdge(i);
-        m_edges.append(qMakePair(edge.m_a, edge.m_b));
-    }
+    computeDodFaces(dod);
+    computeDodEdges(dod);
+    computeOtherDodEdgeMap();
 
     delete dod;
 
@@ -615,7 +795,7 @@ void Fig12Page::drawGadgets()
 {
     for(int i=0; i<12; i++)
     {
-        QVector4D p = m_grid->m_cells[1].m_hMatrix.map(m_grid->m_faceCenters[i]);
+        QVector4D p = m_grid->m_cells[0].m_hMatrix.map(m_grid->m_dodFaces[i].center);
         QVector3D p3 = H3::KModel::toBall(p, 10);
         v()->drawText(p3, QString("F%1").arg(i));
 
