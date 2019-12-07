@@ -36,26 +36,59 @@ public:
 
     struct Cell {
         QMatrix4x4 m_hMatrix;
-        int m_edges[30];
+        int m_gridEdges[30];
     };
 
-    struct Edge {
-        struct { int dod, face; } f1, f2;
+    struct GridFace {
+    public:
+        int dod, face;
+        GridFace() : dod(-1), face(-1) {}
+        GridFace(int _dod, int _face) : dod(_dod), face(_face) {}
+        bool operator==(const GridFace &other) const { return dod==other.dod && face==other.face; }
+    };
+
+    class GridEdge {
+    public:
+        int m;
+        GridFace f1, f2;
+        GridEdge() : m(0) {  }
+        bool hasFace(const GridFace &face) const { return face == f1 || face == f2; }
+        
+        void addCell(int cellIndex, int cellFace, const GridFace &oldFace) {
+            m++;
+            Q_ASSERT(cellIndex>=0 && cellIndex != f1.dod && cellIndex != f2.dod);
+            if(oldFace == f1) f1 = GridFace(cellIndex, cellFace);
+            else if(oldFace == f2) f2 = GridFace(cellIndex, cellFace);
+            else { Q_ASSERT(oldFace == f1 || oldFace == f2); }
+        }
     };
 
     struct DodFace {
         QVector4D center;
         int vertices[5], edges[5];
     };
-    struct DodEdge {
+    class DodEdge {
+    public:
         QVector4D center;
         QVector4D side[2];
         int va,vb,fa,fb;
+        DodEdge() : va(-1), vb(-1), fa(-1), fb(-1) {}
+
+        int getOtherFace(int face) const {
+            Q_ASSERT(fa>=0 && fb>=0 && fa!=fb);
+            if(face == fa) return fb;
+            else if(face == fb) return fa;
+            else 
+            {
+                Q_ASSERT(face == fa || face == fb);
+                return -1;
+            }
+        }
     };
 
 
     QList<Cell> m_cells;
-    QList<Edge> m_edges;
+    QList<GridEdge> m_gridEdges;
     double m_edgeLength;
     QList<QVector4D> m_pts; // dod vertices
     QList<DodFace> m_dodFaces;
@@ -69,6 +102,7 @@ public:
     QList<QVector<int>> m_otherDodEdgeMap; 
     // corrispondenza fra gli edge della faccia 0 del nuovo dod e quelli della faccia i-esima del vecchio
 
+    QList<QPair<QVector3D, int>> m_balls;
 
     void build();
     void drawGadgets();
@@ -84,7 +118,10 @@ public:
     void computeDodEdges(Polyhedron *dod);
     void computeOtherDodEdgeMap();
 
+    void createFirstCell();
     int addCell(int srcCellIndex, int faceIndex);
+    int createNewGridEdge(int cellIndex, int edgeIndex);
+    void joinFaces(int cellIndex, int gridEdgeIndex);
     void buildGrid();
 
     void highlightEdge(int cellIndex, int edgeIndex, int type);
@@ -102,74 +139,174 @@ MyGrid::~MyGrid()
 }
 
 
+
+
 void MyGrid::buildGrid()
 {
-    // create first cell
+    createFirstCell();
+    for(int i=0;i<12;i++) addCell(0,i);
+    addCell(1+4, 6);
+}
+
+
+void MyGrid::createFirstCell()
+{
+    m_cells.clear();
     m_cells.append(Cell());
-    m_cells.last().m_hMatrix.setToIdentity();
     Cell *cell = &m_cells.last();
-    for(int i=0;i<30;i++)
+    cell->m_hMatrix.setToIdentity();
+    for(int i=0;i<30;i++) 
     {
-        const DodEdge &dodEdge = m_dodEdges.at(i);
-        cell->m_edges[i] = m_edges.count();
-        Edge edge;
-        edge.f1.dod = edge.f2.dod = 0;
-        edge.f1.face = dodEdge.fa;
-        edge.f2.face = dodEdge.fb;
-        m_edges.append(edge);
+        cell->m_gridEdges[i] = createNewGridEdge(0, i);
+    }
+}
+
+
+int MyGrid::addCell(int srcCellIndex, int srcFaceIndex)
+{
+    int newCellIndex = m_cells.count();
+    m_cells.append(Cell());
+    Cell *cell = &m_cells.last();
+    QMatrix4x4 srcCellMatrix = m_cells[srcCellIndex].m_hMatrix;
+    cell->m_hMatrix = srcCellMatrix * m_otherDodMatrices[srcFaceIndex];
+    for(int i=0;i<30;i++) cell->m_gridEdges[i] = -1;
+
+    // get src cell grid edges along the face
+    for(int j=0;j<5;j++)
+    {
+        int dodEdgeIndex = m_dodFaces[0].edges[j]; 
+        int tmp = m_otherDodEdgeMap[srcFaceIndex][j]; 
+        int srcDodEdgeIndex = m_dodFaces[srcFaceIndex].edges[tmp];
+        
+        QVector3D uff1 = toBall(cell->m_hMatrix.map(m_dodEdges[dodEdgeIndex].center));
+        QVector3D uff2 = toBall(srcCellMatrix.map(m_dodEdges[srcDodEdgeIndex].center));
+
+
+        //QVector3D cellCenter = toBall(cell->m_hMatrix.map(QVector3D(0,0,0)));
+        //QVector3D uff1 = cellCenter * 0.1 + toBall(cell->m_hMatrix.map(m_dodEdges[dodEdgeIndex].center)) * 0.9;
+        //m_balls.append(qMakePair(uff1, j));
+        //m_balls.append(qMakePair(uff2, j));
+
+        double ufflength = (uff1-uff2).length();
+        Q_ASSERT(ufflength < 3e-6);
+
+        // add the new dod to the grid edge
+
+        const DodEdge &dodEdge = m_dodEdges[dodEdgeIndex];
+        int otherFace = dodEdge.getOtherFace(0);
+
+        int gridEdgeIndex = cell->m_gridEdges[dodEdgeIndex] = m_cells[srcCellIndex].m_gridEdges[srcDodEdgeIndex];
+        GridEdge &gridEdge = m_gridEdges[gridEdgeIndex];
+        gridEdge.addCell(newCellIndex, otherFace, GridFace(srcCellIndex, srcFaceIndex));
+        
     }
 
-    for(int i=0;i<12;i++)
+    // join faces
+    for(int j=0;j<5;j++)
     {
-        addCell(0,i);
-        continue;
-        cell = &m_cells[1+i];
+        int dodEdgeIndex = m_dodFaces[0].edges[j]; 
+        int gridEdgeIndex = cell->m_gridEdges[dodEdgeIndex];
+        Q_ASSERT(gridEdgeIndex>=0);
+        GridEdge &gridEdge = m_gridEdges[gridEdgeIndex];
+        if(gridEdge.m == 4) 
+            joinFaces(newCellIndex, gridEdgeIndex);
+    }
+
+    // create the new grid edges
+    for(int i=0;i<30;i++)
+    {
+        if(cell->m_gridEdges[i]<0) cell->m_gridEdges[i] = createNewGridEdge(newCellIndex, i);
+    }
+
+    return newCellIndex;
+}
+
+
+int MyGrid::createNewGridEdge(int cellIndex, int edgeIndex)
+{
+    int index = m_gridEdges.count();
+    m_gridEdges.append(GridEdge());
+    GridEdge &gridEdge = m_gridEdges.last();
+    gridEdge.f1 = GridFace(cellIndex,m_dodEdges[edgeIndex].fa);
+    gridEdge.f2 = GridFace(cellIndex,m_dodEdges[edgeIndex].fb);
+    gridEdge.m = 1;
+    return index;
+}
+
+void MyGrid::joinFaces(int cellIndex, int gridEdgeIndex)
+{
+    GridEdge &gridEdge = m_gridEdges[gridEdgeIndex];
+    Q_ASSERT(gridEdge.m == 4);
+    Q_ASSERT(gridEdge.f1.dod == cellIndex || gridEdge.f2.dod == cellIndex);
+    const GridFace gridFaces[2] = {gridEdge.f1, gridEdge.f2};
+    int ee[2][5];
+    for(int i=0; i<2; i++)
+    {
+        const int dod = gridFaces[i].dod;
+        const int face = gridFaces[i].face;
+        int k = -1;
+        for(int j=0; j<5; j++)
+        {
+            int t = m_dodFaces[face].edges[j];
+            if(t>=0 && m_cells[dod].m_gridEdges[t] == gridEdgeIndex)
+            {
+                Q_ASSERT(k<0);
+                k = j;
+            }
+        }
+        Q_ASSERT(k>=0);
+        for(int j=0; j<5; j++)
+        {
+            int j2 = i == 0 ? (j+k)%5 :  (5-j+k)%5;
+            ee[i][j] = m_dodFaces[face].edges[j2];
+        }
+    }
+    for(int i=0; i<2; i++)
+    {
+        const int dod = gridFaces[i].dod;
+        QVector3D dodCenter = toBall(m_cells[dod].m_hMatrix.map(QVector4D(0,0,0,1)));
         for(int j=0;j<5;j++)
         {
-            int j1 = m_dodFaces[0].edges[j]; // il j1-esimo edge del nuovo dod e il j-esimo edge della faccia 0
-            int j2 = m_otherDodEdgeMap[i][j1]; // e corrisponde al j2-esimo edge del vecchio dod
-
-            QVector3D uff1 = toBall(cell->m_hMatrix.map(m_dodEdges[j1].center));
-            QVector3D uff2 = toBall(m_cells[0].m_hMatrix.map(m_dodEdges[j2].center));
-            double ufflength = (uff1-uff2).length();
-            Q_ASSERT(ufflength < 1e-6);
-
-            int j3 = m_cells[0].m_edges[j2];
-            cell->m_edges[j1] = j3;
-            const DodEdge dodEdge = m_dodEdges[j1];
-            Q_ASSERT(dodEdge.fa == 0 ||  dodEdge.fb == 0);
-            int otherFace = m_dodEdges[j1].fa == 0 ? m_dodEdges[j1].fb : m_dodEdges[j1].fa;
-            Q_ASSERT(otherFace != 0);
-            Edge &edge = m_edges[j3];
-            if(edge.f1.dod == 0 && edge.f1.face == i)
-            {
-                edge.f1.dod = i+1;
-                edge.f1.face = otherFace;
-            }
-            else if(edge.f2.dod == 0 && edge.f2.face == i)
-            {
-                edge.f2.dod = i+1;
-                edge.f2.face = otherFace;
-            }
-            else
-            {
-                // Q_ASSERT(false);
-            }
+            QVector3D uff1 = toBall(m_cells[dod].m_hMatrix.map(m_dodEdges[ee[i][j]].center));
+            m_balls.append(qMakePair(dodCenter * 0.1 + uff1 * 0.9, j));
         }
     }
 
-    //addCell(1,6);
-    // addCell(0,0);
-    //addCell(1,0);
+
 }
 
 
 void MyGrid::drawGadgets()
 {
-    Color colors[5] = {Color(1,0,0), Color(0,1,0), Color(0,0,1), Color(0,1,1), Color(1,0,1) };
+    Color colors[5] = {Color(0.5,0,0), Color(0,0.5,0), Color(0,0,0.5), Color(0,0.5,0.5), Color(0.5,0,0.5) };
 
-    int i = 4;
+/*
+    QSet<int> touched;
+    for(int i=0;i<m_cells.count();i++)
+    {
+        for(int j=0;j<30;j++)
+        {
+            int gridEdgeIndex = m_cells[i].m_gridEdges[j];
+            if(gridEdgeIndex<0) continue;
+            if(touched.contains(gridEdgeIndex)) continue;
+            touched.insert(gridEdgeIndex);
 
+            int m = m_gridEdges[gridEdgeIndex].m;
+            Q_ASSERT(0<=m && m<=4);
+            setColor(colors[m]);
+            QVector3D p = toBall(m_cells[i].m_hMatrix.map(m_dodEdges[j].center));
+            drawSphere(p,0.2);
+        }
+    }
+    */
+
+    for(int i=0;i<m_balls.count();i++)
+    {
+        setColor(colors[m_balls[i].second]);
+        drawSphere(m_balls[i].first, 0.2);
+    }
+    /*
+    
     for(int j=0;j<5;j++)
     {
         QVector3D p = toBall(m_cells[i+1].m_hMatrix.map(m_dodEdges[m_dodFaces[0].edges[j]].center));
@@ -182,6 +319,7 @@ void MyGrid::drawGadgets()
         
         drawSphere(p, 0.4);
     }
+    */
 
     /*
 
@@ -226,17 +364,6 @@ void MyGrid::highlightEdge(int cellIndex, int edgeIndex, int type)
     }
 
 }
-
-int MyGrid::addCell(int srcCellIndex, int faceIndex)
-{
-    const QMatrix4x4 &srcMatrix = m_cells[srcCellIndex].m_hMatrix;
-    Cell cell;
-    cell.m_hMatrix = srcMatrix * m_otherDodMatrices[faceIndex];
-    int index = m_cells.count();
-    m_cells.append(cell);
-    return index;
-}
-
 
 
 Polyhedron *MyGrid::createDod(double radius)
@@ -539,7 +666,7 @@ void MyGrid::build()
 Fig12Page::Fig12Page()
 : m_theta(10)
 , m_phi(20)
-, m_cameraDistance(15)
+, m_cameraDistance(25)
 , m_rotating(true)
 , m_shaderProgram(0)
 , m_foo(0)
@@ -606,7 +733,7 @@ void Fig12Page::resizeGL(int width, int height)
 
 void Fig12Page::makeEdgeBox(Mesh &mesh, int n)
 {
-    double d = 0.05;
+    double d = 0.01;
     double edgeLength = m_grid->m_edgeLength;    
     QVector4D base[4] = {
         QVector4D(-d,0,-d,1.0),
