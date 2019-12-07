@@ -150,7 +150,7 @@ void Page::savePicture(const QString &path, int border)
     fmt.setAlpha(false);
     fmt.setSampleBuffers(true);
     */
-    int width = 2048, height = 2048;
+    int width = 4096, height = 4096;
     QGLPixelBuffer buffer(width,height,fmt);
     buffer.makeCurrent();
 

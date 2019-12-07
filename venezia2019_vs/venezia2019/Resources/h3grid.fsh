@@ -25,11 +25,11 @@ void main() {
   
   
   // float att = exp(-130.0*max(0.0, gl_FragCoord.z-0.97));
-  float att = max(0.0, min(1.0, (0.95 - gl_FragCoord.z)/0.1));
-  att = 0.3;
+  float att = max(0.0, min(1.0, (1.15 - gl_FragCoord.z)/0.1));
+  // att = 0.3;
   gl_FragColor = vec4((ambientColor +
                       lambertian*diffuseColor +
-                      specular*specColor)*att, 1.0);
+                      specular*specColor)*att + vec3(1.0,1.0,1.0)*(1.0-att), 1.0);
 
     
 }
