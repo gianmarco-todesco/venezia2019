@@ -2,6 +2,7 @@
 #define MESH_INCLUDED
 
 #include <qglbuffer.h>
+class QRectF;
 
 class Mesh {
 public:

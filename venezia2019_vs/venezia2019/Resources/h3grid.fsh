@@ -1,11 +1,15 @@
 varying vec3 normal;
 varying vec3 pos;
+varying vec2 uv;
 
 const vec3 lightPos = vec3(1.0,1.0,1.0);
-const vec3 ambientColor = vec3(0.2, 0.6, 0.8);
-const vec3 diffuseColor = vec3(0.2, 0.6, 0.8);
+vec3 ambientColor = vec3(uv.x, uv.y, 0.4);
+vec3 diffuseColor = vec3(uv.x, uv.y, 0.4);
+//vec3 ambientColor = vec3(0.1, 0.2, 0.4);
+//vec3 diffuseColor = vec3(0.1, 0.2, 0.4);
 const vec3 specColor = vec3(0.2, 0.2, 0.2);
 
+uniform sampler2D texture;
 
 void main() {
   vec3 norm = normalize(normal);
@@ -22,15 +26,14 @@ void main() {
      specular = pow(specAngle, 14.0);
   }
   
-  
+  vec4 color = texture2D(texture, uv);
   
   // float att = exp(-130.0*max(0.0, gl_FragCoord.z-0.97));
   float att = max(0.0, min(1.0, (1.15 - gl_FragCoord.z)/0.1));
-  // att = 0.3;
-  gl_FragColor = vec4((ambientColor +
-                      lambertian*diffuseColor +
+  att = 1.0;
+  gl_FragColor = vec4((color.rgb +
+                      lambertian*color.rgb +
                       specular*specColor)*att + vec3(1.0,1.0,1.0)*(1.0-att), 1.0);
 
     
 }
-

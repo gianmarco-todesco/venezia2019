@@ -1,5 +1,6 @@
 varying vec3 normal;
 varying vec3 pos;
+varying vec2 uv;
 uniform mat4 hMatrix;
 
 vec4 toBall(vec4 p) {
@@ -12,6 +13,8 @@ vec4 toBall(vec4 p) {
 
 void main() {
   
+  uv = gl_MultiTexCoord0.xy;
+
   vec4 inputPos = toBall(hMatrix * gl_Vertex);
   gl_Position = gl_ModelViewProjectionMatrix * inputPos;
 

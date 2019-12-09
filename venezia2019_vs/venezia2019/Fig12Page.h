@@ -18,7 +18,7 @@ class QGLShaderProgram;
 class Texture;
 class H3Grid534;
 class H3Grid;
-
+class Texture;
 class MyGrid;
 
 class Fig12Page : public Page
@@ -33,7 +33,7 @@ class Fig12Page : public Page
   // double m_edgeLength;
   //H3Grid534 *m_grid;
   //H3Grid *m_grid2;
-  Mesh m_sphere, m_vertexCube, m_edgeBox, m_edgeBoxLow;
+  Mesh m_vertexBox, m_edgeBox, m_edgeBoxLow;
   Mesh m_dodMesh;
   QTime m_clock;
   MyGrid *m_grid;
@@ -46,6 +46,8 @@ class Fig12Page : public Page
   // QList<Uffa> uffa;
 
   int m_foo;
+  unsigned int m_textureId;
+
 
 public:
   Fig12Page();
@@ -56,7 +58,11 @@ protected:
   void paintGL();
   void resizeGL(int width, int height);
 
+  void createTextures();
+  void destroyTextures();
+
   void build();
+  void makeVertexBox(Mesh &mesh, int n);
   void makeEdgeBox(Mesh &mesh, int n);
   void makeDodMesh();
 

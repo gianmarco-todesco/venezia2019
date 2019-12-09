@@ -119,8 +119,8 @@ QGLShaderProgram *Viewer::loadProgram(QString name)
 {
   QGLShaderProgram *program = new QGLShaderProgram();
   bool ok = true;
-  ok = program->addShaderFromSourceFile(QGLShader::Vertex, "resources/" + name + ".vsh") && ok;
-  ok = program->addShaderFromSourceFile(QGLShader::Fragment, "resources/" + name + ".fsh") && ok;
+  ok = program->addShaderFromSourceFile(QGLShader::Vertex, "Resources/" + name + ".vsh") && ok;
+  ok = program->addShaderFromSourceFile(QGLShader::Fragment, "Resources/" + name + ".fsh") && ok;
   ok = program->link() && ok;
   if(!ok) 
   {      
