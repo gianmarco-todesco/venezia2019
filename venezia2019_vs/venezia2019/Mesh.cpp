@@ -165,7 +165,7 @@ void Mesh::makeSphere(double r, int n, int m)
     createBuffers();
 }
 
-void Mesh::addFace(const QVector3D &p, const QVector3D &du, const QVector3D &dv, int n, int m)
+void Mesh::addFace(const QVector3D &p, const QVector3D &du, const QVector3D &dv, int n, int m, const QRectF &uvRect)
 {
     int k0 = m_vCount;
     QVector3D norm = QVector3D::crossProduct(du,dv).normalized();
@@ -174,7 +174,12 @@ void Mesh::addFace(const QVector3D &p, const QVector3D &du, const QVector3D &dv,
         for(int j=0;j<m;j++)
         {
             if(m_hasTexCoords)
-                addVertex(p+du*i+dv*j,norm, QPointF((double)i/(n-1), (double)j/(m-1)));
+            {
+                double u = uvRect.left() + uvRect.width() * (double)i/(n-1);
+                double v = uvRect.top() + uvRect.height() * (double)j/(m-1);
+
+                addVertex(p+du*i+dv*j,norm, QPointF(u,v));
+            }
             else
                 addVertex(p+du*i+dv*j,norm);
         }

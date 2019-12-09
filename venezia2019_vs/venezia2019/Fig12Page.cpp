@@ -151,7 +151,7 @@ void MyGrid::buildGrid()
     for(int i=0;i<12;i++)
         addCell(0,i);
 
-    for(int count=0;count<1000;count++)
+    for(int count=0;count<30000;count++)
     {
         int k = -1;
         double rmin = 1e80;
@@ -830,13 +830,14 @@ void MyGrid::build()
 
 
 Fig12Page::Fig12Page()
-: m_theta(10)
-, m_phi(20)
-, m_cameraDistance(25)
+: m_theta(-20)
+, m_phi(41.5)
+, m_cameraDistance(5.2) // 25
 , m_rotating(true)
 , m_shaderProgram(0)
 , m_foo(0)
 , m_grid(new MyGrid())
+, m_textureId(0)
 {
     m_hMatrix.setToIdentity();
     build();
@@ -901,18 +902,19 @@ void Fig12Page::resizeGL(int width, int height)
 
 void Fig12Page::makeVertexBox(Mesh &mesh, int n)
 {
+    const QRectF uvRect(11.0/1024.0, 10.0/1024.0, (502.-12.)/1024.0, (502.-12.0)/1024.0);
     double r = 0.2;
     mesh.m_hasTexCoords = true;
-    mesh.addFace(QVector3D(r,0,0), QVector3D(0,r/4,0), QVector3D(0,0,r/4), 5, 5);
-    mesh.addFace(QVector3D(0,r,0), QVector3D(0,0,r/4), QVector3D(r/4,0,0), 5, 5);
-    mesh.addFace(QVector3D(0,0,r), QVector3D(r/4,0,0), QVector3D(0,r/4,0), 5, 5);
+    mesh.addFace(QVector3D(r,0,0), QVector3D(0,r/4,0), QVector3D(0,0,r/4), 5, 5, uvRect);
+    mesh.addFace(QVector3D(0,r,0), QVector3D(0,0,r/4), QVector3D(r/4,0,0), 5, 5, uvRect);
+    mesh.addFace(QVector3D(0,0,r), QVector3D(r/4,0,0), QVector3D(0,r/4,0), 5, 5, uvRect);
     mesh.createBuffers();
 }
 
 
 void Fig12Page::makeEdgeBox(Mesh &mesh, int n)
 {
-    double d = 0.1;
+    double d = 0.07;
     mesh.m_hasTexCoords = true;
     double edgeLength = m_grid->m_edgeLength;    
     QVector4D base[3] = {
@@ -923,7 +925,7 @@ void Fig12Page::makeEdgeBox(Mesh &mesh, int n)
     QVector<QVector4D> pts;
     for(int i=0; i<=2*n; i++) 
     {
-        double hz = 0.5*edgeLength*(1+ 0.9 * (double)(i-n)/(double)n) ;
+        double hz = 0.5*edgeLength*(1+ 0.62 * (double)(i-n)/(double)n) ;
         QMatrix4x4 tr = H3::KModel::translation(
             QVector3D(0,0,0), 
             QVector3D(0,H3::KModel::getRadius(hz), 0));
@@ -936,16 +938,18 @@ void Fig12Page::makeEdgeBox(Mesh &mesh, int n)
         QVector3D(1,0,0),
         QVector3D(0,0,1)
     };
+    double u0 = (512.0+10.0)/1024.0, u1 = (1024.0-10.0)/1024.0, v0 = 10.0/1024.0, v1 = 502.0/1024.0;
     for(int j=0; j<2; j++) {
         int k = mesh.m_vCount;
         for(int i=0; i<=2*n; i++) {
-            double u = (double)i/(double)(2*n-1);
-            mesh.addVertex(pts[i*3+j].toVector3D(), norms[j], QPointF(u,0));
-            mesh.addVertex(pts[i*3+j+1].toVector3D(), norms[j], QPointF(u,1));
+            double u = (double)i/(double)(2*n); u = 1-u; u = (1-u)*u0 + u*u1;
+            mesh.addVertex(pts[i*3+j].toVector3D(), norms[j], QPointF(u, v0));
+            mesh.addVertex(pts[i*3+j+1].toVector3D(), norms[j], QPointF(u, v1));
         }
         for(int i=0; i<2*n; i++) {
             mesh.addQuad(k,k+2,k+3,k+1); k+= 2;
         }
+        qSwap(v0,v1);
     }
     mesh.createBuffers();
 }
@@ -1004,7 +1008,12 @@ void Fig12Page::paintGL()
     glBindTexture(GL_TEXTURE_2D, m_textureId);
 
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    draw3();    
+    m_dodMesh.bind();
+    for(int i=0;i<m_grid->m_cells.size();i++)
+    {
+        draw(m_grid->m_cells[i].m_hMatrix, m_dodMesh);
+    }
+    m_dodMesh.release(); 
 
     glDisable(GL_TEXTURE_2D);
 
@@ -1083,30 +1092,6 @@ void Fig12Page::build()
 
 
 
-void Fig12Page::draw1()
-{
-}
-
-
-
-
-void Fig12Page::draw2()
-{
- 
-}
-
-void Fig12Page::draw3()
-{
-    m_dodMesh.bind();
-    for(int i=0;i<m_grid->m_cells.size();i++)
-    {
-        draw(m_grid->m_cells[i].m_hMatrix, m_dodMesh);
-    }
-    m_dodMesh.release();
-
-
-}
-
 
 void Fig12Page::drawGadgets()
 {
@@ -1134,16 +1119,37 @@ void Fig12Page::savePictures()
 
 void Fig12Page::createTextures()
 {
-    QImage img(256,256, QImage::Format_ARGB32);
+    // QImage img; img.load("bu.png");
+
+    
+    QImage img(1024, 1024, QImage::Format_ARGB32);
     img.fill(QColor(120,120,120));
     QPainter pa;
     pa.begin(&img);
-    pa.setPen(QPen(Qt::black, 10));
-    pa.drawRect(-20,-20, 256, 256);
+    int x0,y0,x1,y1;
+    x0=10;y0=10;x1=502;y1=502;
+    pa.fillRect(x0,y1-10,x1-x0+1,10, Qt::black);
+    pa.fillRect(x1-10,y0, 10, y1-y0+1, Qt::black);
+    pa.fillRect(x0,y1-5,x1-x0+1,5, Qt::white);
+    pa.fillRect(x1-5,y0, 5, y1-y0+1, Qt::white);
 
+    int d = 160;
+    pa.fillRect(x0,y0+d,d,5, Qt::black);
+    pa.fillRect(x0+d,y0,5,d, Qt::black);
+
+
+    x0=512+10;y0=8;x1=1024-10;y1=502;
+
+    pa.fillRect(x0,y1-10,x1-x0+1,10, Qt::black);
+    pa.fillRect(x0,y1-5,x1-x0+1,5, Qt::white); // bordo laterale edges
+    
+    // pa.fillRect(x0,y0-5,5, y1-y0+1+10, Qt::white);
+    // pa.fillRect(x1-4,y0-5,5, y1-y0+1+10, Qt::white);
 
     pa.end();
-    img.save("bu.png");
+
+    // img.save("bu.png");
+   
 
     glGenTextures(1, &m_textureId); 
     glBindTexture(GL_TEXTURE_2D, m_textureId);
@@ -1156,6 +1162,8 @@ void Fig12Page::createTextures()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     //glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+
 }
 
 void Fig12Page::destroyTextures()

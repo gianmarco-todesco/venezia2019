@@ -2,7 +2,7 @@
 #define MESH_INCLUDED
 
 #include <qglbuffer.h>
-class QRectF;
+#include <QRectF>
 
 class Mesh {
 public:
@@ -27,7 +27,7 @@ public:
     void addQuad(int a, int b, int c, int d);
     void addTriangleGrid(int n, int m, int firstIndex = 0);
 
-    void addFace(const QVector3D &p, const QVector3D &du, const QVector3D &dv, int n, int m);
+    void addFace(const QVector3D &p, const QVector3D &du, const QVector3D &dv, int n, int m, const QRectF &uvRect = QRectF(0,0,1,1));
 
     void addBox(const QVector3D &center, double rx, double ry, double rz, int nx=2, int ny=2, int nz=2);
     void addCube(const QVector3D &center, double r, int n=2) { addBox(center, r,r,r, n,n,n); }

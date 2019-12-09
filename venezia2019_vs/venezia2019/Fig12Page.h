@@ -20,6 +20,7 @@ class H3Grid534;
 class H3Grid;
 class Texture;
 class MyGrid;
+class QImage;
 
 class Fig12Page : public Page
 {
@@ -66,9 +67,6 @@ protected:
   void makeEdgeBox(Mesh &mesh, int n);
   void makeDodMesh();
 
-  void draw1();
-  void draw2();
-  void draw3();
   void drawGadgets();
 
 
