@@ -51,7 +51,7 @@ class Fig12Page : public Page
 
 
 public:
-  Fig12Page();
+  Fig12Page(int cellCount = 100);
  ~Fig12Page();
 
 protected:

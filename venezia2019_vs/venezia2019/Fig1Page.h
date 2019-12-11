@@ -24,6 +24,7 @@ class Fig1Page : public Page {
     QVector3D m_offset;
     double m_gridSmallUnit;
     double m_gridBigUnit;
+    unsigned int m_textureId;
 
 public:
     Fig1Page();
@@ -47,6 +48,12 @@ protected:
 private:
     void buildMesh();
     void draw();
+
+    void createTextures();
+
+    void makeVertexBox(Mesh &mesh, const QVector3D &pos, double r);
+    void makeEdgeBox(Mesh &mesh, const QVector3D &p0, const QVector3D &p1, const QVector3D &up, double r);
+
 
     
 };

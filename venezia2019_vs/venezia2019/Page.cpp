@@ -39,7 +39,7 @@ void Presentation::buildPages()
 {
     
     // addPage(new Fig11Page());
-    addPage(new Fig12Page());
+    addPage(new Fig1Page());
 
 
     // addPage(new H3GridBuildPage());

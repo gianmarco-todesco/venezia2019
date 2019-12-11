@@ -32,8 +32,9 @@
 
 class MyGrid {
 public:
-    MyGrid();
+    MyGrid(int n);
     ~MyGrid();
+
 
     struct Cell {
         QMatrix4x4 m_hMatrix;
@@ -90,6 +91,7 @@ public:
     };
 
 
+    int cellCount;
     QList<Cell> m_cells;
     QList<GridEdge> m_gridEdges;
     double m_edgeLength;
@@ -135,7 +137,8 @@ public:
 };
 
 
-MyGrid::MyGrid()
+MyGrid::MyGrid(int n)
+    : cellCount(n)
 {
 }
 
@@ -151,7 +154,7 @@ void MyGrid::buildGrid()
     for(int i=0;i<12;i++)
         addCell(0,i);
 
-    for(int count=0;count<30000;count++)
+    while(m_cells.count() < cellCount)
     {
         int k = -1;
         double rmin = 1e80;
@@ -829,14 +832,14 @@ void MyGrid::build()
 
 
 
-Fig12Page::Fig12Page()
+Fig12Page::Fig12Page(int cellCount)
 : m_theta(-20)
 , m_phi(41.5)
 , m_cameraDistance(5.2) // 25
 , m_rotating(true)
 , m_shaderProgram(0)
 , m_foo(0)
-, m_grid(new MyGrid())
+, m_grid(new MyGrid(cellCount))
 , m_textureId(0)
 {
     m_hMatrix.setToIdentity();
@@ -1109,7 +1112,7 @@ void Fig12Page::drawGadgets()
 
 void Fig12Page::savePictures()
 {
-    Fig12Page page;
+    Fig12Page page(30000);
     page.m_cameraDistance = m_cameraDistance;
     page.m_theta = m_theta;
     page.m_phi = m_phi;
@@ -1126,23 +1129,33 @@ void Fig12Page::createTextures()
     img.fill(QColor(120,120,120));
     QPainter pa;
     pa.begin(&img);
+
     int x0,y0,x1,y1;
+
+    // vertex
     x0=10;y0=10;x1=502;y1=502;
+
     pa.fillRect(x0,y1-10,x1-x0+1,10, Qt::black);
     pa.fillRect(x1-10,y0, 10, y1-y0+1, Qt::black);
-    pa.fillRect(x0,y1-5,x1-x0+1,5, Qt::white);
-    pa.fillRect(x1-5,y0, 5, y1-y0+1, Qt::white);
+    //pa.fillRect(x0,y1-5,x1-x0+1,5, Qt::white);
+    //pa.fillRect(x1-5,y0, 5, y1-y0+1, Qt::white);
 
     int d = 160;
     pa.fillRect(x0,y0+d,d,5, Qt::black);
     pa.fillRect(x0+d,y0,5,d, Qt::black);
 
 
+    // edge
     x0=512+10;y0=8;x1=1024-10;y1=502;
 
+    // bordo laterale edges
     pa.fillRect(x0,y1-10,x1-x0+1,10, Qt::black);
-    pa.fillRect(x0,y1-5,x1-x0+1,5, Qt::white); // bordo laterale edges
+    //pa.fillRect(x0,y1-5,x1-x0+1,5, Qt::white); 
     
+    //pa.fillRect(x0,y1-10,x1-x0+1,10, Qt::black);
+    //pa.fillRect(x0,y1-5,x1-x0+1,5, Qt::white); // bordo laterale edges
+    
+    // altro bordo
     // pa.fillRect(x0,y0-5,5, y1-y0+1+10, Qt::white);
     // pa.fillRect(x1-4,y0-5,5, y1-y0+1+10, Qt::white);
 
