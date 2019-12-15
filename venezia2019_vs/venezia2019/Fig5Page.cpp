@@ -196,17 +196,14 @@ void Fig5Page::draw()
     glPopMatrix();
 
 
+    /*
+
     if(2 == 2)
     {
         QMatrix4x4 mat;
         mat.setToIdentity();
 
-        /*
-        mat.translate(0,h,0);
-        mat.rotate(angle,1,0,0);
-        mat.translate(0,h,0);
-
-        */
+        
         mat.rotate(-36*2, 0,0,1);        
         mat.translate(0,h,0);
         mat.rotate(-angle*2,1,0,0);
@@ -266,6 +263,7 @@ void Fig5Page::draw()
     drawCylinder(p0,p1,0.04);
     drawCylinder(p2,p3,0.04);
 
+    */
 
 }
 
@@ -273,7 +271,7 @@ void Fig5Page::draw()
 void Fig5Page::drawPolygon(int n, double r0, const Color &color)
 {
     double border = 0.3;
-    double h = 0.01;
+    double h = 0.05;
     double r3 = r0 - border / cos(M_PI/n);
     double t = 0.1;
     double r1 = (1-t)*r0 + t*r3;

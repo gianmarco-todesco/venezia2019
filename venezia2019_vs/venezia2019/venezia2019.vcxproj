@@ -99,6 +99,7 @@
     <ClCompile Include="Fig9Page.cpp" />
     <ClCompile Include="FoldingFacesPage.cpp" />
     <ClCompile Include="GUtil.cpp" />
+    <ClCompile Include="H2TessellationPage.cpp" />
     <ClCompile Include="H3.cpp" />
     <ClCompile Include="H3Grid.cpp" />
     <ClCompile Include="H3GridBuildPage.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="Fig9Page.h" />
     <ClInclude Include="FoldingFacesPage.h" />
     <ClInclude Include="Gutil.h" />
+    <ClInclude Include="H2TessellationPage.h" />
     <ClInclude Include="H3.h" />
     <ClInclude Include="H3Grid.h" />
     <ClInclude Include="H3GridBuildPage.h" />
@@ -180,6 +182,8 @@
     <None Include="Resources\h3grid.vsh" />
     <None Include="Resources\h3grid2.fsh" />
     <None Include="Resources\h3grid2.vsh" />
+    <None Include="Resources\h3grid_f11.fsh" />
+    <None Include="Resources\h3grid_f11.vsh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

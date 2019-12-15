@@ -9,6 +9,7 @@ class CircleLimit3Viewer;
 
 class CircleLimit3Page : public Page
 {
+protected:
     CircleLimit3Viewer *m_viewer;
     QPoint m_lastPos;
     QTime m_time;

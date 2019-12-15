@@ -11,8 +11,9 @@
 class Fig7bPage : public CircleLimit3Page {
   
 public:
-    Fig7bPage();
+    Fig7bPage(bool figureMode = false);
     ~Fig7bPage();
+    void paintGL();
     
     void savePictures();
 };

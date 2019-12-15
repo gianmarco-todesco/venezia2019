@@ -39,7 +39,8 @@ void Presentation::buildPages()
 {
     
     // addPage(new Fig11Page());
-    addPage(new Fig1Page());
+    // addPage(new Fig11Page());
+    addPage(new Fig5Page());
 
 
     // addPage(new H3GridBuildPage());
@@ -145,11 +146,11 @@ void Page::savePicture(const QString &path, int border)
 {
     assert(glGetError() == GL_NO_ERROR);
     QGLFormat fmt;
-    /*
+    
     fmt.setDoubleBuffer(false);
-    fmt.setAlpha(false);
+    // fmt.setAlpha(false);
     fmt.setSampleBuffers(true);
-    */
+    
     int width = 4096, height = 4096;
     QGLPixelBuffer buffer(width,height,fmt);
     buffer.makeCurrent();

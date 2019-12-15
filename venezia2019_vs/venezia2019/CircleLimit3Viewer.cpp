@@ -4,6 +4,7 @@
 #include "Mesh2D.h"
 #include "Gutil.h"
 
+#include <QDebug>
 using namespace GmLib;
 
 CircleLimit3Viewer::CircleLimit3Viewer(bool figureMode)
@@ -13,7 +14,9 @@ CircleLimit3Viewer::CircleLimit3Viewer(bool figureMode)
 , m_maxFaceCount(0)
 , m_figureMode(figureMode)
 {
-  m_tess->init(figureMode ? 10000 : 1000);
+    qDebug() << "Init tess";
+    m_tess->init(figureMode ? 1000 : 500);
+    qDebug() << "Done";
   setTexture(Texture::get("images/cl3_fish_y.png"));
   m_fish[0] = Texture::get("images/cl3_fish_y.png");
   m_fish[1] = Texture::get("images/cl3_fish_r.png");
@@ -95,7 +98,7 @@ void CircleLimit3Viewer::draw()
 
     m_fish[color]->bind();
     int faceCount = m_tess->getFaceCount();
-    if(m_maxFaceCount>=0 && faceCount>m_maxFaceCount) faceCount = m_maxFaceCount;
+    // if(m_maxFaceCount>=0 && faceCount>m_maxFaceCount) faceCount = m_maxFaceCount;
     for(int i=0;i<faceCount;i++)
     {
       // if(i>4 && i<9) continue;
@@ -104,7 +107,7 @@ void CircleLimit3Viewer::draw()
       int c0 = face->c0, c1 = face->c1;
       HTransform transform = m_gTransform * face->transform;
       double ctest = (transform * Complex(0,0)).getNorm();
-      if(ctest>0.99) continue;
+      // if(ctest>0.99) continue;
       double br = brmax;
       if(ctest>0.97) br = brmax * (1 - 0.5*(ctest-0.97)/0.03);
       //glColor3d(br,br,br);
@@ -137,7 +140,7 @@ void CircleLimit3Viewer::draw()
 
 
   glLineWidth(6.0);
-  glColor3d(0.1,0.2,0.2);
+  glColor4d(0.1,0.2,0.2,1.0);
   drawCircle(m_pan, m_scale, 200);
   glLineWidth(1.0);
 
@@ -188,8 +191,46 @@ void CircleLimit3Viewer::drawTess()
     }
     glEnd();
   }
-
 }
+
+
+void CircleLimit3Viewer::drawTess2(double gThickness)
+{
+    for(int i=0;i<m_tess->getEdgeCount();i++)
+    {
+        Net::HEdge *he = m_tess->getEdge(i)->getHedge();
+        Net::Face *f = he->getLeftFace(); if(f==0) f = he->getRightFace();
+        HTransform transform = m_gTransform * m_tess->getFaceTransform(f->getIndex());
+        int indexInFace = m_tess->my(he)->indexInFace;
+
+        Complex c = transform * m_tess->border(indexInFace, 0);
+        QPointF p0 = QPointF(c.re,c.im) * m_scale + m_pan;
+        c = transform * m_tess->border(indexInFace, 1);
+        QPointF p1 = QPointF(c.re,c.im) * m_scale + m_pan;
+
+        double cordLength = getNorm2(p1-p0);
+
+        int m = 2 + (int)(cordLength*0.1);
+        std::vector<std::pair<QPointF, double> > pts(m);
+        for(int j=0;j<m;j++)
+        {
+          Complex c = transform * m_tess->border(indexInFace, (double)j/(double)(m-1));
+          double thickness = 4*(1-c.getNorm2());
+          pts[j].first = QPointF(c.re,c.im) * m_scale + m_pan;
+          pts[j].second = thickness * gThickness;
+        }
+        glBegin(GL_LINE_STRIP);
+        for(int j=0;j<m;j++)
+        {
+          QPointF p = pts[j].first;
+          QPointF d = pts[j].second * rotate90(normalize(pts[j<m-1?j+1:j].first - pts[j>0?j-1:j].first));
+          glVertex(p+d);
+          glVertex(p-d);
+        }
+        glEnd();
+    }
+}
+
 
 void CircleLimit3Viewer::foo()
 {

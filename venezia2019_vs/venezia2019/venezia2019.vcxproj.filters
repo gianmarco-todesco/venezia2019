@@ -179,6 +179,9 @@
     <ClCompile Include="Fig8bPage.cpp">
       <Filter>Source Files\pages</Filter>
     </ClCompile>
+    <ClCompile Include="H2TessellationPage.cpp">
+      <Filter>Source Files\pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Complex.h">
@@ -313,6 +316,9 @@
     <ClInclude Include="Fig8bPage.h">
       <Filter>Header Files\pages</Filter>
     </ClInclude>
+    <ClInclude Include="H2TessellationPage.h">
+      <Filter>Header Files\pages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\basic.fsh">
@@ -343,6 +349,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="Resources\h3grid2.vsh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resources\h3grid_f11.fsh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resources\h3grid_f11.vsh">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

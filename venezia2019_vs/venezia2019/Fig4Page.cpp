@@ -17,6 +17,7 @@
 #include <QGLShaderProgram>
 #include <qmatrix4x4.h>
 #include <QVector4D.h>
+#include <QVector3D>
 #include <qvector.h>
 #include <qlist.h>
 #include <QGLBuffer>
@@ -32,9 +33,9 @@ const double magicRadius = 3.752;
 
 
 Fig4Page::Fig4Page()
-    : m_theta(23.5)
-    , m_phi(-25.75)
-    , m_cameraDistance(24.2)
+    : m_theta(36.5)
+    , m_phi(-31.25)
+    , m_cameraDistance(18.2)
     , m_rotating(false)
 {
     m_hMatrix.setToIdentity();
@@ -254,6 +255,10 @@ void Fig4Page::draw()
                 glRotated(90*i,0,0,1);
                 glRotated(90,1,0,0);
             }
+            else if(i==5)
+            {
+                glRotated(180,0,1,0);
+            }
     
 
             glTranslated(0,0,squarePos);
@@ -289,6 +294,7 @@ void Fig4Page::drawCube()
     double thickness = 0.05;
 
     double sc = position*sqrt(3.0) / ph->getVertex(0).m_pos.length();
+    sc*=1.02;
     ph->scale(sc);
 
     double unit = fabs(ph->getVertex(0).m_pos.x());
@@ -299,21 +305,33 @@ void Fig4Page::drawCube()
         drawSphere(ph->getVertex(i).m_pos, thickness*1.5);
     }
 
+    glDisable(GL_LIGHTING);
+    glCullFace(GL_FRONT);
+    glColor3d(0,0,0);
     for(int i=0;i<ph->getEdgeCount();i++)
     {
         const Polyhedron::Edge &edge = ph->getEdge(i);
         QVector3D p0 = ph->getVertex(edge.m_a).m_pos;
         QVector3D p1 = ph->getVertex(edge.m_b).m_pos;
-        setColor(0.8,0.2,0.8);
-        drawCylinder(p0,p1,thickness);
+        drawCylinder(p0,p1,0.05);
     }
+    glCullFace(GL_BACK);
+    glColor3d(1,1,1);
+    for(int i=0;i<ph->getEdgeCount();i++)
+    {
+        const Polyhedron::Edge &edge = ph->getEdge(i);
+        QVector3D p0 = ph->getVertex(edge.m_a).m_pos;
+        QVector3D p1 = ph->getVertex(edge.m_b).m_pos;
+        drawCylinder(p0,p1,0.02);
+    }
+    glEnable(GL_LIGHTING);
 }
 
 
 void Fig4Page::drawPolygon(int n, double r0, const Color &color)
 {
     double border = 0.3;
-    double h = 0.01;
+    double h = 0.05;
     double r3 = r0 - border / cos(M_PI/n);
     double t = 0.1;
     double r1 = (1-t)*r0 + t*r3;
@@ -377,3 +395,5 @@ void Fig4Page::drawPolygon(int n, double r0, const Color &color)
     glEnd();
 
 }
+
+

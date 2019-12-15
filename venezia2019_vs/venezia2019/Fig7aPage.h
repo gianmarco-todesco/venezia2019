@@ -2,22 +2,16 @@
 
 
 #include "Page.h"
-#include "PDiskPage.h"
+#include "H2TessellationPage.h"
 
 #include <QString>
 #include <QMatrix4x4>
 
 
-class Fig7aPage : public PDiskPage {
+class Fig7aPage : public H2TessellationPage {
   
 public:
-    Fig7aPage();
-    ~Fig7aPage();
-    
+    Fig7aPage(bool veryDetailed = false);
+    ~Fig7aPage();    
     void savePictures();
-
-    void resizeGL(int width, int height);
-    
-    void paintGL();
-
 };

@@ -25,6 +25,9 @@ public:
   HTessellationViewer();
   virtual ~HTessellationViewer();
 
+  QPointF getPan() const { return m_pan; }
+  float getScale() const { return m_scale; }
+
   void setMesh(Mesh2D *mesh); // doesn't get ownership
   Mesh2D *getMesh() const { return m_mesh; }
 

@@ -9,11 +9,13 @@ class CircleLimit3Viewer : public HTessellationViewer
 {
   CircleLimit3Tessellation *m_tess;
   Texture *m_fish[4];
-  int m_status;
   int m_maxFaceCount;
   bool m_figureMode;
 
 public:
+  int m_status;
+
+
   CircleLimit3Viewer(bool figureMode = false);
   ~CircleLimit3Viewer();
 
@@ -23,6 +25,7 @@ public:
 
   void draw();
   void drawTess();
+  void drawTess2(double thickness);
 
   void loadTextures();
 };
