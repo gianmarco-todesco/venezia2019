@@ -34,7 +34,7 @@ Fig5Page::Fig5Page()
     , m_phi(-25.75)
     , m_cameraDistance(24.2)
     , m_rotating(false)
-    , m_parameter(0.3160)
+    , m_parameter(0.627)
 {
     m_hMatrix.setToIdentity();
 }
@@ -183,41 +183,88 @@ void Fig5Page::draw()
     
     double angle = m_parameter*100;
 
-    glPushMatrix();
-    glRotated(angle, 1,0,0);
-    glTranslated(0,-h,0);
-    drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
-    glPopMatrix();
+
+    QMatrix4x4 mat;
+    mat.setToIdentity();  
+    mat.translate(0,h,0);  
+    mat.rotate(-angle, 1,0,0);
+    mat.translate(0,h,0);  
+    mat.rotate(-36*2, 0,0,1);        
+    
+    double triangleRadius = edgeLength*0.5/sin(M_PI/3);
+
+    QVector3D bpos = -(mat*mat).map(QVector3D(0,0,0)) * 0.5;
+
 
     glPushMatrix();
-    glRotated(-angle, 1,0,0);
-    glTranslated(0,h,0);
-    drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+    glTranslated(bpos.x(), bpos.y(), bpos.z());
+
+    for(int i=0;i<3;i++)
+    {
+        // primo decagono
+        drawPolygon(10, decagonRadius, Color(0.6,0.6,0.6));
+    
+        // due triangli    
+        glPushMatrix();
+        glTranslated(0,h,0);    
+        glRotated(-angle/2, 1,0,0);
+        for(int t=0; t<2;t++)
+        {
+            glPushMatrix();
+            glRotated(180*t,0,0,1);
+            glTranslated(- edgeLength * 0.5,0,0);
+            glRotated(-20,0,1,0);
+            glTranslated(-triangleRadius,0,0);
+            drawPolygon(3, triangleRadius, Color(0.2,0.2,0.2));
+            glPopMatrix();
+        }
+        glPopMatrix();
+
+        glMultMatrixd(mat.constData());    
+    }
+
+    // ultimo decagono
+    drawPolygon(10, decagonRadius, Color(0.6,0.6,0.6));
+    
     glPopMatrix();
 
 
     /*
 
+
+    glPushMatrix();
+    glRotated(180,0,0,1);
+    glTranslated(- edgeLength * 0.5,0,0);
+    glRotated(-20,0,1,0);
+    glTranslated(-triangleRadius,0,0);
+    drawPolygon(3, triangleRadius, Color(0.2,0.2,0.2));
+    glPopMatrix();
+
+
+    glPushMatrix();
+    glRotated(-angle, 1,0,0);
+    glTranslated(0,h,0);
+    // drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+    glPopMatrix();
+
+
+    glPushMatrix();
+    glRotated(-angle, 1,0,0);
+    glTranslated(0,h,0);
+        
+    glMultMatrixd(mat.constData());        
+    drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+    glMultMatrixd(mat.constData());        
+    drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
+    glPopMatrix();
+
+    */
+
+    /*
+
     if(2 == 2)
     {
-        QMatrix4x4 mat;
-        mat.setToIdentity();
 
-        
-        mat.rotate(-36*2, 0,0,1);        
-        mat.translate(0,h,0);
-        mat.rotate(-angle*2,1,0,0);
-        mat.translate(0,h,0);
-
-        glPushMatrix();
-        glRotated(-angle, 1,0,0);
-        glTranslated(0,h,0);
-        
-        glMultMatrixd(mat.constData());        
-        drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
-        glMultMatrixd(mat.constData());        
-        drawPolygon(10, decagonRadius, Color(0.3,0.6,0.8));
-        glPopMatrix();
 
     }
 
