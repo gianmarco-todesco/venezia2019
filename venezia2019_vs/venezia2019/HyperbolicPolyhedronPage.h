@@ -47,6 +47,7 @@ protected:
     void draw();
     void draw2();
     void drawOutSphere();
+    void drawOutSphere2();
 
     void drawHPolygon(const QList<QVector3D> &pts);
 
@@ -68,6 +69,10 @@ protected:
     void wheelEvent(QWheelEvent*);
 
     void setStatus(int status);
+
+
+    QVector3D toBall(const QVector3D &p) const;
+    // QPair<QVector3D,QVector3D> getLineEnds(QVector3D &p0, QVector3D &p1);
 };
 
 

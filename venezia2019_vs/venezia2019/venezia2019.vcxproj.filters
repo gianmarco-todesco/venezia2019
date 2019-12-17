@@ -357,5 +357,11 @@
     <None Include="Resources\h3grid_f11.vsh">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Resources\basic2.fsh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Resources\basic2.vsh">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

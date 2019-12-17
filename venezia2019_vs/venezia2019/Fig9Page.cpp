@@ -53,7 +53,7 @@ void Fig9Page::paintGL()
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 90.0);
 
     draw();
-    drawOutSphere();
+    drawOutSphere2();
 
     glPopMatrix();
 }
@@ -76,7 +76,26 @@ extern QVector3D rainbow(double t);
 extern QMatrix4x4 makeTranslation(double x, double y, double z);
 
 
+void foo(QVector3D p1, QVector3D p2)
+{
+    QVector3D p0 = (p1+p2)*0.5;
+    QVector3D q = QVector3D::crossProduct(p1,p2-p1);
+    QVector3D u = QVector3D::crossProduct(p2-p1,q).normalized();
+    if(QVector3D::dotProduct(u,p0)>0) u = -u;
+    glDisable(GL_LIGHTING);
+    glColor3d(0.8,0.1,0.8);
+    glBegin(GL_LINES);
+    glVertex3d(p1.x(),p1.y(),p1.z());
+    glVertex3d(p2.x(),p2.y(),p2.z());
 
+    glVertex3d(p0.x(),p0.y(),p0.z());
+
+    QVector3D uff = p0 + u*10;
+    glVertex3d(uff.x(),uff.y(),uff.z());
+    glEnd();
+    glEnable(GL_LIGHTING);
+
+}
 
 void Fig9aPage::draw()
 {
@@ -88,8 +107,8 @@ void Fig9aPage::draw()
     m_hMatrix = makeTranslation(m_hPan.x(),0,m_hPan.y());
         
 
-    QVector3D p0(-0.5,0,0), p1(0.5,0,0);
-    QVector3D p(0.2,0.4,0.1);
+    QVector3D p0(0.7,-0.1,0.1), p1(0.1,-0.15,0.5);
+    QVector3D p(0.2,0.8,0.3);
     setColor(0,0.5,0.9);
     drawHPoint(p0);
     drawHPoint(p1);
@@ -97,6 +116,9 @@ void Fig9aPage::draw()
     drawHLine(p0,p);
     drawHLine(p1,p);
     drawHLine(p0,p1);
+
+
+    foo(toBall(p0), toBall(p1));
 }
 
 void Fig9bPage::draw()

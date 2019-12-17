@@ -24,8 +24,8 @@
 
 HyperbolicPolyhedronPage::HyperbolicPolyhedronPage()
 : m_cameraDistance(15)
-, m_theta(10)
-, m_phi(20)
+, m_theta(36.5) // 10)
+, m_phi(-41.25) // 20)
 , m_rotating(true)
 , m_parameter(0)
 , m_status(0)
@@ -368,6 +368,10 @@ void HyperbolicPolyhedronPage::draw()
     }
 }
 
+QVector3D HyperbolicPolyhedronPage::toBall(const QVector3D &p) const
+{
+    return H3::KModel::toBall(m_hMatrix.map(QVector4D(p,1.0)));
+}
 
 void HyperbolicPolyhedronPage::drawHPoint(const QVector3D &pos)
 {
@@ -560,9 +564,71 @@ void HyperbolicPolyhedronPage::drawOutSphere()
     glBegin(GL_LINE_STRIP);
     for(int i=0;i<m;i++) glVertex3d(0,cssn[i].first*r,cssn[i].second*r);
     glEnd();
-
     r = 5;
     double rr = r/sqrt(-r*r+m_cameraDistance*m_cameraDistance);
+    glPushMatrix();
+    glLoadIdentity();
+    // glTranslated(0,0,-m_cameraDistance);
+    double z = 10;
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<m;i++) glVertex3d(z*rr*cssn[i].first,z*rr*cssn[i].second,-z);       
+    glEnd();
+    
+    
+    glPopMatrix();
+    
+    glBegin(GL_LINES);
+        glColor3d(1,0,0);
+        glVertex3d(0,0,0);
+        glVertex3d(r,0,0);
+        glColor3d(0,1,0);
+        glVertex3d(0,0,0);
+        glVertex3d(0,r,0);
+        glColor3d(0,0,1);
+        glVertex3d(0,0,0);
+        glVertex3d(0,0,r);
+
+    glEnd();
+
+    glEnable(GL_LIGHTING);
+}
+
+
+
+void HyperbolicPolyhedronPage::drawOutSphere2()
+{
+    glDisable(GL_LIGHTING);
+
+    int m = 200;
+    double r = 5.002;
+
+    QVector<QPair<double, double> > cssn;
+    for(int i=0;i<m;i++) {
+        double phi = M_PI * 2 * i / (m-1);
+        cssn.append(qMakePair(cos(phi), sin(phi)));
+    }
+    GLdouble clipPlane[4] = {0,0,1,m_cameraDistance - r*r/m_cameraDistance};
+
+    glPushMatrix();
+    glLoadIdentity();
+    glClipPlane(GL_CLIP_PLANE0, clipPlane);
+    glPopMatrix();
+
+    glEnable(GL_CLIP_PLANE0);
+    glColor3d(0.5,0.5,0.5);    
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<m;i++) glVertex3d(cssn[i].first*r,cssn[i].second*r,0);
+    glEnd();
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<m;i++) glVertex3d(cssn[i].first*r,0,cssn[i].second*r);
+    glEnd();
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<m;i++) glVertex3d(0,cssn[i].first*r,cssn[i].second*r);
+    glEnd();
+    glDisable(GL_CLIP_PLANE0);
+    r = 5;
+    double rr = r/sqrt(-r*r+m_cameraDistance*m_cameraDistance);
+
     glPushMatrix();
     glLoadIdentity();
     // glTranslated(0,0,-m_cameraDistance);
