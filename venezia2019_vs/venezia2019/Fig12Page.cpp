@@ -839,7 +839,7 @@ Fig12Page::Fig12Page(int cellCount)
 , m_rotating(true)
 , m_shaderProgram(0)
 , m_foo(0)
-, m_grid(new MyGrid(cellCount))
+, m_grid(new MyGrid(50000)) // cellCount))
 , m_textureId(0)
 {
     m_hMatrix.setToIdentity();

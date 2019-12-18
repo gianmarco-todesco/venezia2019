@@ -55,7 +55,7 @@ void Fig10Page::paintGL()
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 90.0);
 
     draw();
-    drawOutSphere();
+    drawOutSphere2();
 
     glPopMatrix();
 }
@@ -77,12 +77,12 @@ void Fig10Page::draw()
     m_hMatrix = makeTranslation(0,0,0);
 
     // hpolyhedron 
-    m_texture1.bind();    
+    //m_texture1.bind();    
     prog = m_h3ShaderProgram;
     prog->bind();
     // setViewUniforms(prog);
     prog->setUniformValue("u_texture", 0);
-    prog->setUniformValue("u_texScale", QPointF(20,20));   
+    prog->setUniformValue("u_texScale", QPointF(1,1));   
     prog->setUniformValue("hMatrix", m_hMatrix);
     prog->setUniformValue("u_color", QVector3D(1,1,1));
 
@@ -94,7 +94,7 @@ void Fig10Page::draw()
     ph->scale(radius / ph->getVertex(0).m_pos.length());
     drawHPolyhedron(ph);
 
-    m_texture1.release();
+    //m_texture1.release();
     prog->release();
 
     // dihedral angle
@@ -123,9 +123,9 @@ void Fig10Page::draw()
     {
         const QVector3D p0 = getFaceCenter(ph, fis[0]);
         const QVector3D p1 = getFaceCenter(ph, fis[1]);
-        drawHLine(midPoint,p0);
-        drawHLine(midPoint,p1);
-        drawHAngle(midPoint,midPoint-p0,midPoint-p1);
+        drawHLine2(midPoint,p0);
+        drawHLine2(midPoint,p1);
+        drawHAngle2(midPoint,midPoint-p0,midPoint-p1);
     }
 
 

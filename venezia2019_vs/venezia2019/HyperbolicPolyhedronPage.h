@@ -21,7 +21,7 @@ protected:
   bool m_rotating;
   QTime m_clock;
 
-  MyTexture m_texture1, m_texture2, m_texture3;
+  MyTexture m_texture1, m_texture2, m_texture3, m_texture4;
   Mesh m_mesh, m_hlineMesh;
   Mesh m_outSphereMesh;
   QGLShaderProgram *m_h3ShaderProgram;
@@ -56,10 +56,13 @@ protected:
     void drawHLine(const QVector3D &p0, const QVector3D&p1);
     void drawHLines(const QList<QMatrix4x4> &matrices);
     void drawHLines(const QList<QPair<QVector3D, QVector3D> > &pointPairs);
-  
+
+    void drawHLine2(const QVector3D &p0, const QVector3D&p1);
+
     void drawHPolyhedron(const Polyhedron *ph);
 
     void drawHAngle(const QVector3D &p, const QVector3D &d1, const QVector3D &d2);
+    void drawHAngle2(const QVector3D &p, const QVector3D &d1, const QVector3D &d2);
 
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);

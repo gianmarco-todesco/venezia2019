@@ -844,7 +844,7 @@ Fig11Page::Fig11Page(int cellCount)
 , m_rotating(true)
 , m_shaderProgram(0)
 , m_foo(0)
-, m_grid(new MyGrid2(cellCount))
+, m_grid(new MyGrid2(3000)) // cellCount))
 , m_textureId(0)
 {
     m_hMatrix.setToIdentity();

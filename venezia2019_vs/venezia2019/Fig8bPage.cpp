@@ -101,10 +101,19 @@ void Fig8bPage::paintGL()
 
 
     // contorno del disco
-    glLineWidth(4);
     glColor3d(0,0,0);
-    drawCircle(center,r,200);
-    glLineWidth(1);
+    int m = 100;
+    glBegin(GL_TRIANGLE_STRIP);
+    double r1 = r + 4;
+    for(int i=0;i<=m;i++)
+    {
+        double phi = M_PI*2*i/m;
+        double cs = cos(phi), sn = sin(phi);
+        glVertex2d(center.x() + r*cs, center.y() + r*sn);
+        glVertex2d(center.x() + r1*cs, center.y() + r1*sn);
+    }
+    glEnd();
+    
 
 
 }

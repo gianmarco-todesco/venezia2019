@@ -30,7 +30,7 @@
 
 
 Fig7bPage::Fig7bPage(bool figureMode)
-    : CircleLimit3Page(figureMode)
+    : CircleLimit3Page(true)
 {
 }
     

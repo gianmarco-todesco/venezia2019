@@ -41,7 +41,12 @@ void Fig9Page::paintGL()
 {        
     glClearColor(1,1,1,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(true);
+
     // drawBackground();
+
+    
     
     glPushMatrix();
     glTranslated(0,0,-m_cameraDistance);
@@ -54,6 +59,17 @@ void Fig9Page::paintGL()
 
     draw();
     drawOutSphere2();
+
+    /*
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    setColor(0.4,0.8,0.4);
+    drawSphere(QVector3D(0.5,0,0.8),0.6);
+    setColor(0.8,0.4,0.4);
+    drawSphere(QVector3D(-0.5,0,0.8),0.6);
+    */
+
 
     glPopMatrix();
 }
@@ -69,6 +85,8 @@ void Fig9Page::savePictures()
     //page.m_phi = m_phi;
     page->savePicture(getFigureName());
     delete page;
+    v()->makeCurrent();
+    resizeGL(width(), height());
 }
 
 
@@ -76,25 +94,13 @@ extern QVector3D rainbow(double t);
 extern QMatrix4x4 makeTranslation(double x, double y, double z);
 
 
-void foo(QVector3D p1, QVector3D p2)
+
+
+
+Fig9aPage::Fig9aPage()
 {
-    QVector3D p0 = (p1+p2)*0.5;
-    QVector3D q = QVector3D::crossProduct(p1,p2-p1);
-    QVector3D u = QVector3D::crossProduct(p2-p1,q).normalized();
-    if(QVector3D::dotProduct(u,p0)>0) u = -u;
-    glDisable(GL_LIGHTING);
-    glColor3d(0.8,0.1,0.8);
-    glBegin(GL_LINES);
-    glVertex3d(p1.x(),p1.y(),p1.z());
-    glVertex3d(p2.x(),p2.y(),p2.z());
-
-    glVertex3d(p0.x(),p0.y(),p0.z());
-
-    QVector3D uff = p0 + u*10;
-    glVertex3d(uff.x(),uff.y(),uff.z());
-    glEnd();
-    glEnable(GL_LIGHTING);
-
+    m_theta = 36.5;
+    m_phi = -41.25;
 }
 
 void Fig9aPage::draw()
@@ -107,18 +113,23 @@ void Fig9aPage::draw()
     m_hMatrix = makeTranslation(m_hPan.x(),0,m_hPan.y());
         
 
-    QVector3D p0(0.7,-0.1,0.1), p1(0.1,-0.15,0.5);
+    QVector3D p0(0.7,-0.1,0.1), p1(0.1,0.07,0.5);
     QVector3D p(0.2,0.8,0.3);
     setColor(0,0.5,0.9);
     drawHPoint(p0);
     drawHPoint(p1);
     drawHPoint(p);
-    drawHLine(p0,p);
-    drawHLine(p1,p);
-    drawHLine(p0,p1);
+    drawHLine2(p0,p);
+    drawHLine2(p1,p);
+    drawHLine2(p0,p1);
 
+    assert(glGetError() == GL_NO_ERROR);
+}
 
-    foo(toBall(p0), toBall(p1));
+Fig9bPage::Fig9bPage()
+{
+    m_theta = 34;
+    m_phi = -62.5;
 }
 
 void Fig9bPage::draw()
@@ -126,7 +137,8 @@ void Fig9bPage::draw()
     QGLShaderProgram *prog;
 
     m_hMatrix = makeTranslation(0,0,m_parameter);
-
+    glDepthMask(true);
+    glDepthFunc(GL_LESS);
     // draw faces
         
     m_texture2.bind();    
@@ -162,6 +174,11 @@ void Fig9bPage::draw()
 
 
 
+Fig9cPage::Fig9cPage()
+{
+    m_theta = 36.5;
+    m_phi = -41.25;
+}
 
 void Fig9cPage::draw()
 {
@@ -176,7 +193,7 @@ void Fig9cPage::draw()
     prog->bind();
     // setViewUniforms(prog);
     prog->setUniformValue("u_texture", 0);
-    prog->setUniformValue("u_texScale", QPointF(20,20));   
+    prog->setUniformValue("u_texScale", QPointF(1,1));   
     prog->setUniformValue("hMatrix", m_hMatrix);
     prog->setUniformValue("u_color", QVector3D(1,1,1));
 

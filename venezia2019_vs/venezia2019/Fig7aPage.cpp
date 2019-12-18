@@ -4,7 +4,7 @@
 
 
 Fig7aPage::Fig7aPage(bool veryDetailed)
-    : H2TessellationPage(8,3,veryDetailed)
+    : H2TessellationPage(8,3,true)
 {
 }
 

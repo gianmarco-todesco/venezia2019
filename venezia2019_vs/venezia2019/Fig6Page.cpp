@@ -3,7 +3,7 @@
 // fig.6 A regular Hyperbolic tessellation: {8,4}
 
 Fig6Page::Fig6Page(bool veryDetailed)
-    : H2TessellationPage(8,4,veryDetailed)
+    : H2TessellationPage(8,4,true)
 {
 }
 

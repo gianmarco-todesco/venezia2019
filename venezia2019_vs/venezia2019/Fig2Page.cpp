@@ -5,7 +5,7 @@
 
 
 Fig2Page::Fig2Page(bool veryDetailed)
-    : H2TessellationPage(5,4,veryDetailed)
+    : H2TessellationPage(5,4,true)
 {
 }
 

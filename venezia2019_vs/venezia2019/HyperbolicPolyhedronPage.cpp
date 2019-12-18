@@ -72,6 +72,32 @@ void HyperbolicPolyhedronPage::initializeGL()
     pa.end();   
     m_texture2.createTexture(img);
 
+    img = QImage(256,256, QImage::Format_ARGB32_Premultiplied);
+    img.fill(QColor(255,255,255));
+
+
+
+    pa.begin(&img);
+
+    for(int i=0;i<5;i++)
+    {
+        double x = 256 * i / 5.0;
+        // pa.fillRect(x-4,0,8,256, Qt::green);
+    }
+    double y = 256 * 0.125;
+    // pa.fillRect(0,0,256,y, Qt::red);
+    
+    y = (int)(256 * 0.9 - 5);
+    pa.fillRect(0,y,256,256-y, Qt::black);
+
+    y -= 20;
+    pa.fillRect(0,y,256,5, Qt::black);
+
+    pa.end();   
+    
+    m_texture4.createTexture(img);
+
+
     /*
     img = QImage(32,32, QImage::Format_ARGB32_Premultiplied);
     img.fill(QColor(200,120,20));
@@ -154,6 +180,7 @@ void HyperbolicPolyhedronPage::paintGL()
 {
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     drawBackground();
     
     glPushMatrix();
@@ -402,6 +429,8 @@ void HyperbolicPolyhedronPage::drawHLines(const QList<QMatrix4x4> &matrices)
     prog->setUniformValue("u_texture", 0);
     prog->setUniformValue("u_texScale", QPointF(20,20));
     prog->setUniformValue("u_color", QVector3D(0.05,0.3,0.8));
+    prog->setUniformValue("u_texScale", QPointF(1,1));
+
     setColor(1,1,1);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -465,6 +494,72 @@ void HyperbolicPolyhedronPage::drawHLines(const QList<QPair<QVector3D, QVector3D
     }
     drawHLines(matrices);
 }
+
+
+QPair<QVector3D, QVector3D> getEndPoints(QVector3D p1, QVector3D p2)
+{
+    const double R2 = 25.0;
+    QVector3D p0 = (p1+p2)*0.5;
+    QVector3D q = QVector3D::crossProduct(p1,p2-p1);
+    QVector3D u = QVector3D::crossProduct(p2-p1,q).normalized();
+    if(QVector3D::dotProduct(u,p0)<0) u = -u;
+
+    double den = 2.0 * QVector3D::dotProduct(u, p1);
+    double lambda = (-p0.lengthSquared() + (p0-p1).lengthSquared() + R2) / den;
+
+    QVector3D b = p0 + u*lambda;
+    double dist = b.length();
+
+    QVector3D e0 = b.normalized();
+    QVector3D e1 = ((p2-p1) - e0*QVector3D::dotProduct((p2-p1), e0)).normalized();
+    double x = R2/dist;
+    double y = sqrt(R2-x*x);
+
+    return qMakePair(e0 * x + e1 * y, e0 * x - e1 * y);
+}
+
+
+void drawEndPoint(const QVector3D &p)
+{
+    QVector3D e0 = QVector3D(-p.z(), 0, p.x()).normalized();
+    QVector3D e1 = QVector3D::crossProduct(p, e0).normalized();
+    int m = 50;
+    QList<QVector3D> pts;
+    for(int i=0; i<m; i++)
+    {
+        double phi = 2*M_PI*i/(m-1);
+        double cs = cos(phi), sn = sin(phi);
+        pts.append(e0 * cs + e1 * sn); 
+    }
+
+    double r = 0.05;
+    glBegin(GL_LINE_STRIP);
+    for(int i=0; i<m; i++) glVertex(p + r * pts.at(i)); 
+    glEnd();
+    r = 0.1;
+    glBegin(GL_LINE_STRIP);
+    for(int i=0; i<m; i++) glVertex(p + r * pts.at(i)); 
+    glEnd();
+}
+
+void drawEndPoints(QPair<QVector3D, QVector3D> &pair)
+{
+    drawEndPoint(pair.first);
+    drawEndPoint(pair.second);
+}
+
+void HyperbolicPolyhedronPage::drawHLine2(const QVector3D &p0, const QVector3D&p1)
+{
+    drawHLine(p0,p1);
+
+    QPair<QVector3D, QVector3D> endPoints = getEndPoints(toBall(p0), toBall(p1));
+    glDisable(GL_LIGHTING);
+
+    glColor3d(0.5,0.5,0.5);
+    drawEndPoints(endPoints);
+    glEnable(GL_LIGHTING);
+}
+
     
 void HyperbolicPolyhedronPage::drawHAngle(
     const QVector3D &kp, 
@@ -490,9 +585,10 @@ void HyperbolicPolyhedronPage::drawHAngle(
     double phi = acos(QVector3D::dotProduct(d1,d2));
     double r1 = 1;
     double r2 = 1.5;
-    double dphi = 5 * M_PI/180;
+    double dphi = 10 * M_PI/180;
     QVector<QVector3D> pts;
     double a = 0;
+    double aa = 0;
     for(;;a+=dphi)
     {
         if(a>phi) a=phi;
@@ -512,12 +608,80 @@ void HyperbolicPolyhedronPage::drawHAngle(
     glBegin(GL_LINES);
     for(int i=0;i<m;i++) {glVertex(pts[2*i]);glVertex(pts[2*i+1]);}
     glEnd();
+    glEnable(GL_LIGHTING);
+}
+
+    
+void HyperbolicPolyhedronPage::drawHAngle2(
+    const QVector3D &kp, 
+    const QVector3D &kd1, 
+    const QVector3D &kd2)
+{
+    glDisable(GL_LIGHTING);
+
+    const QVector3D p = H3::KModel::toBall(kp);
+    const QVector3D d1 = (H3::KModel::toBall(kp+kd1*0.001)-p).normalized();
+    const QVector3D d2 = (H3::KModel::toBall(kp+kd2*0.001)-p).normalized();
+
+
+    glBegin(GL_LINE_STRIP);
+    glVertex(p+d1);
+    glVertex(p);
+    glVertex(p+d2);
+    glEnd();
+
+    QVector3D e0 = d1.normalized();
+    QVector3D e1 = (d2-e0*QVector3D::dotProduct(e0,d2)).normalized();
+    double phi = acos(QVector3D::dotProduct(d1,d2));
+    double r1 = 1;
+    double r2 = 1.25;
+
+
+    glColor3d(0,0,0);
+    int m = 360;
+    QVector<QVector3D> pts;
+    for(int i=0;i<=m;i++)
+    {
+        double phi = 2*M_PI*i/m;
+        pts.append(e0*cos(phi) + e1*sin(phi));
+    }
+
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<=m;i+=5) glVertex(p + r1*pts[i]);
+    glEnd();
+    glBegin(GL_LINE_STRIP);
+    for(int i=0;i<=m;i+=5) glVertex(p + r2*pts[i]);
+    glEnd();
+    glBegin(GL_LINES);
+    for(int i=0;i<=m;i+=5) 
+    { 
+        double r = i%90 == 0 ? r2 : (i%10==0) ? (r1+r2)*0.5 : r1*0.75 + r2*0.25; 
+        glVertex(p + r1*pts[i]); 
+        glVertex(p + r*pts[i]); 
+    }
+    glVertex(p);
+    glVertex(p + e0*2);
+    glVertex(p);
+    glVertex(p + d2.normalized()*2);
+
+
+    glEnd();
+
+    glColor3d(0.8,0.8,0.8);
+    glBegin(GL_TRIANGLE_STRIP);
+    for(int i=0;i<=m;i+=5) 
+    { 
+        if(i*M_PI/180.0>phi) break;
+        glVertex(p + r1*pts[i]); 
+        glVertex(p + r2*pts[i]); 
+
+    }
+    glEnd();
+
 
 
     glEnable(GL_LIGHTING);
-
 }
-
 
 void HyperbolicPolyhedronPage::drawOutSphere()
 {
@@ -676,7 +840,9 @@ void HyperbolicPolyhedronPage::drawHPolygon(const QList<QVector3D> &pts)
 {
     setColor(0.8,0.5,0.1);
     m_h3ShaderProgram->setUniformValue("u_color", QVector3D(0.8,0.5,0.05));
+    m_h3ShaderProgram->setUniformValue("u_texScale", QPointF(1,1)); 
     
+    const double v0 = 0.125, v1 = 0.9;
     const int n = pts.count();
     QVector3D center;
     foreach(QVector3D p, pts) center+=p;
@@ -686,50 +852,99 @@ void HyperbolicPolyhedronPage::drawHPolygon(const QList<QVector3D> &pts)
     QVector<GLfloat> buffer;
     QList<QVector3D> qs;
     qs.append(center);
-    addVertex(buffer, center, normal);
     int m = 30;
-    for(int i=0;i<n;i++)
+    
+    // center
+    addVertex(buffer, center, normal, QPointF(0,0.08));
+
+    // along radii (m point for radius; face center is not included)
+    // note: last point is a copy of the first (with different U texture coordinate)
+    for(int i=0;i<=n;i++)
     {
+        // for i-th radius (center => pts[i])
         for(int j=1;j<=m;j++)
         {
             double t = (double)j/m;
-            QVector3D q = (1-t)*center + t*pts[i];
+            QVector3D q = (1-t)*center + t*pts[i%n];
             qs.append(q);
-            addVertex(buffer, q, normal);
+            addVertex(buffer, q, normal, QPointF(i / (double)n, v0 + (v1-v0) * (j-1)/(double)(m-1)));
         }
     }
-    int k = 1+n*m;
+
+    // for each face (center, pts[i], pts[i1]) add inner points and indices
+    
+    int k = 1+(n+1)*m; // next index
+
     for(int i=0; i<n; i++)
     {
-        int i1 = (i+1)%n;        
-        indices << 0 << i*m+1 << i1*m+1;
+        int i1 = i+1;        
+        // i-th face: center, pts[i], pts[i1]
+        double u0 = i/(double)n, u1 = (i+1)/(double)n;
+        indices << 0 << i*m+1 << i1*m+1; // first triangle touching center
+
+        QList<int> prevRowIndices; 
+        prevRowIndices << i*m+1 << i1*m+1;
+        for(int j=2;j<=m;j++) 
+        {
+            const double v = v0 + (v1-v0) * j/(double)m;
+            QList<int> rowIndices;
+            // j control the distance from the center
+            int a = i*m + j, b = i1*m + j; // a,b are indices of points on i-th and (i+1)-th radii
+            rowIndices.append(a);
+            for(int s=1; s<j; s++)
+            {
+                double t = (double)s/(double)j;
+                QVector3D q = qs[a]*(1-t)+qs[b]*t;
+                double u = u0 *(1-t) + u1*t;
+                addVertex(buffer, q, normal, QPointF(u, v));
+                rowIndices.append(k++);
+            }
+            rowIndices.append(b);
+            // add faces
+            for(int s = 0; s+1<rowIndices.count(); s++)
+            {
+                indices << rowIndices[s] << rowIndices[s+1] << prevRowIndices[s];
+                if(s>0)
+                    indices << prevRowIndices[s-1] << rowIndices[s] << prevRowIndices[s];
+            }
+            prevRowIndices.swap(rowIndices);
+        }
+
+        /*
         for(int j=1;j<m;j++) 
         {
+            // j control the distance from the center
             int a = i*m+j, b = i*m+j+1, c = i1*m+j, d = i1*m+j+1;   
             int as = a, bs = b;
             double t;
+            // add inner points
             for(int s=1; s<j; s++)
             {
                 t = (double)s/j;
-                addVertex(buffer, qs[a]*(1-t)+qs[c]*t, normal);
+                addVertex(buffer, qs[a]*(1-t)+qs[c]*t, normal, QPointF(i / (double)n, 0.1+0.8*t));
                 t = (double)s/(j+1);
-                addVertex(buffer, qs[b]*(1-t)+qs[d]*t, normal);
+                addVertex(buffer, qs[b]*(1-t)+qs[d]*t, normal, QPointF(0.1 + 0.8 * i/(double)(n-1), 0.1+0.8*t));
                 indices << as << bs << k+1 << as << k+1 << k;
                 as = k;
                 bs = k+1;
                 k+=2;
             }
             t = (double)j/(j+1);
-            addVertex(buffer, qs[b]*(1-t)+qs[d]*t, normal);
+            addVertex(buffer, qs[b]*(1-t)+qs[d]*t, normal, QPointF(0.1 + 0.8 * i/(double)(n-1), 0.1+0.8*t));
             indices << as << bs << k << c << as << k << c << k << d;
             k++;
         }
+        */
     }
+
+    m_texture4.bind();
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnable(GL_CULL_FACE);
-    glNormalPointer(GL_FLOAT, sizeof(GL_FLOAT)*6, &buffer[0]+3);
-    glVertexPointer(3, GL_FLOAT, sizeof(GL_FLOAT)*6, &buffer[0]);
+    glNormalPointer(GL_FLOAT, sizeof(GL_FLOAT)*8, &buffer[0]+3);
+    glVertexPointer(3, GL_FLOAT, sizeof(GL_FLOAT)*8, &buffer[0]);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(GL_FLOAT)*8, &buffer[0]+6);
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, &indices[0]);
     // glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
@@ -737,6 +952,9 @@ void HyperbolicPolyhedronPage::drawHPolygon(const QList<QVector3D> &pts)
     
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    m_texture4.release();
+    assert(glGetError() == GL_NO_ERROR);
 
 }
 

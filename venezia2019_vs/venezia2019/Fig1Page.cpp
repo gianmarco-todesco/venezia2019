@@ -328,6 +328,19 @@ void Fig1Page::wheelEvent(QWheelEvent*e)
 
 void Fig1Page::keyPressEvent(QKeyEvent *e)
 {
+    double d =  0.1 * ((e->modifiers() & Qt::ShiftModifier) == 0 ? 1 : -1);
+    if(e->key() == Qt::Key_X)
+    {
+        m_offset.setX(m_offset.x() + d); 
+    }
+    else if(e->key() == Qt::Key_Y)
+    {
+        m_offset.setY(m_offset.y() + d); 
+    }
+    if(e->key() == Qt::Key_Z)
+    {
+        m_offset.setZ(m_offset.z() + d); 
+    }
     e->ignore();
 }
 

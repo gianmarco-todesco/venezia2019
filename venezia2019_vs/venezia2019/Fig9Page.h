@@ -27,12 +27,14 @@ public:
 class Fig9aPage : public Fig9Page {
 public:
     void draw();
+    Fig9aPage();
     Fig9Page* clone() const { return new Fig9aPage(); }
     QString getFigureName() const { return "Fig9a.png"; } 
 };
 
 class Fig9bPage : public Fig9Page {
 public:
+    Fig9bPage();
     void draw();
     Fig9Page* clone() const { return new Fig9bPage(); }
     QString getFigureName() const { return "Fig9b.png"; } 
@@ -40,6 +42,7 @@ public:
 
 class Fig9cPage : public Fig9Page {
 public:
+    Fig9cPage();
     void draw();
     Fig9Page* clone() const { return new Fig9cPage(); }
     QString getFigureName() const { return "Fig9c.png"; } 

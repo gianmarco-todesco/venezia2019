@@ -37,12 +37,15 @@
 
 void Presentation::buildPages()
 {
+
+    addPage(new Fig1Page());
     
-    addPage(new Fig9aPage());
-
-
-    // addPage(new H3GridBuildPage());
+    // addPage(new Fig11Page());
+    // addPage(new Fig12Page());
+    
     /*
+    // addPage(new H3GridBuildPage());
+    
     addPage(new Fig1Page());
     addPage(new Fig2Page());
     addPage(new Fig3Page());
@@ -145,12 +148,15 @@ void Page::savePicture(const QString &path, int border)
     assert(glGetError() == GL_NO_ERROR);
     QGLFormat fmt;
     
-    fmt.setDoubleBuffer(false);
+    // fmt.setDoubleBuffer(false);
     // fmt.setAlpha(false);
-    fmt.setSampleBuffers(true);
-    
+        
+    // fmt.setSampleBuffers(true);
+    fmt.setDepth(true);
+
     int width = 4096, height = 4096;
-    QGLPixelBuffer buffer(width,height,fmt);
+    // width=height=1024;
+    QGLPixelBuffer buffer(width,height,fmt);    
     buffer.makeCurrent();
 
     setSize(width, height);
